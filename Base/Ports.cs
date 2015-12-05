@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
@@ -8,6 +9,7 @@ using Edge.Arrays;
 using Edge.Credentials;
 using Edge.Factory;
 using Edge.Funnels;
+using Edge.Looping;
 using Edge.Ports.AutoCommands;
 using Edge.Processes;
 using Edge.Serializations;
@@ -704,8 +706,12 @@ namespace Edge.Ports
             {
                 if (this.Target == null)
                     throw new Exception("connection target is not set!");
-                _int.Send(new MultiSocket.SendRequest(o,this.Target));
-                var confirmation = _int.recieve() as MultiSocket.SentConfirmation;
+                var m = Target.Equals(_int.Target) ? o : new MultiSocket.SendRequest(o, this.Target);
+                var ret =_int.Send(m);
+                var r = Target.Equals(_int.Target) ? new MultiSocket.SentConfirmation(ret) : _int.recieve();
+                var confirmation = r as MultiSocket.SentConfirmation;
+                if (confirmation == null)
+                    throw new Exception($"expected a {nameof(MultiSocket.SentConfirmation)}, got {r}");
                 return confirmation.sentBytes;
             }
             public object silentrecieve(out EndPoint @from, int buffersize)
@@ -900,7 +906,7 @@ namespace Edge.Ports
                 handler.Add(a =>
                 {
                     DateTime t = DateTime.Now;
-                    foreach (EndPoint subsciber in _subscibers)
+                    foreach (EndPoint subsciber in _subscibers.Except(messageRecieveEventArgs.source))
                     {
                         Target = subsciber;
                         Send(new MultiSocket.ForwardedDataGram(messageRecieveEventArgs.message, messageRecieveEventArgs.source, t));

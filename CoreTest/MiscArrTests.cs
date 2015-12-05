@@ -142,6 +142,25 @@ namespace CoreTest
         }
     }
     [TestClass]
+    public class ToPrintableDictionaryTest
+    {
+        [TestMethod]
+        public void Simple()
+        {
+            AreEqual((new Dictionary<string,int>()  { ["0"]=0, ["1"]=1, ["2"]=2 }).ToPrintable(seperator:","), "{0:0,1:1,2:2}");
+        }
+        [TestMethod]
+        public void Empty()
+        {
+            AreEqual((new Dictionary<string, int>()).ToPrintable(), "{}");
+        }
+        [TestMethod]
+        public void Nill()
+        {
+            AreEqual((new Dictionary<string, int>()).ToPrintable("", "", "",""), "");
+        }
+    }
+    [TestClass]
     public class CountTest
     {
         [TestMethod] public void Simple()

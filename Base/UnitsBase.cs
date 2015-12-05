@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Xml;
@@ -895,8 +896,10 @@ namespace Edge.Units
             public static readonly RWUnitofMeasurment<Money> Dollars, Cents, IsraeliNewSheckels, Agoras, Euros, CentEuros, Yen;
             public static readonly MeasureSystem<Money> UnitedStates, Israel, Europe, Japan;
             public readonly static TimeSpan DefaultUpdateTimeTolerance = new TimeSpan(12, 0, 0);
+            private static readonly string _ExchangeRatesPermaPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + @"\Edge\" +
+                                                                     "__Edge_Units_Money_ExchangeRates.xml";
 #pragma warning disable CC0033
-            private readonly static SyncPermaObject<string> _ExchangeRatePerma = new SyncPermaObject<string>(Encoding.ASCII.GetString, Encoding.ASCII.GetBytes, "__Cobra_Units_Money_ExchangeRates", true, ".xml");
+            private static readonly SyncPermaObject<string> _ExchangeRatePerma;
             private static bool _initialized;
             private static readonly Lazy<Funnel<string, Money>> DefaultParsers =
             new Lazy<Funnel<string, Money>>(() => new Funnel<string, Money>(
@@ -929,6 +932,8 @@ namespace Edge.Units
                 Israel = new MeasureSystem<Money>(", ", new UnitofMeasurment<Money>[] { IsraeliNewSheckels, Agoras });
                 Europe = new MeasureSystem<Money>(", ", new UnitofMeasurment<Money>[] { Euros, CentEuros });
                 Japan = new MeasureSystem<Money>(Yen);
+                Directory.CreateDirectory(System.IO.Path.GetDirectoryName(_ExchangeRatesPermaPath));
+                _ExchangeRatePerma = new SyncPermaObject<string>(Encoding.ASCII.GetString, Encoding.ASCII.GetBytes,_ExchangeRatesPermaPath, false, FileAccess.ReadWrite, FileShare.ReadWrite);
             }
             public static bool updateRates()
             {

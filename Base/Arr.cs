@@ -300,6 +300,14 @@ namespace Edge.Arrays
             a.WriteTo(w, seperator, opening, closing);
             return w.ToString();
         }
+        public static string ToPrintable<K,V>(this IDictionary<K,V> a, string definitionSeperator = ":", string seperator = ", ", string opening = "{", string closing = "}")
+        {
+            return ToPrintable(a, x=>x.ToString(), x=>x.ToString(), definitionSeperator, seperator, opening, closing);
+        }
+        public static string ToPrintable<K,V>(this IDictionary<K,V> a,Func<K,string> kPrinter, Func<V,string> vPrinter, string definitionSeperator = ":", string seperator = ", ", string opening = "{", string closing = "}")
+        {
+            return a.Select(x => kPrinter(x.Key) + definitionSeperator + vPrinter(x.Value)).ToPrintable(seperator,opening, closing);
+        }
         /// <summary>
         /// returns number of members in array that are being searched for
         /// </summary>

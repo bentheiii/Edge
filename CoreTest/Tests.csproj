@@ -81,6 +81,7 @@
     <Compile Include="ImagingTests.cs" />
     <Compile Include="LoopsTests.cs" />
     <Compile Include="MatrixTests.cs" />
+    <Compile Include="PermaObjectTests.cs" />
     <Compile Include="ReturnFunnelTests.cs" />
     <Compile Include="GuardTests.cs" />
     <Compile Include="Init.cs" />

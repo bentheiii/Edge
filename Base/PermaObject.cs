@@ -15,6 +15,7 @@ using Edge.Path;
 using Edge.Ports;
 using Edge.Ports.MultiSocket;
 using Edge.Serializations;
+using Edge.Units.Time;
 using Edge.WordsPlay;
 
 namespace Edge.PermanentObject
@@ -24,96 +25,76 @@ namespace Edge.PermanentObject
         T tryParse(out Exception ex);
         T value { get; set; }
         string name { get; }
+        FileAccess access { get; }
+        FileShare share { get; }
     }
     public static class PermaObject
     {
-        internal static readonly string RoamingFolderPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + @"\CobraCore\PermaObjects";
-        internal const string PERMA_OBJ_TRACKER_FILE = "perma_obj_tracker";
-        internal const string PERMA_OBJ_EXTENSION = ".permaobj";
-        internal const string PERMA_PORT_EXTENSION = ".permaport";
-        static PermaObject()
+        public static bool Exists(string name)
         {
-            ensurePermaObjData();
+            return File.Exists(name);
         }
-        public static void ensurePermaObjData()
-        {
-            Directory.CreateDirectory(RoamingFolderPath);
-            if (!File.Exists(RoamingFolderPath + @"\" + PERMA_OBJ_TRACKER_FILE))
-            {
-                TextWriter w = new StreamWriter(RoamingFolderPath + @"\" + PERMA_OBJ_TRACKER_FILE);
-                w.Write("0");
-                w.Close();
-            }
-        }
-        public static bool Exists(string name, string permaObjExtension = PERMA_OBJ_EXTENSION)
-        {
-            return File.Exists(RoamingFolderPath + @"\" + name + permaObjExtension);
-        }
-        internal static string getnextFilename()
-        {
-            TextReader r = new StreamReader(RoamingFolderPath + @"\" + PERMA_OBJ_TRACKER_FILE);
-            BigInteger s = BigInteger.Parse(r.ReadToEnd());
-            r.Close();
-            TextWriter w = new StreamWriter(RoamingFolderPath + @"\" + PERMA_OBJ_TRACKER_FILE);
-            w.Write((s + 1).ToString());
-            w.Close();
-            return s.ToString("X");
-        }
-        public static void Mutaute<T>(this IPermaObject<T> @this, Func<T, T> mutation)
+        public static void MutauteValue<T>(this IPermaObject<T> @this, Func<T, T> mutation)
         {
             @this.value = mutation(@this.value);
-        }
-        public static void Mutaute<T>(this IPermaObject<T> @this, Action<T> mutation)
-        {
-            var temp = @this.value;
-            mutation(temp);
-            @this.value = temp;
         }
         public static string LocalName<T>(this IPermaObject<T> @this)
         {
             var s = @this.name;
-            return s.Substringbetween(s.LastIndexOf(@"\"),s.LastIndexOf("."));
+            return System.IO.Path.GetFileName(s);
         }
-        public static void delete<T>(this IPermaObject<T> @this)
+        public static bool Readable<T>(this IPermaObject<T> @this)
         {
-            if (FilePath.IsFileAccessible(@this.name, FileAccess.Write))
-                File.Delete(@this.name);
+            Exception ex;
+            var temp = @this.tryParse(out ex);
+            return ex == null;
+        }
+        public static TimeSpan timeSinceUpdate<T>(this ISyncPermaObject<T> @this)
+        {
+            return DateTime.Now.Subtract(@this.getLatestUpdateTime());
         }
     }
     public class PermaObject<T> : IPermaObject<T>
     {
         private readonly FileStream _stream;
-        private readonly bool _preserve;
+        public FileAccess access { get; }
+        public FileShare share { get; }
         private readonly Func<byte[], T> _read;
         private readonly Func<T, byte[]> _write;
-        public PermaObject() : this(null) { }
-        public PermaObject([CanBeNull] string name) : this(name,false) { }
-        public PermaObject([CanBeNull] string name, bool preserve, string extension = PermaObject.PERMA_OBJ_EXTENSION) : this(a => (T)Serialization.Deserialize(a), a=>Serialization.Serialize(a), name, preserve,extension) { }
-        public PermaObject(Func<byte[], T> read, Func<T, byte[]> write) : this(read, write, null,false) { }
-        public PermaObject(Func<byte[], T> read, Func<T, byte[]> write, [CanBeNull] string name, bool preserve, string extension = PermaObject.PERMA_OBJ_EXTENSION)
+        public PermaObject(string name, bool deleteOnDispose = false, FileAccess access = FileAccess.ReadWrite, FileShare share = FileShare.None, FileMode mode = FileMode.OpenOrCreate, T valueIfCreated = default(T)) : this(a => (T)Serialization.Deserialize(a), a=>Serialization.Serialize(a), name, deleteOnDispose, access, share, mode, valueIfCreated) { }
+        public PermaObject(Func<byte[], T> read, Func<T, byte[]> write, string name, bool deleteOnDispose = false, FileAccess access = FileAccess.ReadWrite, FileShare share = FileShare.None, FileMode mode = FileMode.OpenOrCreate, T valueIfCreated = default(T))
         {
+            if (mode == FileMode.Truncate || mode == FileMode.Append)
+                throw new ArgumentException("truncate and append modes are not supported", nameof(mode));
+            bool create = !PermaObject.Exists(name);
+            if (mode != FileMode.Open && valueIfCreated == null)
+                throw new ArgumentException("is the default value is null, the PermaObject cannot be newly created");
+            if (deleteOnDispose && (!create && share != FileShare.None))
+                throw new ArgumentException("delete on dispose demands the file not previously exist or that sharing will be none", nameof(deleteOnDispose));
             this._read = read;
             this._write = write;
-            this._preserve = preserve;
-            name = (name ?? PermaObject.getnextFilename())+ extension;
-            _stream = new FileStream(PermaObject.RoamingFolderPath + @"\" +name, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.ReadWrite);
+            this.access = access;
+            this.share = share;
+            FileOptions options = FileOptions.SequentialScan;
+            if (share != FileShare.None)
+                options |= FileOptions.Asynchronous;
+            if (deleteOnDispose)
+                options |= FileOptions.DeleteOnClose;
+            _stream = new FileStream(name, mode, access, share,4096,options);
+            if (create)
+                this.value = valueIfCreated;
 
         }
         public T tryParse(out Exception ex)
         {
-            const int buffersize = 255;
-            _stream.Seek(0, SeekOrigin.Begin);
-            List<byte> b = new List<byte>(buffersize);
-            byte[] buffer = new byte[buffersize];
-            int grabbed;
-            while ((grabbed = _stream.Read(buffer, 0, buffersize)) > 0)
-            {
-                b.AddRange(buffer.Take(grabbed));
-            }
+            if (!access.HasFlag(FileAccess.Read))
+                throw new AccessViolationException("permaobject is set not to read");
+            const int buffersize = 4096;
             try
             {
                 ex = null;
-                return _read(b.ToArray());
+                var b = LoadFiles.loadAsBytes(_stream, buffersize);
+                return _read(b);
             }
             catch (Exception e)
             {
@@ -133,6 +114,8 @@ namespace Edge.PermanentObject
             }
             set
             {
+                if (!access.HasFlag(FileAccess.Write))
+                    throw new AccessViolationException("permaobject is set not to write");
                 byte[] buffer = _write(value);
                 _stream.Seek(0, SeekOrigin.Begin);
                 _stream.SetLength(0);
@@ -154,14 +137,14 @@ namespace Edge.PermanentObject
         }
         protected virtual void Dispose(bool disposing)
         {
-            (this._stream as IDisposable).Dispose();
-            if (disposing && !_preserve && FilePath.IsFileAccessible(name, FileAccess.Write))
-                File.Delete(_stream.Name);
+            if (disposing)
+                (this._stream as IDisposable).Dispose();
         }
     }
     public interface ISyncPermaObject<T> : IPermaObject<T>
     {
         T getFresh(DateTime earliestTime);
+        T getFresh(TimeSpan maxInterval);
         DateTime getLatestUpdateTime();
     }
     public class SyncPermaObject<T> : ISyncPermaObject<T>
@@ -169,19 +152,23 @@ namespace Edge.PermanentObject
         internal const string PERMA_OBJ_UPDATE_EXTENSION = ".permaobjupdate";
         private readonly PermaObject<T> _int;
         private readonly PermaObject<DateTime> _update;
-        public SyncPermaObject() : this(null) { }
-        public SyncPermaObject([CanBeNull] string name) : this(name,false) { }
-        public SyncPermaObject([CanBeNull] string name, bool preserve, string extension = PermaObject.PERMA_OBJ_EXTENSION, string updateext = PERMA_OBJ_UPDATE_EXTENSION) : this(a => (T)Serialization.Deserialize(a), a => Serialization.Serialize(a), name, preserve, extension, updateext) { }
-        public SyncPermaObject(Func<byte[], T> read, Func<T, byte[]> write,[CanBeNull] string name, bool preserve, string extension = PermaObject.PERMA_OBJ_EXTENSION, string updateext = PERMA_OBJ_UPDATE_EXTENSION)
+        public SyncPermaObject([CanBeNull] string name, bool deleteOnDispose = false, FileAccess access = FileAccess.ReadWrite, FileShare share = FileShare.None, FileMode mode = FileMode.OpenOrCreate, T valueIfCreated = default(T)) : this(a => (T)Serialization.Deserialize(a), a=>Serialization.Serialize(a), name, deleteOnDispose, access, share, mode, valueIfCreated) { }
+        public SyncPermaObject(Func<byte[], T> read, Func<T, byte[]> write, string name, bool deleteOnDispose = false, FileAccess access = FileAccess.ReadWrite, FileShare share = FileShare.None, FileMode mode = FileMode.OpenOrCreate, T valueIfCreated = default(T))
         {
-            _int = new PermaObject<T>(read,write,name,preserve,extension);
-            _update = new PermaObject<DateTime>(name, preserve, updateext);
+            _int = new PermaObject<T>(read,write,name,deleteOnDispose, access, share, mode, valueIfCreated);
+            _update = new PermaObject<DateTime>(FilePath.MutateFileName(name, a=> "__LATESTUPDATE_"+a), deleteOnDispose, access, share, mode, DateTime.Now);
         }
-        public DateTime getLatestUpdateTime()
+        public T getFresh(TimeSpan maxInterval)
         {
-            Exception e;
-            var a = _update.tryParse(out e);
-            return (e == null) ? a : DateTime.MinValue;
+            return getFresh(maxInterval, maxInterval.Divide(2));
+        }
+        public T getFresh(TimeSpan maxInterval, TimeSpan checkinterval)
+        {
+            while (this.timeSinceUpdate() > maxInterval)
+            {
+                Thread.Sleep(checkinterval);
+            }
+            return this.value;
         }
         public T getFresh(DateTime earliestTime)
         {
@@ -194,6 +181,12 @@ namespace Edge.PermanentObject
                 Thread.Sleep(checkinterval);
             }
             return this.value;
+        }
+        public DateTime getLatestUpdateTime()
+        {
+            Exception e;
+            var a = _update.tryParse(out e);
+            return (e == null) ? a : DateTime.MinValue;
         }
         public T tryParse(out Exception ex)
         {
@@ -218,6 +211,20 @@ namespace Edge.PermanentObject
                 return _int.name;
             }
         }
+        public FileAccess access
+        {
+            get
+            {
+                return _int.access;
+            }
+        }
+        public FileShare share
+        {
+            get
+            {
+                return _int.share;
+            }
+        }
         protected virtual void Dispose(bool disposing)
         {
             _int.Dispose();
@@ -237,27 +244,24 @@ namespace Edge.PermanentObject
         private readonly SyncPermaObject<T> _int;
         private readonly IConnection _conn;
         private readonly PermaObject<EndPoint> _permaPort;
-        public PortBoundPermaObject([CanBeNull] string name, string extension = PermaObject.PERMA_OBJ_EXTENSION) : this(name, false, extension) { }
-        public PortBoundPermaObject([CanBeNull] string name, bool preserve, string extension = PermaObject.PERMA_OBJ_EXTENSION) : this(a => (T)Serialization.Deserialize(a), a => Serialization.Serialize(a), name, preserve, extension) { }
-        public PortBoundPermaObject(Func<byte[], T> read, Func<T, byte[]> write, [CanBeNull] string name, bool preserve, string extension = PermaObject.PERMA_OBJ_EXTENSION)
+        public PortBoundPermaObject([CanBeNull] string name, bool deleteOnDispose = false, FileAccess access = FileAccess.ReadWrite, FileShare share = FileShare.None, FileMode mode = FileMode.OpenOrCreate, T valueIfCreated = default(T)) : this(a => (T)Serialization.Deserialize(a), a=>Serialization.Serialize(a), name, deleteOnDispose, access, share, mode, valueIfCreated) { }
+        public PortBoundPermaObject(Func<byte[], T> read, Func<T, byte[]> write, string name, bool deleteOnDispose = false, FileAccess access = FileAccess.ReadWrite, FileShare share = FileShare.None, FileMode mode = FileMode.OpenOrCreate, T valueIfCreated = default(T))
         {
             Exception ex;
-            this._permaPort = new PermaObject<EndPoint>("name"+extension,false,PermaObject.PERMA_PORT_EXTENSION);
+            this._permaPort = new PermaObject<EndPoint>(FilePath.MutateFileName(name, a => "__PORT_" + a), deleteOnDispose,FileAccess.ReadWrite,FileShare.ReadWrite,mode, new IPEndPoint(IPAddress.None, 0));
             EndPoint port = this._permaPort.tryParse(out ex);
-            if (ex != null)
+            if (ex != null || ((IPEndPoint)port).Address == IPAddress.None)
             {
                 //port is undefined
-                _conn = MultiSocket.ConnectToStrippedMultiSocket(out port, new OpenCredentialValidator(),
-                    new Credential());
+                _conn = MultiSocket.ConnectToStrippedMultiSocket(out port, new OpenCredentialValidator(), new Credential());
                 this._permaPort.value = port;
             }
             else
             {
                 //port is defined
-                _conn = MultiSocket.ConnectToStrippedMultiSocket(port, new OpenCredentialValidator(),
-                    new Credential());
+                _conn = MultiSocket.ConnectToStrippedMultiSocket(port, new OpenCredentialValidator(), new Credential());
             }
-            _int = new SyncPermaObject<T>(read,write,name,preserve,extension);
+            _int = new SyncPermaObject<T>(read,write,name,deleteOnDispose,access,share,mode,valueIfCreated);
 
         }
         protected virtual void Dispose(bool disposing)
@@ -295,6 +299,20 @@ namespace Edge.PermanentObject
                 return _int.name;
             }
         }
+        public FileAccess access
+        {
+            get
+            {
+                return _int.access;
+            }
+        }
+        public FileShare share
+        {
+            get
+            {
+                return _int.share;
+            }
+        }
         public DateTime getLatestUpdateTime()
         {
             return _int.getLatestUpdateTime();
@@ -311,58 +329,69 @@ namespace Edge.PermanentObject
             }
             return this.value;
         }
-    }
-    public static class PermaExtensions
-    {
-        public static TimeSpan timeSinceUpdate<T>(this ISyncPermaObject<T> @this)
+        public T getFresh(TimeSpan maxInterval)
         {
-            return DateTime.Now.Subtract(@this.getLatestUpdateTime());
+            while (this.timeSinceUpdate() > maxInterval)
+            {
+                object pack = _conn.recieve();
+                if (!(pack is ValChangedNotification))
+                {
+                    throw new InvalidDataException("PortBoundPermaObject received a datagram that it cannot handle");
+                }
+            }
+            return this.value;
         }
     }
     namespace Enumerable
     {
-        public class PermaObjectArray<T> : IEnumerable<T>, IDisposable
+        public class PermaArray<T> : IList<T>, IDisposable
         {
-            internal const string PERMA_ARRAY_ITEM = ".member";
-            internal const string PERMA_ARRAY_METADATA_EXTENSION = ".permarrmeta";
             [Serializable]
             private class PermaObjArrayData
             {
-                public string ext { get; }
                 public int length { get; }
-                public PermaObjArrayData(int length, string ext)
+                public PermaObjArrayData(int length)
                 {
                     this.length = length;
-                    this.ext = ext;
                 }
             }
             private IPermaObject<T>[] _array;
             private readonly IPermaObject<PermaObjArrayData> _length;
-            private readonly bool _preserve;
             private readonly Func<byte[], T> _read;
             private readonly Func<T, byte[]>_write;
-            public bool SupportMultiAccess { get; set; } = false;
-            public PermaObjectArray(int length, Func<byte[], T> read, Func<T, byte[]> write, [CanBeNull] string name, string extension = PermaObject.PERMA_OBJ_EXTENSION) : this(length,read, write, name, false, extension) { }
-            public PermaObjectArray(int length) : this(length, null, false) { }
-            public PermaObjectArray(int length, [CanBeNull] string name, bool preserve, string extension = PermaObject.PERMA_OBJ_EXTENSION) : this(length,a => (T)Serialization.Deserialize(a), a => Serialization.Serialize(a), name, preserve, extension) { }
-            //if array already exists, the length and extension parameters are ignored
-            public PermaObjectArray(int length,Func<byte[], T> read, Func<T, byte[]> write, [CanBeNull] string name, bool preserve, string extension = PermaObject.PERMA_OBJ_EXTENSION)
+            private readonly bool _deleteOnDispose;
+            private readonly T _valueIfCreated;
+            public bool SupportMultiAccess => _length.share != FileShare.None;
+            public PermaArray(int length, string name, bool deleteOnDispose = false, FileAccess access = FileAccess.ReadWrite, FileShare share = FileShare.None, FileMode mode = FileMode.OpenOrCreate, T valueIfCreated = default(T)) : this(length,a => (T)Serialization.Deserialize(a), a => Serialization.Serialize(a), name, deleteOnDispose, access, share, mode, valueIfCreated) { }
+            //if array already exists, the length parameter are ignored
+            public PermaArray(int length,Func<byte[], T> read, Func<T, byte[]> write, string name, bool deleteOnDispose = false, FileAccess access = FileAccess.ReadWrite, FileShare share = FileShare.None, FileMode mode = FileMode.OpenOrCreate, T valueIfCreated = default(T))
             {
-                _length = new PermaObject<PermaObjArrayData>(name,preserve,PERMA_ARRAY_METADATA_EXTENSION);
-                Exception ex;
-                _preserve = preserve;
-                _length.tryParse(out ex);
                 _read = read;
                 _write = write;
-                if (ex != null)
-                    _length.value = new PermaObjArrayData(length,extension);
+                _deleteOnDispose = deleteOnDispose;
+                _valueIfCreated = valueIfCreated;
+                this.name = name;
+                _length = new PermaObject<PermaObjArrayData>(FilePath.MutateFileName(name, a => "__ARRAYDATA_" + a), deleteOnDispose, access, share, mode, new PermaObjArrayData(length));
                 this.updateArr(true);
             }
             private void updateArr(bool overridemulti = false)
             {
-                if (!SupportMultiAccess | overridemulti)
-                    return;
-                this._array = Loops.Range(this._length.value.length).SelectToArray( a => new PermaObject<T>(_read, _write, this._length.LocalName() + PERMA_ARRAY_ITEM + a, _preserve, this._length.value.ext));
+                if (SupportMultiAccess || overridemulti)
+                    this._array = Loops.Range(this._length.value.length).SelectToArray( a => new PermaObject<T>(_read, _write,
+                                    FilePath.MutateFileName(name, k => "__ARRAYMEMBER_"+a+"_" + k), _deleteOnDispose,
+                                    _length.access, _length.share, valueIfCreated: _valueIfCreated));
+            }
+            public int IndexOf(T item)
+            {
+                return (_array.CountBind().FirstOrDefault(a => a.Item1.value.Equals(item)) ?? Tuple.Create((IPermaObject<T>)null, -1)).Item2;
+            }
+            void IList<T>.Insert(int index, T item)
+            {
+                throw new NotSupportedException();
+            }
+            void IList<T>.RemoveAt(int index)
+            {
+                throw new NotSupportedException();
             }
             public T this[int i]
             {
@@ -381,22 +410,17 @@ namespace Edge.PermanentObject
                     _array[i].value = value;
                 }
             }
-            public void Mutaute(int i, Func<T, T> mutation)
+            public void MutauteValue(int i, Func<T, T> mutation)
             {
                 this.updateArr();
-                _array[i].Mutaute(mutation);
-            }
-            public void Mutaute(int i, Action<T> mutation)
-            {
-                this.updateArr();
-                _array[i].Mutaute(mutation);
+                _array[i].MutauteValue(mutation);
             }
             public T tryParse(int i, out Exception ex)
             {
                 this.updateArr();
                 return _array[i].tryParse(out ex);
             }
-            public string name => _length.name;
+            public string name { get; }
             public string LocalName() => _length.LocalName();
             public IEnumerator<T> GetEnumerator()
             {
@@ -430,16 +454,24 @@ namespace Edge.PermanentObject
                 int oldlength = _length.value.length;
                 if (oldlength == newsize)
                     return;
-                _length.value = new PermaObjArrayData(newsize, _length.value.ext);
+                _length.value = new PermaObjArrayData(newsize);
                 if (oldlength > newsize)
                 {
                     foreach (IPermaObject<T> permaObject in _array.Skip(newsize))
                     {
                         permaObject.Dispose();
-                        permaObject.delete();
+                        if (!_deleteOnDispose)
+                            File.Delete(permaObject.name);
                     }
+                    Array.Resize(ref _array,newsize);
                 }
-                _array = Loops.Range(_length.value.length).SelectToArray(a => new PermaObject<T>(_read, _write, _length.LocalName() + PERMA_ARRAY_ITEM + a, _preserve, _length.value.ext));
+                else
+                {
+                    Array.Resize(ref _array, newsize);
+                    _array.Fill(a => new PermaObject<T>(_read, _write,
+                                        FilePath.MutateFileName(name, k => "__ARRAYMEMBER_" + a + "_" + k), _deleteOnDispose,
+                                        _length.access, _length.share, valueIfCreated: _valueIfCreated), oldlength);
+                }
 
             }
             public int length
@@ -450,57 +482,82 @@ namespace Edge.PermanentObject
                     return _length.value.length;
                 }
             }
+            void ICollection<T>.Add(T item)
+            {
+                throw new NotSupportedException();
+            }
+            void ICollection<T>.Clear()
+            {
+                throw new NotSupportedException();
+            }
+            public bool Contains(T item)
+            {
+                return IndexOf(item) > 0;
+            }
+            public void CopyTo(T[] array, int arrayIndex)
+            {
+                foreach (var t in _array.CountBind(arrayIndex))
+                {
+                    array[t.Item2] = t.Item1.value;
+                }
+            }
+            bool ICollection<T>.Remove(T item)
+            {
+                throw new NotSupportedException();
+            }
+            public int Count
+            {
+                get
+                {
+                    return _length.value.length;
+                }
+            }
+            public bool IsReadOnly => false;
         }
-        public class PermaObjectDictionary<T> : IDisposable, IDictionary<string,T>
+        public class PermaDictionary<T> : IDisposable, IDictionary<string,T>
         {
-            internal const string PERMA_DIC_ITEM = ".definition";
-            internal const string PERMA_DIC_METADATA_EXTENSION = ".permdicmeta";
             private readonly IPermaObject<string> _definitions;
             private IDictionary<string, IPermaObject<T>> _dic;
-            private readonly bool _preserve;
+            private readonly bool _deleteondispose;
             private readonly Func<byte[], T> _read;
             private readonly Func<T, byte[]> _write;
-            private readonly string _extension;
-            public bool SupportMultiAccess { get; set; } = false;
-            public PermaObjectDictionary() : this(null, false) { }
-            public PermaObjectDictionary([CanBeNull] string name, bool preserve, string extension = PermaObject.PERMA_OBJ_EXTENSION) : this(a => (T)Serialization.Deserialize(a), a => Serialization.Serialize(a), name, preserve, extension) { }
-            public PermaObjectDictionary(Func<byte[], T> read, Func<T, byte[]> write, [CanBeNull] string name, string extension = PermaObject.PERMA_OBJ_EXTENSION) : this(read, write, name, false, extension) { }
-            public PermaObjectDictionary(Func<byte[], T> read, Func<T, byte[]> write, [CanBeNull] string name, bool preserve, string extension = PermaObject.PERMA_OBJ_EXTENSION)
+            private readonly string _defSeperator;
+            private int _holdUpdateFlag = 0;
+            public string name { get; }
+            public bool SupportMultiAccess => (_definitions.share != FileShare.None);
+            public PermaDictionary(string name, string defSeperator=null, bool deleteOnDispose = false, FileAccess access = FileAccess.ReadWrite, FileShare share = FileShare.None, FileMode mode = FileMode.OpenOrCreate) : this(a => (T)Serialization.Deserialize(a), a => Serialization.Serialize(a), name, defSeperator, deleteOnDispose,access,share,mode) { }
+            public PermaDictionary(Func<byte[], T> read, Func<T, byte[]> write, string name, string defSeperator=null, bool deleteOnDispose = false, FileAccess access = FileAccess.ReadWrite, FileShare share = FileShare.None, FileMode mode = FileMode.OpenOrCreate)
             {
-                _definitions = new PermaObject<string>(name, preserve, PERMA_DIC_METADATA_EXTENSION);
-                _preserve = preserve;
+                _definitions = new PermaObject<string>(name, deleteOnDispose,access,share, mode,"");
+                _deleteondispose = deleteOnDispose;
                 _read = read;
                 _write = write;
-                _extension = extension;
+                this.name = name;
+                _defSeperator = defSeperator ?? Environment.NewLine;
                 this.RefreshDefinitions(true);
             }
             private void RefreshDefinitions(bool overridemulti = false)
             {
-                if (!SupportMultiAccess || overridemulti)
-                    return;
-                Exception ex;
-                this._definitions.tryParse(out ex);
-                if (ex != null)
+                if ((SupportMultiAccess || overridemulti) && (_holdUpdateFlag == 0))
                 {
-                    this._definitions.value = "";
-                }
-                this._dic = new Dictionary<string, IPermaObject<T>>(this._definitions.value.countappearances(Environment.NewLine));
-                foreach (string s in this._definitions.value.Split(Environment.NewLine.ToCharArray()))
-                {
-                    if (s.Length == 0)
+                    Exception ex;
+                    this._definitions.tryParse(out ex);
+                    if (ex != null)
+                        this._definitions.value = "";
+                    var defstring = this._definitions.value;
+                    this._dic = new Dictionary<string, IPermaObject<T>>(defstring.countappearances(Environment.NewLine));
+                    var keys = (defstring == ""
+                        ? System.Linq.Enumerable.Empty<string>() : defstring.Split(new string[] {Environment.NewLine}, StringSplitOptions.None));
+                    foreach (string s in keys.Take(Math.Max(0,keys.Count()-1)))
                     {
-                        continue;
+                        this._dic[s] = new PermaObject<T>(_read, _write,
+                            FilePath.MutateFileName(name, k => "__DICTIONARYMEMBER_" + s + "_" + k), _deleteondispose,_definitions.access, _definitions.share, FileMode.Open );
                     }
-                    this._dic[s] = new PermaObject<T>(_read, _write, _definitions.LocalName() + PERMA_DIC_ITEM + s, _preserve, _extension);
                 }
             }
-            public void Mutaute(string i, Func<T, T> mutation)
+            public void MutauteValue(string i, Func<T, T> mutation)
             {
-                _dic[i].Mutaute(mutation);
-            }
-            public void Mutaute(string i, Action<T> mutation)
-            {
-                _dic[i].Mutaute(mutation);
+                _dic[i].MutauteValue(mutation);
             }
             public T tryParse(string i, out Exception ex)
             {
@@ -515,7 +572,9 @@ namespace Edge.PermanentObject
             public void Add(string key, T value)
             {
                 this.RefreshDefinitions();
+                _holdUpdateFlag++;
                 this[key] = value;
+                _holdUpdateFlag--;
             }
             public bool Remove(string key)
             {
@@ -523,15 +582,16 @@ namespace Edge.PermanentObject
                 if (!_dic.ContainsKey(key))
                     return false;
                 StringBuilder newdef = new StringBuilder(_definitions.value.Length + Environment.NewLine.Length * 2);
-                foreach (string s in _definitions.value.Split(Environment.NewLine.ToCharArray()))
+                foreach (string s in _definitions.value.Split(new string[] {_defSeperator}, StringSplitOptions.None))
                 {
                     if (s.Equals(key))
                         continue;
-                    newdef.Append(s + Environment.NewLine);
+                    newdef.Append(s + _defSeperator);
                 }
                 _definitions.value = newdef.ToString();
                 _dic[key].Dispose();
-                _dic[key].delete();
+                if (!_deleteondispose)
+                    File.Delete(_dic[key].name);
                 _dic.Remove(key);
                 return true;
             }
@@ -555,12 +615,13 @@ namespace Edge.PermanentObject
                 set
                 {
                     this.RefreshDefinitions();
-                    if (identifier.Contains(Environment.NewLine))
-                        throw new Exception("cannot create entry with newline in it");
+                    if (identifier.Contains(_defSeperator))
+                        throw new Exception("cannot create entry with the separator in it");
                     if (!_dic.ContainsKey(identifier))
                     {
-                        _dic[identifier] = new PermaObject<T>(_read,_write, _definitions.LocalName() + PERMA_DIC_ITEM + identifier,_preserve,_extension);
-                        _definitions.value += identifier + Environment.NewLine;
+                        _dic[identifier] = new PermaObject<T>(_read, _write,
+                            FilePath.MutateFileName(name, k => "__DICTIONARYMEMBER_" + identifier + "_" + k), _deleteondispose, _definitions.access, _definitions.share, FileMode.Create);
+                        _definitions.value += identifier + _defSeperator;
                     }
                     _dic[identifier].value = value;
                 }
@@ -594,37 +655,50 @@ namespace Edge.PermanentObject
             public void Add(KeyValuePair<string, T> item)
             {
                 this.RefreshDefinitions();
+                _holdUpdateFlag++;
                 Add(item.Key,item.Value);
+                _holdUpdateFlag--;
             }
             public void Clear()
             {
                 this.RefreshDefinitions();
+                _holdUpdateFlag++;
                 foreach (string key in Keys)
                 {
                     this.Remove(key);
                 }
+                _holdUpdateFlag--;
             }
             public bool Contains(KeyValuePair<string, T> item)
             {
                 this.RefreshDefinitions();
-                return ContainsKey(item.Key) && this[item.Key].Equals(item.Value);
+                _holdUpdateFlag++;
+                var contains = ContainsKey(item.Key) && this[item.Key].Equals(item.Value);
+                _holdUpdateFlag--;
+                return contains;
             }
             public void CopyTo(KeyValuePair<string, T>[] array, int arrayIndex)
             {
                 this.RefreshDefinitions();
+                _holdUpdateFlag++;
                 foreach (var key in Keys.CountBind(arrayIndex))
                 {
                     array[key.Item2] = new KeyValuePair<string, T>(key.Item1,this[key.Item1]);
                 }
+                _holdUpdateFlag--;
             }
             public bool Remove(KeyValuePair<string, T> item)
             {
                 this.RefreshDefinitions();
-                if (Contains(item))
+                _holdUpdateFlag++;
+                var t = Contains(item);
+                if (t)
                 {
                     Remove(item.Key);
+                    _holdUpdateFlag--;
                     return true;
                 }
+                _holdUpdateFlag--;
                 return false;
             }
             public int Count
@@ -639,8 +713,7 @@ namespace Edge.PermanentObject
             {
                 get
                 {
-                    this.RefreshDefinitions();
-                    return false;
+                    return !_definitions.access.HasFlag(FileAccess.Write);
                 }
             }
             protected virtual void Dispose(bool disposing)
@@ -661,26 +734,19 @@ namespace Edge.PermanentObject
                 GC.SuppressFinalize(this);
             }
         }
-        public class PermaObjectCollection<T> : ICollection<T>, IDisposable
+        public class PermaCollection<T> : ICollection<T>, IDisposable
         {
-            internal const string PERMA_COL_METADATA_EXTENSION = ".permcolmeta";
-            private readonly PermaObjectDictionary<T> _int;
-            private readonly PermaObject<BigInteger> _maxname;
-            public PermaObjectCollection() : this(null, false) { }
-            public PermaObjectCollection([CanBeNull] string name, bool preserve, string extension = PermaObject.PERMA_OBJ_EXTENSION) : this(a => (T)Serialization.Deserialize(a), a => Serialization.Serialize(a), name, preserve, extension) { }
-            public PermaObjectCollection(Func<byte[], T> read, Func<T, byte[]> write, [CanBeNull] string name, string extension = PermaObject.PERMA_OBJ_EXTENSION) : this(read, write, name, false, extension) { }
-            public PermaObjectCollection(Func<byte[], T> read, Func<T, byte[]> write, [CanBeNull] string name, bool preserve, string extension = PermaObject.PERMA_OBJ_EXTENSION)
+            private readonly PermaDictionary<T> _int;
+            private readonly PermaObject<long> _maxname;
+            public PermaCollection(string name,  bool deleteOnDispose = false, FileAccess access = FileAccess.ReadWrite, FileShare share = FileShare.None, FileMode mode = FileMode.OpenOrCreate) : this(a => (T)Serialization.Deserialize(a), a => Serialization.Serialize(a), name, deleteOnDispose,access,share,mode) { }
+            public PermaCollection(Func<byte[], T> read, Func<T, byte[]> write, string name, bool deleteOnDispose = false, FileAccess access = FileAccess.ReadWrite, FileShare share = FileShare.None, FileMode mode = FileMode.OpenOrCreate)
             {
-                _int = new PermaObjectDictionary<T>(read,write,name,preserve,extension);
-                _maxname = new PermaObject<BigInteger>(name,preserve,PERMA_COL_METADATA_EXTENSION);
-                Exception ex;
-                _maxname.tryParse(out ex);
-                if (ex != null)
-                    _maxname.value = BigInteger.Zero;
+                _int = new PermaDictionary<T>(read,write,name,null, deleteOnDispose, access, share, mode);
+                _maxname = new PermaObject<long>(FilePath.MutateFileName(name, k => "__COLLECTIONMAXINDEX_" + k), deleteOnDispose, access, share, mode);
             }
             public IEnumerator<T> GetEnumerator()
             {
-                return _int.Select(a=>a.Value).GetEnumerator();
+                return _int.Values.GetEnumerator();
             }
             IEnumerator IEnumerable.GetEnumerator()
             {
@@ -693,10 +759,8 @@ namespace Edge.PermanentObject
             }
             public void Clear()
             {
-                foreach (string key in _int.Keys)
-                {
-                    _int.Remove(key);
-                }
+                _int.Clear();
+                _maxname.value = 0;
             }
             public bool Contains(T item)
             {
@@ -729,7 +793,7 @@ namespace Edge.PermanentObject
             {
                 get
                 {
-                    return false;
+                    return _int.IsReadOnly;
                 }
             }
             protected virtual void Dispose(bool disposing)

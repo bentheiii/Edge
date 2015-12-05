@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using Edge.Arrays;
 using Edge.Streams;
@@ -8,16 +10,21 @@ using Microsoft.WindowsAPICodePack.Shell;
 
 namespace Edge.Path
 {
-    namespace texts
+    public static class LoadFiles
     {
-        public static class SaveLoadText
+        public static byte[] loadAsBytes(FileStream stream, int bufferSize = 4096)
         {
-            public static string loadasstring(string path, bool addnewlines = true)
+            stream.Seek(0, SeekOrigin.Begin);
+            List<byte> b = new List<byte>(bufferSize);
+            byte[] buffer = new byte[bufferSize];
+            while (true)
             {
-                StreamReader sr = new StreamReader(path);
-                return sr.Loop().ToPrintable(addnewlines ? Environment.NewLine : "", "", "");
+                var grabbed = stream.Read(buffer, 0, bufferSize);
+                if (grabbed == 0)
+                    break;
+                b.AddRange(buffer.Take(grabbed));
             }
-
+            return b.ToArray();
         }
     }
     namespace thumbnails
@@ -78,6 +85,10 @@ namespace Edge.Path
             {
                 return false;
             }
+        }
+        public static string MutateFileName(string filepath, Func<string, string> mutation)
+        {
+            return System.IO.Path.Combine(System.IO.Path.GetDirectoryName(filepath), mutation(System.IO.Path.GetFileName(filepath)));
         }
     }
 }
