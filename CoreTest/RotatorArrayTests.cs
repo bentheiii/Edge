@@ -1,5 +1,5 @@
 ﻿using System;
-using Edge.Arrays.GroupSwitches;
+using Edge.Arrays;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using static Microsoft.VisualStudio.TestTools.UnitTesting.Assert;
 

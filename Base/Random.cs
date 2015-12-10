@@ -120,14 +120,14 @@ namespace Edge.RandomGen
             }
         }
     }
-    public class LocalGenerator : RandomGenerator
+    public class LocalRandomGenerator : RandomGenerator
     {
         private readonly Random _int;
-        public LocalGenerator()
+        public LocalRandomGenerator()
         {
             _int = new Random();
         }
-        public LocalGenerator(int seed)
+        public LocalRandomGenerator(int seed)
         {
             _int = new Random(seed);
         }
@@ -150,10 +150,10 @@ namespace Edge.RandomGen
             return _int.Next(min,max);
         }
     }
-    public class GlobalGenerator : RandomGenerator
+    public class GlobalRandomGenerator : RandomGenerator
     {
         private static Random _int;
-        static GlobalGenerator()
+        static GlobalRandomGenerator()
         {
             reset();
         }
@@ -184,10 +184,10 @@ namespace Edge.RandomGen
             _int = new Random(seed);
         }
     }
-    public class ConstantGenerator : RandomGenerator
+    public class ConstantRandomGenerator : RandomGenerator
     {
         public byte val { get; }
-        public ConstantGenerator(byte val)
+        public ConstantRandomGenerator(byte val)
         {
             this.val = val;
         }

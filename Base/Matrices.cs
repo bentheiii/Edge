@@ -340,7 +340,7 @@ namespace Edge.Matrix
         }
         public virtual T[,] to2DArr()
         {
-            return Arr2D.Fill(this.rows, this.collumns, (i, i1) => this[i, i1]);
+            return Array2D.Fill(this.rows, this.collumns, (i, i1) => this[i, i1]);
         }
         public virtual bool isIdent(out T val)
         {
@@ -634,7 +634,7 @@ namespace Edge.Matrix
         }
         public ExplicitMatrix(int rows, int collumns, Func<int,int,T> filler)
         {
-            this._values = Arr2D.Fill(rows, collumns, filler);
+            this._values = Array2D.Fill(rows, collumns, filler);
         }
         public override T this[int i, int j]
         {

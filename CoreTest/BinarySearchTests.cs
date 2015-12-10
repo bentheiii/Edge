@@ -43,7 +43,7 @@ namespace CoreTest
             IDictionary<char, string> d = new Dictionary<char, string>();
             d['b'] = "ab";
             IsTrue(d.SumDefinition('b', "cd"));
-            AreEqual(d['b'], "abcd");
+            AreEqual(d['b'], "cdab");
         }
         [TestMethod] public void EnsureDefiniton()
         {

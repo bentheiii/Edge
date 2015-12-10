@@ -566,5 +566,4 @@ namespace Edge.Symbols
             return sum;
         }
     }
-    
 }

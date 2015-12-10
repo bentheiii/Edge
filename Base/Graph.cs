@@ -199,7 +199,7 @@ namespace Edge.Graphs
         {
             _indexer = new Dictionary<VT, int>(verts.Length);
             _def = defaultvalue;
-            _links = Arr2D.Fill(verts.Length, verts.Length, defaultvalue);
+            _links = Array2D.Fill(verts.Length, verts.Length, defaultvalue);
             int ind = 0;
             foreach (VT v in verts)
             {

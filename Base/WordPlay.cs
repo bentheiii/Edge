@@ -13,28 +13,17 @@ namespace Edge.WordsPlay
     {
 		[Flags]
         public enum LetterFilter {Lowercase=1, Uppercase=2, Numbers = 4, All = -1}
-        /// <summary>
-        /// removes only first occurrence, if none found doesn't alter text
-        /// </summary>
-        /// <param name="x">todo: describe x parameter on Removespecific</param>
-        /// <param name="toremove">todo: describe toremove parameter on Removespecific</param>
         public static string Removespecific(this string x, string toremove)
         {
             int i = x.IndexOf(toremove, StringComparison.Ordinal);
             return i == -1 ? x : x.Remove(i, toremove.Length);
         }
-        /// <summary>
-        /// start index is inclusive, end is exclusive
-        /// </summary>
         public static string Substringbetween(this string x, int start, int end)
         {
             if (start > end)
                 throw new Exception("start must be before or at end");
             return x.Substring(start, end - start);
         }
-        /// <summary>
-        /// both start and end must be in x once, start must be before (or at) end
-        /// </summary>
         public static string Substringbetween(this string x, string start, string end, bool includestart = false)
         {
             int si = x.IndexOf(start, StringComparison.Ordinal);
@@ -47,9 +36,6 @@ namespace Edge.WordsPlay
                 throw new Exception("start must be before or at end");
             return x.Substringbetween(si, ei);
         }
-        /// <summary>
-        /// start must be in x once
-        /// </summary>
         public static string Substringbetween(this string x, string start, bool includestart = false)
         {
             int si = x.IndexOf(start, StringComparison.Ordinal);
@@ -69,9 +55,6 @@ namespace Edge.WordsPlay
         {
             return truesplit(a, new string[] { divisor }, removeempties, empties);
         }
-        /// <summary>
-        /// if multiple divisors have the same index, the divisor treated is the first in the array
-        /// </summary>
         public static string[] truesplit(this string a, string[] divisors , bool removeempties = true, string empties = "")
         {
             string tempa = a;
@@ -178,21 +161,6 @@ namespace Edge.WordsPlay
 	        if (addToRight)
 		        return tostretch + new string(filler, newsize - tostretch.Length);
 	        return new string(filler, newsize - tostretch.Length) + tostretch;
-        }
-        public static int customhashcode(this string str)
-        {
-            int s1 = 0, s2 = 1, s3 = 0;
-            for (int i = 0; i < str.Length; i++)
-            {
-                s1 += str[i] * (((str.Length * str.Length) % (i + 1)) + i);
-                s2 *= ((str.Length * str.Length) % (i + 1))+1;
-                s3 += str[i]*str[i];
-            }
-            return s1 ^ s2 ^ s3;
-        }
-        public static int customhashcode(this char c)
-        {
-            return c*c;
         }
         public static string Reverse(this string x)
         {

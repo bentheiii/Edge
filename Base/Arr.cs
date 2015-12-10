@@ -29,7 +29,7 @@ namespace Edge.Arrays
         public static bool AggregateDefinition<T, G>(this IDictionary<T, G> @this, T key, G val, Func<G, G, G> aggfunc)
         {
             bool ret = @this.ContainsKey(key);
-            @this[key] = ret ? aggfunc(@this[key], val) : val;
+            @this[key] = ret ? aggfunc(val, @this[key]) : val;
             return ret;
         }
         public static bool EnsureDefinition<T, G>(this IDictionary<T, G> @this, T key, G defaultval = default(G))
@@ -451,7 +451,7 @@ namespace Edge.Arrays
         }
         public static T[] Shuffle<T>(this IList<T> arr)
         {
-            return Shuffle(arr, new GlobalGenerator());
+            return Shuffle(arr, new GlobalRandomGenerator());
         }
         public static T[] Shuffle<T>(this IList<T> arr, RandomGenerator gen)
         {
@@ -540,118 +540,184 @@ namespace Edge.Arrays
             return @this.Cast<object>().ToArray();
         }
     }
-    namespace GroupSwitches
+    public sealed class RotatorArray<T> : IList<T>
     {
-        public sealed class RotatorArray<T> : IList<T>
+        private readonly T[] _items;
+        private RollerNum<int> _mIndex;
+        public int Index
         {
-            private readonly T[] _items;
-            private RollerNum<int> _mIndex;
-            public int Index
+            get
             {
-                get
+                return _mIndex.value;
+            }
+        }
+        public int IndexOf(T item)
+        {
+            return ((IList)_items).IndexOf(item);
+        }
+        void IList<T>.Insert(int index, T item)
+        {
+            ((IList)_items).Insert(index, item);
+        }
+        void IList<T>.RemoveAt(int index)
+        {
+            ((IList)_items).RemoveAt(index);
+        }
+        public T this[int i]
+        {
+            get
+            {
+                return _items[(_mIndex + i).value];
+            }
+            set
+            {
+                _items[(_mIndex + i).value] = value;
+            }
+        }
+        public void Rotate(int val = 1)
+        {
+            _mIndex += val;
+        }
+        public static RotatorArray<T> operator ++(RotatorArray<T> a)
+        {
+            a.Rotate();
+            return a;
+        }
+        public static RotatorArray<T> operator --(RotatorArray<T> a)
+        {
+            a.Rotate(-1);
+            return a;
+        }
+        public RotatorArray(params T[] switchvalues)
+        {
+            if (switchvalues?.Length == 0)
+                throw new ArgumentException("cannot be empty",nameof(switchvalues));
+            this._items = switchvalues.Copy();
+            this._mIndex = new RollerNum<int>(0, _items.Length, 0);
+        }
+        public RotatorArray(int length)
+        {
+            this._items = new T[length];
+            this._mIndex = new RollerNum<int>(0, _items.Length, 0);
+        }
+        public IEnumerator<T> GetEnumerator()
+        {
+            for (int i = 0; i < _items.Length; i++)
+            {
+                yield return this[i];
+            }
+        }
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return this.GetEnumerator();
+        }
+        void ICollection<T>.Add(T item)
+        {
+            ((IList)_items).Add(item);
+        }
+        void ICollection<T>.Clear()
+        {
+            ((IList)_items).Clear();
+        }
+        public bool Contains(T item)
+        {
+            return _items.Contains(item);
+        }
+        public void CopyTo(T[] array, int arrayIndex)
+        {
+            _items.CopyTo(array, arrayIndex);
+        }
+        bool ICollection<T>.Remove(T item)
+        {
+            return ((IList<T>)_items).Remove(item);
+        }
+        public int Count
+        {
+            get
+            {
+                return _items.Count();
+            }
+        }
+        public bool IsReadOnly
+        {
+            get
+            {
+                return _items.IsReadOnly;
+            }
+        }
+    }
+    public class SparseArray<T>
+    {
+        private struct Coordinate : IComparable<Coordinate>
+        {
+            private readonly int[] _cors;
+            public Coordinate(params int[] cors)
+            {
+                this._cors = cors;
+            }
+            public override int GetHashCode()
+            {
+                return _cors.GetHashCode() ^ _cors.Length;
+            }
+            public override bool Equals(object obj)
+            {
+                Coordinate? c = obj as Coordinate?;
+                return c != null && this._cors.SequenceEqual(c.Value._cors);
+            }
+            public override string ToString()
+            {
+                return _cors.ToPrintable();
+            }
+            public int CompareTo(Coordinate other)
+            {
+                if (other._cors.Length != _cors.Length)
+                    return _cors.Length.CompareTo(other._cors.Length);
+                int ret = 0;
+                var cors = _cors.Zip(other._cors).GetEnumerator();
+                while (ret == 0 && cors.MoveNext())
+                    ret = cors.Current.Item1.CompareTo(cors.Current.Item2);
+                return ret;
+            }
+        }
+        private readonly IDictionary<Coordinate, T> _values;
+        private readonly int[] _dim;
+        public SparseArray(int dims, T def = default(T))
+        {
+            if (dims <= 0)
+                throw new ArgumentException("must be positive", nameof(dims));
+            this._dim = new int[dims];
+            this.defaultValue = def;
+            this._values = new SortedDictionary<Coordinate, T>();
+        }
+        public T defaultValue { get; }
+        public T this[params int[] query]
+        {
+            get
+            {
+                Coordinate co = new Coordinate(query);
+                return _values.ContainsKey(co) ? _values[co] : defaultValue;
+            }
+            set
+            {
+                Coordinate co = new Coordinate(query);
+                if (query.Length != _dim.Length)
+                    throw new ArgumentException("incorrect number of arguments for " + _dim.Length + " rank array");
+                for (int i = 0; i < query.Length; i++)
                 {
-                    return _mIndex.value;
+                    if (query[i] > _dim[i])
+                        _dim[i] = query[i] + 1;
                 }
+                this._values[co] = value;
             }
-            public int IndexOf(T item)
-            {
-                return ((IList)_items).IndexOf(item);
-            }
-            void IList<T>.Insert(int index, T item)
-            {
-                ((IList)_items).Insert(index, item);
-            }
-            void IList<T>.RemoveAt(int index)
-            {
-                ((IList)_items).RemoveAt(index);
-            }
-            public T this[int i]
-            {
-                get
-                {
-                    return _items[(_mIndex + i).value];
-                }
-                set
-                {
-                    _items[(_mIndex + i).value] = value;
-                }
-            }
-            public void Rotate(int val = 1)
-            {
-                _mIndex += val;
-            }
-            public static RotatorArray<T> operator ++(RotatorArray<T> a)
-            {
-                a.Rotate();
-                return a;
-            }
-            public static RotatorArray<T> operator --(RotatorArray<T> a)
-            {
-                a.Rotate(-1);
-                return a;
-            }
-            public RotatorArray(params T[] switchvalues)
-            {
-                if (switchvalues?.Length == 0)
-                    throw new ArgumentException("cannot be empty",nameof(switchvalues));
-                this._items = switchvalues.Copy();
-                this._mIndex = new RollerNum<int>(0, _items.Length, 0);
-            }
-            public RotatorArray(int length)
-            {
-                this._items = new T[length];
-                this._mIndex = new RollerNum<int>(0, _items.Length, 0);
-            }
-            public IEnumerator<T> GetEnumerator()
-            {
-                for (int i = 0; i < _items.Length; i++)
-                {
-                    yield return this[i];
-                }
-            }
-            IEnumerator IEnumerable.GetEnumerator()
-            {
-                return this.GetEnumerator();
-            }
-            void ICollection<T>.Add(T item)
-            {
-                ((IList)_items).Add(item);
-            }
-            void ICollection<T>.Clear()
-            {
-                ((IList)_items).Clear();
-            }
-            public bool Contains(T item)
-            {
-                return _items.Contains(item);
-            }
-            public void CopyTo(T[] array, int arrayIndex)
-            {
-                _items.CopyTo(array, arrayIndex);
-            }
-            bool ICollection<T>.Remove(T item)
-            {
-                return ((IList<T>)_items).Remove(item);
-            }
-            public int Count
-            {
-                get
-                {
-                    return _items.Count();
-                }
-            }
-            public bool IsReadOnly
-            {
-                get
-                {
-                    return _items.IsReadOnly;
-                }
-            }
+        }
+        public int GetLength(int i)
+        {
+            return _dim[i];
         }
     }
     namespace Arr2D
     {
-        public static class Arr2D
+        public static class Array2D
         {
             public static T[,] Fill<T>(int rows, int cols, T tofill = default(T))
             {
@@ -668,12 +734,9 @@ namespace Edge.Arrays
                 }
                 return ret;
             }
-            public static int[] getSize(this Array mat)
+            public static IEnumerable<int> getSize(this Array mat)
             {
-                int[] ret = new int[mat.Rank];
-                for (int i = 0; i < ret.Length; i++)
-                    ret[i] = mat.GetLength(i);
-                return ret;
+                return Loops.Range(mat.Rank).Select(mat.GetLength);
             }
             public static T[,] to2DArr<T>(this T[] a, int dim0Length)
             {
@@ -766,75 +829,6 @@ namespace Edge.Arrays
             public static T[,] Concat<T>(this T[,] @this, T[,] other, int dimen)
             {
                 return Concat(dimen, @this, other);
-            }
-        }
-        public class SparseArray<T>
-        {
-            private struct Coordinate : IComparable<Coordinate>
-            {
-                private readonly int[] _cors;
-                public Coordinate(params int[] cors)
-                {
-                    this._cors = cors;
-                }
-                public override int GetHashCode()
-                {
-                    return _cors.GetHashCode() ^ _cors.Length;
-                }
-                public override bool Equals(object obj)
-                {
-                    Coordinate? c = obj as Coordinate?;
-                    return c != null && this._cors.SequenceEqual(c.Value._cors);
-                }
-                public override string ToString()
-                {
-                    return _cors.ToPrintable();
-                }
-                public int CompareTo(Coordinate other)
-                {
-                    if (other._cors.Length != _cors.Length)
-                        return _cors.Length.CompareTo(other._cors.Length);
-                    int ret = 0;
-                    var cors = _cors.Zip(other._cors).GetEnumerator();
-                    while (ret == 0 && cors.MoveNext())
-                        ret = cors.Current.Item1.CompareTo(cors.Current.Item2);
-                    return ret;
-                }
-            }
-            private readonly IDictionary<Coordinate, T> _values;
-            private readonly int[] _dim;
-            public SparseArray(int dims, T def = default(T))
-            {
-                if (dims <= 0)
-                    throw new ArgumentException("must be positive", nameof(dims));
-                this._dim = new int[dims];
-                this.defaultValue = def;
-                this._values = new SortedDictionary<Coordinate, T>();
-            }
-            public T defaultValue { get; }
-            public T this[params int[] query]
-            {
-                get
-                {
-                    Coordinate co = new Coordinate(query);
-                    return _values.ContainsKey(co) ? _values[co] : defaultValue;
-                }
-                set
-                {
-                    Coordinate co = new Coordinate(query);
-                    if (query.Length != _dim.Length)
-                        throw new ArgumentException("incorrect number of arguments for " + _dim.Length + " rank array");
-                    for (int i = 0; i < query.Length; i++)
-                    {
-                        if (query[i] > _dim[i])
-                            _dim[i] = query[i] + 1;
-                    }
-                    this._values[co] = value;
-                }
-            }
-            public int GetLength(int i)
-            {
-                return _dim[i];
             }
         }
         public class SymmetricMatrix<T>

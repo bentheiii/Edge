@@ -9,7 +9,7 @@ using Edge.Timer;
 
 namespace Edge.Processes
 {
-    public static class Processmonitor
+    public static class ProcessMonitor
     {
         public static int countprocesseswithsamename(params string[] otherprocessnames)
         {

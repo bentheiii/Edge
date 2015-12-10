@@ -2,7 +2,7 @@
 using System.Linq;
 using Edge.Looping;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using static Edge.Arrays.Arr2D.Arr2D;
+using static Edge.Arrays.Arr2D.Array2D;
 using static Microsoft.VisualStudio.TestTools.UnitTesting.Assert;
 
 namespace CoreTest

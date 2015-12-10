@@ -44,7 +44,7 @@ namespace Edge.Statistics
         }
         public T RandomMember()
         {
-            return RandomMember(new GlobalGenerator());
+            return RandomMember(new GlobalRandomGenerator());
         }
         public abstract T RandomMember(RandomGenerator g);
     }
@@ -445,7 +445,7 @@ namespace Edge.Statistics
             public abstract int Minimum { get; }
             public DieRoll RandomRoll()
             {
-                return RandomRoll(new GlobalGenerator());
+                return RandomRoll(new GlobalRandomGenerator());
             }
             public DieRoll RandomRoll(RandomGenerator g)
             {
@@ -477,7 +477,7 @@ namespace Edge.Statistics
             }
             public int RandomInt()
             {
-                return RandomInt(new GlobalGenerator());
+                return RandomInt(new GlobalRandomGenerator());
             }
             public abstract int RandomInt(RandomGenerator g);
             public override sealed double ProbabilityFor(double x)

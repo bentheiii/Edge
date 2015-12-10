@@ -8,13 +8,9 @@ namespace Edge.Assert
     {
         public static void AreEqual<T>(T expected, T actual, T delta)
         {
-            try
+            if (!expected.Equals(actual) && (expected.ToFieldWrapper() - actual).abs() > delta)
             {
-                IsTrue((expected.ToFieldWrapper() - actual).abs() <= delta);
-            }
-            catch (NotSupportedException)
-            {
-                Microsoft.VisualStudio.TestTools.UnitTesting.Assert.AreEqual(expected,actual);
+                Microsoft.VisualStudio.TestTools.UnitTesting.Assert.AreEqual(expected, actual);
             }
         }
     }

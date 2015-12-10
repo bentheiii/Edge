@@ -32,7 +32,7 @@ namespace Edge.Timer
 	public class IdleTimer : ITimer
 	{
 		private DateTime _startTime = DateTime.Now;
-		private IdleTimer _timePaused = null;
+		private IdleTimer _timePaused;
 		public IdleTimer(bool startpaused = false)
 		{
 			if (startpaused)

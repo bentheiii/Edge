@@ -23,7 +23,7 @@ namespace Edge.Credentials
         public PasswordCredential(string value) : base(value) {}
         public override string ToString()
         {
-            return value.ToString();
+            return value;
         }
     }
     public interface ICredentialValidator

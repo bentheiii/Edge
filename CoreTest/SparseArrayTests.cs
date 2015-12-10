@@ -1,4 +1,5 @@
 ﻿using System;
+using Edge.Arrays;
 using Edge.Arrays.Arr2D;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using static Microsoft.VisualStudio.TestTools.UnitTesting.Assert;
