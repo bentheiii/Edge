@@ -101,7 +101,6 @@
     <Compile Include="Symbols.cs" />
     <Compile Include="System.cs" />
     <Compile Include="Theater.cs" />
-    <Compile Include="Threads.cs" />
     <Compile Include="Timer.cs" />
     <Compile Include="UnitsBase.cs" />
     <Compile Include="UnitsPhysics.cs" />
