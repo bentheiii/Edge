@@ -176,10 +176,6 @@ A powerful object type that stores the data in a file for it to be used across p
 Wrapper classes for UDP and TCP ports that can send and receive any object, not just bytes.
 
 ---
-###Receiver Threads and Listener Threads
-A thread designed to handle connections
-
----
 ###MultiSocket
 A socket that multiple processes can hook up to.
 
