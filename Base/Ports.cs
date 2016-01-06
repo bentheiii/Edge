@@ -120,7 +120,7 @@ namespace Edge.Ports
         {
             c.Source = LocalEndPoint(port);
         }
-        public static EndPoint EnsureSource(this IConnection c)
+        public static EndPoint EnsureSource(this IPortBound c)
         {
             if (c.Source == null)
             {

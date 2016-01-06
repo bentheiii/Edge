@@ -79,7 +79,13 @@
     <Compile Include="Graph.cs" />
     <Compile Include="EventGuard.cs" />
     <Compile Include="Imaging.cs" />
+    <Compile Include="PlaceHolderTextBox.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="Loops.cs" />
+    <Compile Include="ReturnForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="Series.cs" />
     <Compile Include="Matrices.cs" />
     <Compile Include="Modulary.cs" />
@@ -104,6 +110,9 @@
     <Compile Include="Timer.cs" />
     <Compile Include="UnitsBase.cs" />
     <Compile Include="UnitsPhysics.cs" />
+    <Compile Include="FileFolderDialog.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="WordPlay.cs" />
   </ItemGroup>
   <ItemGroup>

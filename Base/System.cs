@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
@@ -12,6 +13,7 @@ namespace Edge.SystemExtensions
     public static class SystemExtension
     {
         public static int Indicator(this bool @this) => @this ? 1 : 0;
+        public static T Indicator<T>(this bool @this, T then, T @else) => @this ? then : @else;
         public static decimal pow(this decimal powbase, decimal powpower)
         {
             return (decimal)Math.Pow((double)powbase, (double)powpower);
