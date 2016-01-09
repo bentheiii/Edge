@@ -152,36 +152,51 @@ namespace Edge.RandomGen
     }
     public class GlobalRandomGenerator : RandomGenerator
     {
-        private static Random _int;
-        static GlobalRandomGenerator()
+        private static readonly IDictionary<Thread, RandomGenerator> _dic = new Dictionary<Thread, RandomGenerator>(1);
+        private static bool EnsureGeneratorExists(Thread t)
         {
-            reset();
+            var ret = _dic.ContainsKey(t);
+            if (!ret)
+                reset(t);
+            return ret;
         }
         public override byte[] Bytes(int length)
         {
-            byte[] ret = new byte[length];
-            _int.NextBytes(ret);
-            return ret;
+            EnsureGeneratorExists(Thread.CurrentThread);
+            return _dic[Thread.CurrentThread].Bytes(length);
         }
         public override double Double()
         {
-            return _int.NextDouble();
+            EnsureGeneratorExists(Thread.CurrentThread);
+            return _dic[Thread.CurrentThread].Double();
         }
         public override double Double(double min, double max)
         {
-            return (max - min) * _int.NextDouble() + min;
+            EnsureGeneratorExists(Thread.CurrentThread);
+            return _dic[Thread.CurrentThread].Double(min,max);
         }
         public override int Int(int min, int max)
         {
-            return _int.Next(min, max);
+            EnsureGeneratorExists(Thread.CurrentThread);
+            return _dic[Thread.CurrentThread].Int(min,max);
         }
         public static void reset()
         {
-            _int = new Random(DateTime.Now.GetHashCode() ^ Process.GetCurrentProcess().GetHashCode() ^ Thread.CurrentThread.GetHashCode());
+            EnsureGeneratorExists(Thread.CurrentThread);
+            reset(Thread.CurrentThread);
+        }
+        public static void reset(Thread t)
+        {
+            EnsureGeneratorExists(Thread.CurrentThread);
+            reset(DateTime.Now.GetHashCode() ^ Process.GetCurrentProcess().GetHashCode() ^ Thread.CurrentThread.GetHashCode(),t);
         }
         public static void reset(int seed)
         {
-            _int = new Random(seed);
+            reset(seed, Thread.CurrentThread);
+        }
+        public static void reset(int seed, Thread t)
+        {
+            _dic[t] = new LocalRandomGenerator(seed);
         }
     }
     public class ConstantRandomGenerator : RandomGenerator
