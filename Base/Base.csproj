@@ -71,6 +71,7 @@
     <Compile Include="Controls.cs" />
     <Compile Include="Credential.cs" />
     <Compile Include="Data.cs" />
+    <Compile Include="TripleDesEncryption.cs" />
     <Compile Include="Enviroment.cs" />
     <Compile Include="Factory.cs" />
     <Compile Include="Fields.cs" />

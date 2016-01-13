@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -109,9 +110,9 @@ namespace Edge.WordsPlay
             }
             return true;
         }
-        public static string convertToString (this char[] x)
+        public static string convertToString (this IEnumerable<char> x)
         {
-			return new string(x);
+			return new string(x.ToArray());
         }
         public static string pluralize(int c, string singular, string plural, bool includecount = false, bool pluralreplacesingle = false)
         {
@@ -226,51 +227,10 @@ namespace Edge.WordsPlay
         {
             return ((i>=1 || i <= (1/12.0)?((int) i).ToRomanNumerals():"") + ToRomanNumerals(i, '.', 'S'));
         }
-    }
-	namespace Encryption
-    {
-        public static class Encryption
+        public static void SplitbyIndex(this string @this, int charindex, out string first, out string second)
         {
-            public static string Encrypt(string input, string key)
-            {
-                char[] truekey = new char[24];
-                for (int i = 0; i < truekey.Length; i++)
-                {
-                    truekey[i] = (char) (key[i % key.Length] + (i/key.Length));
-                }
-                byte[] inputArray = Encoding.UTF8.GetBytes(input);
-                TripleDESCryptoServiceProvider tripleDes = new TripleDESCryptoServiceProvider
-                {
-                    Key = Encoding.UTF8.GetBytes(truekey),
-                    Mode = CipherMode.ECB,
-                    Padding = PaddingMode.PKCS7
-                };
-                ICryptoTransform cTransform = tripleDes.CreateEncryptor();
-                byte[] resultArray = cTransform.TransformFinalBlock(inputArray, 0, inputArray.Length);
-                tripleDes.Clear();
-                tripleDes.Dispose();
-                return Convert.ToBase64String(resultArray, 0, resultArray.Length);
-            }
-            public static string Decrypt(string input, string key)
-            {
-                char[] truekey = new char[24];
-                for (int i = 0; i < truekey.Length; i++)
-                {
-                    truekey[i] = (char)(key[i % key.Length] + (i / key.Length));
-                }
-                byte[] inputArray = Convert.FromBase64String(input);
-                TripleDESCryptoServiceProvider tripleDes = new TripleDESCryptoServiceProvider
-                {
-                    Key = Encoding.UTF8.GetBytes(truekey),
-                    Mode = CipherMode.ECB,
-                    Padding = PaddingMode.PKCS7
-                };
-                ICryptoTransform cTransform = tripleDes.CreateDecryptor();
-                byte[] resultArray = cTransform.TransformFinalBlock(inputArray, 0, inputArray.Length);
-                tripleDes.Clear();
-                tripleDes.Dispose();
-                return Encoding.UTF8.GetString(resultArray);
-            }
+            first = @this.Substring(0, charindex);
+            second = @this.Substring(charindex);
         }
     }
     namespace Parsing

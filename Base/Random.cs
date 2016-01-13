@@ -2,7 +2,9 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
+using System.Linq;
 using System.Threading;
+using System.Security.Cryptography;
 using Edge.Arrays;
 
 namespace Edge.RandomGen
@@ -65,9 +67,14 @@ namespace Edge.RandomGen
         }
         public virtual double Double(double min, double max)
         {
-            byte[] buf = Bytes(8);
-            var @base = BitConverter.ToDouble(buf, 0);
-            return (Math.Abs(@base % (max - min)) + min);
+            while (true)
+            {
+                var @base = ULong(ulong.MaxValue) / (double)ULong(ULong(ulong.MaxValue));
+                @base *= max;
+                if (double.IsNaN(@base) || double.IsInfinity(@base))
+                    continue;
+                return (Math.Abs(@base % (max - min)) + min);
+            }
         }
         public bool success(double odds)
         {
@@ -153,12 +160,12 @@ namespace Edge.RandomGen
     public class GlobalRandomGenerator : RandomGenerator
     {
         private static readonly IDictionary<Thread, RandomGenerator> _dic = new Dictionary<Thread, RandomGenerator>(1);
-        private static bool EnsureGeneratorExists(Thread t)
+        private static void EnsureGeneratorExists(Thread t)
         {
             var ret = _dic.ContainsKey(t);
             if (!ret)
                 reset(t);
-            return ret;
+            return;
         }
         public override byte[] Bytes(int length)
         {
@@ -182,12 +189,10 @@ namespace Edge.RandomGen
         }
         public static void reset()
         {
-            EnsureGeneratorExists(Thread.CurrentThread);
             reset(Thread.CurrentThread);
         }
         public static void reset(Thread t)
         {
-            EnsureGeneratorExists(Thread.CurrentThread);
             reset(DateTime.Now.GetHashCode() ^ Process.GetCurrentProcess().GetHashCode() ^ Thread.CurrentThread.GetHashCode(),t);
         }
         public static void reset(int seed)
@@ -229,6 +234,33 @@ namespace Edge.RandomGen
         {
             var @base = val;
             return (Math.Abs(@base % (max - min)) + min);
+        }
+    }
+    public class ShaGenerator : ByteEnumeratorGenerator, IDisposable
+    {
+        private readonly SHA256 _sha;
+        private readonly IList<byte> _seed;
+        public ShaGenerator(byte[] seed)
+        {
+            _sha = SHA256.Create();
+            _seed = new List<byte>(seed);
+        }
+        protected override IEnumerator<byte> Bytes()
+        {
+            while (true)
+            {
+                _sha.ComputeHash(_seed.ToArray().Shuffle());
+                _seed.Clear();
+                foreach (byte b in _sha.Hash)
+                {
+                    yield return b;
+                    _seed.Add(b);
+                }
+            }
+        }
+        public void Dispose()
+        {
+            ((IDisposable)_sha).Dispose();
         }
     }
     namespace ThreadEntropy
