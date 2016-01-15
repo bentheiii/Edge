@@ -417,10 +417,9 @@ namespace Edge.PermanentObject
             [Serializable]
             private class PermaObjArrayData
             {
-                private const int DEF_OFFSET = 2;
                 public int length { get; }
                 public int offset { get; }
-                public PermaObjArrayData(int length, int offset = DEF_OFFSET)
+                public PermaObjArrayData(int length, int offset )
                 {
                     this.length = length;
                     this.offset = offset;
@@ -455,7 +454,7 @@ namespace Edge.PermanentObject
             private readonly T _valueIfCreated;
             public bool SupportMultiAccess => _data.share != FileShare.None;
             public PermaList(string name, int length=0, int offset = 2, bool deleteOnDispose = false, FileAccess access = FileAccess.ReadWrite, FileShare share = FileShare.None, FileMode mode = FileMode.OpenOrCreate, T valueIfCreated = default(T), bool allowCaching = true) : this(length, offset,a => (T)Serialization.Deserialize(a), a => Serialization.Serialize(a), name, deleteOnDispose, access, share, mode, valueIfCreated,allowCaching) { }
-            //if array already exists, the length parameter are ignored
+            //if array already exists, the length and offset parameters are ignored
             public PermaList(int length, int offset ,Func<byte[], T> read, Func<T, byte[]> write, string name, bool deleteOnDispose = false, FileAccess access = FileAccess.ReadWrite, FileShare share = FileShare.None, FileMode mode = FileMode.OpenOrCreate, T valueIfCreated = default(T), bool allowCaching = true)
             {
                 _read = read;
@@ -534,7 +533,7 @@ namespace Edge.PermanentObject
                     this._array.Last().DeleteOnDispose = true;
                     this._array.Last().Dispose();
                     this._array.RemoveAt(this._array.Count-1);
-                    _data.MutauteValue(a => new PermaObjArrayData(a.length - 1));
+                    _data.MutauteValue(a => new PermaObjArrayData(a.length - 1,a.offset));
                 }
             }
             public T this[int i]
@@ -629,7 +628,7 @@ namespace Edge.PermanentObject
                     iPermaObject.DeleteOnDispose = true;
                     iPermaObject.Dispose();
                 }
-                _data.value = new PermaObjArrayData(0);
+                _data.value = new PermaObjArrayData(0,0);
                 updateArr(true);
             }
             public bool Contains(T item)

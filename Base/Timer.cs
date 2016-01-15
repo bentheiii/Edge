@@ -61,9 +61,10 @@ namespace Edge.Timer
 		{
 			get
 			{
-				if (paused)
-					throw new InvalidOperationException("timer is paused");
-				return DateTime.Now.Subtract(_startTime);
+                var ret =  DateTime.Now.Subtract(_startTime);
+			    if (paused)
+			        ret = ret.Subtract(_timePaused.timeSinceStart);
+			    return ret;
 			}
 		}
 	}

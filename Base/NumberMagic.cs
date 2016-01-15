@@ -565,10 +565,15 @@ namespace Edge.NumbersMagic
 		        yield return n;
 		    }
 		}
-	    public static int divisibility(this int x, int todiv)
+	    public static int divisibility(this int n, int b)
 	    {
-	        return arrayExtensions.binSearch(a => x % todiv.pow(a) == 0, 0, x.log(todiv).ceil());
-	    }
+            if (n == 1 || b > n || n % b != 0)
+                return 0;
+            int k = divisibility(b * b * b, n);
+            var p = n / Math.Pow(b, (3 * k));
+            return 3 * k + (p % (b * b) == 0 ? 2 : (p % b == 0 ? 1 : 0));
+            //return arrayExtensions.binSearch(a => x % todiv.pow(a) == 0, 0, x.log(todiv).ceil());
+        }
 	    public static ulong factorial(this int x, int iteration = 1)
 		{
 			ulong[,] val =

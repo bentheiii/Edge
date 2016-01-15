@@ -766,12 +766,67 @@ namespace Edge.Fielding {
             public override bool Negatable => false;
             public override bool ModduloAble => false;
             public override bool Parsable => true;
+            public override OrderType Order => OrderType.TotalOrder;
             public override string Parse(string s)
             {
                 return s;
             }
         }
-        
+        private class CharField : Field<char>
+        {
+            public CharField() : base('\u0000', '\u0001', '\u0002') { }
+            public override char add(char a, char b) => (char)(a + b);
+            public override char pow(char a, char b)
+            {
+                throw new NotSupportedException();
+            }
+            public override int Compare(char x, char y) => x.CompareTo(y);
+            public override char Factorial(int x)
+            {
+                throw new NotSupportedException();
+            }
+            public override char fromInt(int x)
+            {
+                return (char)x;
+            }
+            public override char fromInt(ulong x)
+            {
+                return (char)x;
+            }
+            public override char abs(char x) => x;
+            public override char Conjugate(char a) => a;
+            public override char divide(char a, char b) => (char)(a / b);
+            public override char fromFraction(int numerator, int denumerator)
+            {
+                throw new NotSupportedException();
+            }
+            public override char Invert(char x)
+            {
+                throw new NotSupportedException();
+            }
+            public override bool isNegative(char x) => false;
+            public override char log(char a)
+            {
+                throw new NotSupportedException();
+            }
+            public override char multiply(char a, char b) => (char)(a * b);
+            public override char mod(char a, char b) => (char)(a % b);
+            public override char Negate(char x) => (char)(char.MaxValue - x);
+            public override char subtract(char a, char b) => (char)(a - b);
+            public override double? toDouble(char a)
+            {
+                return a;
+            }
+            public override bool Invertible => false;
+            public override bool Negatable => true;
+            public override bool ModduloAble => true;
+            public override bool Parsable => true;
+            public override char Parse(string s)
+            {
+                return s[0];
+            }
+            public override OrderType Order => OrderType.TotalOrder;
+        }
         private class BigRationalField : Field<BigRational>
         {
             public BigRationalField() : base(0, 1, Math.E) { }
@@ -909,6 +964,7 @@ namespace Edge.Fielding {
             setField(new BigRationalField());
             setField(new BigIntegerField());
             setField(new BoolField());
+            setField(new CharField());
         }
         [NotNull] public static Field<T> getField<T>()
         {

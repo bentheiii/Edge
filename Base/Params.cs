@@ -103,7 +103,7 @@ namespace Edge.Params
         {
             this._parameters = new Dictionary<string, string>();
             this.protocol = new ParamsProtocol {Divisor = divisor, Seperator = paramsynseperator};
-            string[] splitparams = args.truesplit(divisor);
+            IEnumerable<string> splitparams = args.truesplit(divisor);
             this.sortparams(splitparams);
         }
         private void sortparams(IEnumerable<string> splitargs)

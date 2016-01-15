@@ -6,6 +6,8 @@ using System.Linq;
 using System.Threading;
 using System.Security.Cryptography;
 using Edge.Arrays;
+using Edge.Looping;
+using Edge.WordsPlay;
 
 namespace Edge.RandomGen
 {
@@ -106,6 +108,10 @@ namespace Edge.RandomGen
         {
             return Color.FromArgb(Int(0, 256), Int(0, 256), Int(0, 256));
         }
+        public string String(int length, char[] allowedChars)
+        {
+            return Loops.Range(length).Select(a => allowedChars[Int(allowedChars.Length)]).convertToString();
+        }
     }
     public abstract class ByteEnumeratorGenerator : RandomGenerator
     {
@@ -165,7 +171,6 @@ namespace Edge.RandomGen
             var ret = _dic.ContainsKey(t);
             if (!ret)
                 reset(t);
-            return;
         }
         public override byte[] Bytes(int length)
         {

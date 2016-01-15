@@ -774,7 +774,7 @@ namespace Edge.Arrays
                     {
                         if (j > 0)
                             ret.Append(divider);
-                        ret.Append(arr[i, j].ToString().stretchtoFill(s));
+                        ret.Append(arr[i, j].ToString().PadLeft(s));
                     }
                     string closer = closermid;
                     if (i == 0)

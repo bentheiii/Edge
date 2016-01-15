@@ -12,8 +12,6 @@ namespace Edge.WordsPlay
 {
     public static class WordPlay
     {
-		[Flags]
-        public enum LetterFilter {Lowercase=1, Uppercase=2, Numbers = 4, All = -1}
         public static string Removespecific(this string x, string toremove)
         {
             int i = x.IndexOf(toremove, StringComparison.Ordinal);
@@ -52,15 +50,14 @@ namespace Edge.WordsPlay
                 throw new Exception("count must be lower than string length");
             return count == 0 ? x : x.Remove(x.Length - count);
         }
-        public static string[] truesplit(this string a, string divisor = ",", bool removeempties = true, string empties = "")
+        public static IEnumerable<string> truesplit(this string a, string divisor = ",")
         {
-            return truesplit(a, new string[] { divisor }, removeempties, empties);
+            return truesplit(a, new string[] { divisor });
         }
-        public static string[] truesplit(this string a, string[] divisors , bool removeempties = true, string empties = "")
+        public static IEnumerable<string> truesplit(this string a, string[] divisors)
         {
             string tempa = a;
-            List<string> ret = new List<string>();
-            while (tempa != "")
+            while (tempa.Length > 0)
             {
                 int divindex = -1, divlength = 0;
                 foreach (string t1 in divisors)
@@ -74,45 +71,28 @@ namespace Edge.WordsPlay
                 }
                 if (divindex == -1)
                 {
-                    ret.Add(tempa);
-                    break;
+                    yield return tempa;
+                    yield break;
                 }
-                ret.Add(tempa.Substring(0, divindex));
+                yield return tempa.Substring(0, divindex);
                 tempa = tempa.Substring(divindex + divlength) ;
             }
-            if (removeempties)
-            {
-                ret.RemoveAll(s => s.Equals(empties));
-            }
-            return ret.ToArray();
         }
-        public static string truejoin(this string[] coll, string divider = " ", bool divideatstart = false, bool divideatend = false)
+        public static string truejoin(this IEnumerable<string> coll, string divider = " ", bool divideatstart = false, bool divideatend = false)
         {
 	        return coll.ToPrintable(divider, divideatstart ? divider : "", divideatend ? divider : "");
         }
-        public static bool isletter(this char x, LetterFilter filter = LetterFilter.Lowercase | LetterFilter.Uppercase)
+        public static string convertToString(this IEnumerable<byte> x)
         {
-            return filter.HasFlag(LetterFilter.All)
-                   || (x <= 'z' && x >= 'a' && filter.HasFlag(LetterFilter.Lowercase)
-                   || (x <= 'Z' && x >= 'A' && filter.HasFlag(LetterFilter.Uppercase))
-                   || (x <= '9' && x >= '0' && filter.HasFlag(LetterFilter.Numbers)));
-        }
-        public static bool isdigit(this char x)
-        {
-            return x >= '0' && x <= '9';
-        }
-        public static bool ispalindrome(string x)
-        {
-            for (int i = 0; i < x.Length/2; i++)
-            {
-                if (x[i] != x[x.Length - i])
-                    return false;
-            }
-            return true;
+            return new string(x.Select(a=>(char)a).ToArray());
         }
         public static string convertToString (this IEnumerable<char> x)
         {
 			return new string(x.ToArray());
+        }
+        public static byte[] ToBytes(this string @this)
+        {
+            return @this.SelectToArray(a => (byte)a);
         }
         public static string pluralize(int c, string singular, string plural, bool includecount = false, bool pluralreplacesingle = false)
         {
@@ -141,27 +121,17 @@ namespace Edge.WordsPlay
         }
         public static int countappearances(this string tosearch, string tofind)
         {
-            return tosearch.getappearances(tofind).Length;
+            return tosearch.getappearances(tofind).Count();
         }
-        public static int[] getappearances(this string tosearch, string tofind)
+        public static IEnumerable<int> getappearances(this string tosearch, string tofind)
         {
-            List<int> ret = new List<int>();
             string t = tosearch;
             int ti = t.IndexOf(tofind, StringComparison.Ordinal);
             while (ti != -1)
             {
-                ret.Add(ti);
+                yield return ti;
                 ti = t.IndexOf(tofind, ti + 1, StringComparison.Ordinal);
             }
-            return ret.ToArray();
-        }
-        public static string stretchtoFill(this string tostretch, int newsize, char filler = ' ', bool addToRight = true)
-        {
-            if (tostretch.Length >= newsize)
-                return tostretch;
-	        if (addToRight)
-		        return tostretch + new string(filler, newsize - tostretch.Length);
-	        return new string(filler, newsize - tostretch.Length) + tostretch;
         }
         public static string Reverse(this string x)
         {
@@ -255,13 +225,5 @@ namespace Edge.WordsPlay
                 return tryParse;
             }
         }
-	    public static class ParseExtentions
-	    {
-		    public static T[] ParseCollection<T>(this string @this, Func<string, T> proccesor,string[] divisors, bool removeEmpties = true, string empties = "")
-		    {
-			    string[] split = @this.truesplit(divisors, removeEmpties, empties);
-			    return split.SelectToArray(proccesor);
-		    }
-	    }
     }
 }

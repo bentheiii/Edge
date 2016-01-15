@@ -1,14 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Runtime.Serialization.Formatters.Binary;
-using System.Text;
-using System.Windows.Input;
 using Edge.Arrays;
 using Edge.Looping;
 using Edge.WordsPlay;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Edge.Serializations
 {
@@ -19,7 +17,7 @@ namespace Edge.Serializations
             ulong FromBytes(IEnumerable<byte> bytes);
             IEnumerable<byte> ToBytes(ulong num);
         }
-        public class FullcodeNumberSerializer : INumberSerializer
+        private class FullcodeNumberSerializer : INumberSerializer
         {
             public IEnumerable<byte> ToBytes(ulong num)
             {
@@ -72,7 +70,7 @@ namespace Edge.Serializations
             }
         }
         public static readonly INumberSerializer FullCodeSerializer = new FullcodeNumberSerializer();
-        public static readonly INumberSerializer AlphaNumbreicSerializer = new ClosedListNumberSerializer("0123456789abcdefghijklmnopqrstuvwxyz");
+        public static readonly INumberSerializer AlphaNumbreicSerializer = new ClosedListNumberSerializer(Loops.IRange('a','z').Concat(Loops.IRange('0','9')));
         public static ulong FromString(this INumberSerializer @this, string s)
         {
             return @this.FromBytes(s.Select(a => (byte)a));
@@ -109,9 +107,49 @@ namespace Edge.Serializations
             return s.Substring(0, length);
         }
     }
+    public static class Compresion
+    {
+        public static byte[] Compress(this byte[] raw)
+        {
+            using (MemoryStream memory = new MemoryStream())
+            {
+                using (GZipStream gzip = new GZipStream(memory,
+                CompressionMode.Compress, true))
+                {
+                    gzip.Write(raw, 0, raw.Length);
+                }
+                return memory.ToArray();
+            }
+        }
+        public static byte[] Decompress(this byte[] gzip)
+        {
+            using (GZipStream stream = new GZipStream(new MemoryStream(gzip), CompressionMode.Decompress))
+            {
+                const int size = 4096;
+                byte[] buffer = new byte[size];
+                using (MemoryStream memory = new MemoryStream())
+                {
+                    int count;
+                    do
+                    {
+                        count = stream.Read(buffer, 0, size);
+                        if (count > 0)
+                        {
+                            memory.Write(buffer, 0, count);
+                        }
+                    }
+                    while (count > 0);
+                    return memory.ToArray();
+                }
+            }
+        }
+    }
     public static class Serialization
     {
-        
+        public static T Deserialize<T>(byte[] arr)
+        {
+            return (T)Deserialize(arr);
+        }
         public static object Deserialize(byte[] arr)
         {
             if (arr == null)
