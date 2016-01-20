@@ -74,11 +74,13 @@
     <Compile Include="ControlTests.cs" />
     <Compile Include="CredentialsTest.cs" />
     <Compile Include="EntityManagerTests.cs" />
+    <Compile Include="ExpandingArrayTests.cs" />
     <Compile Include="FieldTests.cs" />
     <Compile Include="FillTests.cs" />
     <Compile Include="FormulaTests.cs" />
     <Compile Include="GraphTests.cs" />
     <Compile Include="ImagingTests.cs" />
+    <Compile Include="LazyArrayTests.cs" />
     <Compile Include="LoopsTests.cs" />
     <Compile Include="MatrixTests.cs" />
     <Compile Include="PermaObjectTests.cs" />

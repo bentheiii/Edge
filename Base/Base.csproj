@@ -79,6 +79,7 @@
     <Compile Include="Funnel.cs" />
     <Compile Include="Graph.cs" />
     <Compile Include="EventGuard.cs" />
+    <Compile Include="RecursiveQuerier.cs" />
     <Compile Include="Imaging.cs" />
     <Compile Include="PlaceHolderTextBox.cs">
       <SubType>Component</SubType>

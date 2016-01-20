@@ -358,7 +358,7 @@ namespace CoreTest
         [TestMethod] public void Simple()
         {
             Guard<int> val = new Guard<int>(1);
-            Loops.Repeat(3, () => val.value *= 2);
+            3.Repeat(() => val.value *= 2);
             AreEqual(val.value, 8);
         }
     }

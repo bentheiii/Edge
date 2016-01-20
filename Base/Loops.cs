@@ -295,6 +295,16 @@ namespace Edge.Looping
                 action();
             }
         }
+        public static IEnumerable<T> Repeat<T>(this IEnumerable<T> @this, int count)
+        {
+            foreach (int i in Range(count))
+            {
+                foreach (var t in @this)
+                {
+                    yield return t;
+                }
+            }
+        }
         public static IEnumerable<T1> Detach<T1, T2>(this IEnumerable<Tuple<T1, T2>> @this, Guard<T2> informer1)
         {
             foreach (var t in @this)
@@ -613,6 +623,10 @@ namespace Edge.Looping
 	    {
 		    return a.Zip(Count(start));
 	    }
+        public static IEnumerable<Tuple<T, C>> CountBind<T,C>(this IEnumerable<T> a, C start)
+        {
+            return a.Zip(Count(start));
+        }
         [Flags]public enum Position { First = 1, Middle = 2, Last = 4, None=0, Only = First|Middle|Last}
         public static IEnumerable<Tuple<T, Position>> PositionBind<T>(this IEnumerable<T> @this)
         {
@@ -811,6 +825,15 @@ namespace Edge.Looping
                 action?.Invoke(t);
             }
         }
+        public static IEnumerable<T> EnumerationHook<T>(this IEnumerable<T> @this,Action preNumeration = null, Action postNumeration = null)
+        {
+            preNumeration?.Invoke();
+            foreach (var t in @this)
+            {
+                yield return t;
+            }
+            postNumeration?.Invoke();
+        }
         public static IEnumerable<T> Enum<T>() where T : struct, IConvertible
         {
             if (!typeof(T).IsEnum)
@@ -850,6 +873,13 @@ namespace Edge.Looping
         public static IDictionary<K, V> ToDictionary<K, V>(this IEnumerable<Tuple<K, V>> @this)
         {
             return @this.ToDictionary(a => a.Item1, a => a.Item2);
+        }
+        public static IEnumerable<T> Generate<T>(Func<T> gen)
+        {
+            while (true)
+            {
+                yield return gen();
+            }
         }
     }
 }

@@ -715,6 +715,104 @@ namespace Edge.Arrays
             return _dim[i];
         }
     }
+    public class ExpandingArray<T> : IEnumerable<T>
+    {
+        
+        private readonly List<T> _data;
+        public T defaultValue { get; }
+        public ExpandingArray(T defaultValue = default(T), int capacity = 4)
+        {
+            this.defaultValue = defaultValue;
+            _data = new List<T>(capacity);
+        }
+        public void ExpandTo(int newsize)
+        {
+            if (_data.Count < newsize)
+            {
+                _data.Capacity = newsize;
+                _data.AddRange(defaultValue.Enumerate().Repeat(newsize -_data.Count));
+            }
+        }
+        public T this[int ind]
+        {
+            get
+            {
+                return _data.Count <= ind ? defaultValue : _data[ind];
+            }
+            set
+            {
+                ExpandTo(ind+1);
+                _data[ind] = value;
+            }
+        }
+        public IEnumerator<T> GetEnumerator()
+        {
+            return _data.Concat(defaultValue.Enumerate().Cycle()).GetEnumerator();
+        }
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return ((IEnumerable)_data).GetEnumerator();
+        }
+        public void Add(T item)
+        {
+            if (item.Equals(defaultValue))
+                return;
+            this[_data.Count] = item;
+        }
+        public void Clear()
+        {
+            _data.Clear();
+        }
+        public bool Contains(T item)
+        {
+            return item.Equals(defaultValue) || _data.Contains(item);
+        }
+    }
+    public class LazyArray<T> : IEnumerable<T>
+    {
+        private readonly Func<int, LazyArray<T>, T> _generator;
+        private readonly ExpandingArray<T> _data;
+        private readonly ExpandingArray<bool> _initialized;
+        public LazyArray(Func<int, T> generator) : this((i, array) => generator(i)) {}
+        public LazyArray(Func<int, LazyArray<T>, T> generator)
+        {
+            _generator = generator;
+            _data = new ExpandingArray<T>();
+            _initialized = new ExpandingArray<bool>();
+        }
+        public bool Initialized(int index)
+        {
+            return _initialized[index];
+        }
+        public void RemoveAt(int index)
+        {
+            _initialized[index] = false;
+        }
+        public T this[int ind]
+        {
+            get
+            {
+                if (_initialized[ind])
+                    return _data[ind];
+                T ret = _data[ind] = _generator(ind,this);
+                _initialized[ind] = true;
+                return ret;
+            }
+        }
+        public IEnumerator<T> GetEnumerator()
+        {
+            return Loops.Count().Select(a=>this[a]).GetEnumerator();
+        }
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return GetEnumerator();
+        }
+        public void Clear()
+        {
+            _data.Clear();
+            _initialized.Clear();
+        }
+    }
     namespace Arr2D
     {
         public static class Array2D

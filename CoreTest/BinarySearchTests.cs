@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using Edge.Arrays;
 using Edge.NumbersMagic;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -150,7 +151,7 @@ namespace CoreTest
         private const int ARRSIZE = 20;
         [ClassInitialize] public static void ClassInit(TestContext context)
         {
-            _primes = NumberMagic.listprimesbylength(ARRSIZE);
+            _primes = NumberMagic.listprimes().Take(ARRSIZE).ToArray();
         }
         [TestMethod] public void Simple()
         {
@@ -172,7 +173,7 @@ namespace CoreTest
         private const int ARRSIZE = 20;
         [ClassInitialize] public static void ClassInit(TestContext context)
         {
-            _primes = NumberMagic.listprimesbylength(ARRSIZE);
+            _primes = NumberMagic.listprimes().Take(ARRSIZE).ToArray(ARRSIZE);
         }
         [TestMethod] public void Simple()
         {
@@ -198,7 +199,7 @@ namespace CoreTest
         private const int ARRSIZE = 100;
         [ClassInitialize] public static void ClassInit(TestContext context)
         {
-            _primes = NumberMagic.listprimesbylength(ARRSIZE);
+            _primes = NumberMagic.listprimes().Take(ARRSIZE).ToArray();
         }
         [TestMethod] public void Simple()
         {
