@@ -394,9 +394,14 @@ namespace CoreTest
             val.CheckFromInt(new int[] {0, 3, -2, 4, 9, 4}.Attach(a => (BigRational)a));
             val.CheckFromFraction(
                 new Tuple<int, int>[] {Tuple.Create(0, 9), Tuple.Create(9, 8), Tuple.Create(-8, 1)}.Attach((a, b) => a / (BigRational)b));
+            var parr = new Tuple<BigRational, int>[]
+            {Tuple.Create((BigRational)0.0, 9), Tuple.Create((BigRational)9.0, 3), Tuple.Create((BigRational)(-8.0), 1)}.Attach((a, b) =>
+            {
+                var ret= a.pow(b);
+                return ret;
+            }).ToArray();
             val.CheckPow(
-                new Tuple<BigRational, int>[]
-                {Tuple.Create((BigRational)0.0, 9), Tuple.Create((BigRational)9.0, 3), Tuple.Create((BigRational)(-8.0), 1)}.Attach((a, b) => a.pow(b)));
+                parr);
             val.CheckFactorial(new int[] {0, 9, 3}.Attach(a => (BigRational)a.factorial()));
             val.CheckParse(new string[] {"1.5", "0.0", "-0.0002"}.Attach(a => new BigRational(double.Parse(a))));
         }
@@ -786,9 +791,9 @@ namespace CoreTest
         [TestMethod] public void BoolTest()
         {
             var val = Fields.getField<bool>();
-            val.CheckZero<bool>(false);
-            val.CheckOne<bool>(true);
-            val.CheckBase<bool>(true);
+            val.CheckZero(false);
+            val.CheckOne(true);
+            val.CheckBase(true);
             val.CheckNegativeOne<bool>(true);
             val.CheckNegate(new bool[] {true, false}.Attach(a => a));
             val.CheckProduct(new bool[] {true, true, false, true, false, false}.Group2().Attach((a, b) => (a && b)));

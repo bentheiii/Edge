@@ -552,12 +552,13 @@ namespace CoreTest
         [TestMethod] public void Choose()
         {
             var val = new int[][] {new[] {1, 7, 8, 9}, new[] {2, 3, 4, 6}, new[] {5, 8, 11}, new[] {0, 5, 5}};
-            IsTrue(val.Choose(a =>
+            var ch = val.Choose(a =>
             {
                 int ret;
                 a.getMin(out ret);
                 return ret;
-            }).SequenceEqual(new int[] {0, 1, 2, 3, 4, 5, 5, 5, 6, 7, 8, 8, 9, 11}));
+            }).ToArray();
+            IsTrue(ch.SequenceEqual(new int[] {0, 1, 2, 3, 4, 5, 5, 5, 6, 7, 8, 8, 9, 11}));
         }
         [TestMethod] public void ChooseComp()
         {

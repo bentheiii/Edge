@@ -357,7 +357,7 @@ namespace Edge.Arrays
             if (!tosearch.Any())
                 throw new ArgumentException("cannot be empty", nameof(tosearch));
             Tuple<T, int>[] arr = tosearch.CountBind().ToArray();
-            Array.Sort(arr,0,(arr.Length/2)+1, new FunctionComparer<Tuple<T, int>>((a, b) => comparer.Compare(a.Item1, b.Item1)));
+            Array.Sort(arr, new FunctionComparer<Tuple<T, int>>((a, b) => comparer.Compare(a.Item1, b.Item1)));
             var ret = arr[arr.Length / 2];
             index = ret.Item2;
             return ret.Item1;
@@ -382,7 +382,7 @@ namespace Edge.Arrays
                 throw new ArgumentException("cannot be empty", nameof(tosearch));
             T ret = tosearch.First();
             index = 0;
-            int i = 0;
+            int i = 1;
             foreach (T var in tosearch.Skip(1))
             {
                 if (compare.Compare(var, ret) < 0)

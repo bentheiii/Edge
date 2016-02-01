@@ -36,8 +36,9 @@
     <ApplicationIcon>Edge1.0.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="BigRationalLibrary">
-      <HintPath>..\Core\bin\Debug\BigRationalLibrary.dll</HintPath>
+    <Reference Include="BigRationalLibrary, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\BigRationalLibrary\bin\Debug\BigRationalLibrary.dll</HintPath>
     </Reference>
     <Reference Include="LiteDB, Version=1.0.3.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>

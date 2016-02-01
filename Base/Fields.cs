@@ -385,7 +385,7 @@ namespace Edge.Fielding {
         public QueryEnabledField(T zero, T one, T naturalbase) : base(zero,one,naturalbase)
         {
             // ReSharper disable DoNotCallOverridableMethodsInConstructor
-            _fromIntQuerier = new HalvingQuerier<T>(this.zero,this.add,this.one);
+            _fromIntQuerier = new HalvingQuerier<T>(this.one,this.add,this.zero);
             _powDictionary = new Dictionary<T, HalvingQuerier<T>>();
             _factorialQuerier = new LazyArray<T>((i, array) => i == 0 ? this.one : this.multiply(this.fromInt(i),array[i-1]));
             // ReSharper restore DoNotCallOverridableMethodsInConstructor
@@ -408,7 +408,7 @@ namespace Edge.Fielding {
                         //base isn't valid
                         return base.Pow(@base, x);
                     //base is valid, initialize halver
-                    _powDictionary[@base] = new HalvingQuerier<T>(this.one,this.multiply,@base);
+                    _powDictionary[@base] = new HalvingQuerier<T>(@base,this.multiply, this.one);
                 }
                 //if it does, then it's valid
                 return _powDictionary[@base][x];
