@@ -6,6 +6,7 @@ using System.Linq;
 using System.Threading;
 using System.Security.Cryptography;
 using Edge.Arrays;
+using Edge.Fielding;
 using Edge.Looping;
 using Edge.WordsPlay;
 
@@ -17,15 +18,17 @@ namespace Edge.RandomGen
         {
             return arrayExtensions.Fill(length, () => (byte)Int(0, byte.MaxValue));
         }
+        public virtual IEnumerable<byte> Bytes()
+        {
+            return Loops.Generate(() => Bytes(sizeof(int))).Concat();
+        }
         public int Int(int max)
         {
             return Int(0, max);
         }
         public virtual int Int(int min, int max)
         {
-            byte[] buf = Bytes(4);
-            var @base = BitConverter.ToInt32(buf, 0);
-            return (Math.Abs(@base % (max - min)) + min);
+            return Fields.getField<int>().Random(Bytes(sizeof(int)),Tuple.Create(min,max));
         }
         public int Int(int min, int max, bool inclusive)
         {
@@ -37,9 +40,7 @@ namespace Edge.RandomGen
         }
         public virtual long Long(long min, long max)
         {
-            byte[] buf = Bytes(8);
-            var @base = BitConverter.ToInt64(buf, 0);
-            return (Math.Abs(@base % (max - min)) + min);
+            return Fields.getField<long>().Random(Bytes(sizeof(long)), Tuple.Create(min, max));
         }
         public long Long(long min, long max, bool inclusive)
         {
@@ -51,9 +52,7 @@ namespace Edge.RandomGen
         }
         public virtual ulong ULong(ulong min, ulong max)
         {
-            byte[] buf = Bytes(8);
-            var @base = BitConverter.ToUInt64(buf, 0);
-            return (@base % (max - min)) + min;
+            return Fields.getField<ulong>().Random(Bytes(sizeof(ulong)), Tuple.Create(min, max));
         }
         public ulong ULong(ulong min, ulong max, bool inclusive)
         {
@@ -69,14 +68,7 @@ namespace Edge.RandomGen
         }
         public virtual double Double(double min, double max)
         {
-            while (true)
-            {
-                var @base = ULong(ulong.MaxValue) / (double)ULong(ULong(ulong.MaxValue));
-                @base *= max;
-                if (double.IsNaN(@base) || double.IsInfinity(@base))
-                    continue;
-                return (Math.Abs(@base % (max - min)) + min);
-            }
+            return Fields.getField<double>().Random(Bytes(sizeof(double)), Tuple.Create(min, max));
         }
         public bool success(double odds)
         {
@@ -112,25 +104,33 @@ namespace Edge.RandomGen
         {
             return Loops.Range(length).Select(a => allowedChars[Int(allowedChars.Length)]).convertToString();
         }
+        public T FromField<T>()
+        {
+            var f = Fields.getField<T>();
+            if (f.RandGen == RandomGenType.None || f.RandGen == RandomGenType.Special)
+                throw new NotSupportedException("Field does not support this generation");
+            return f.Random(Bytes());
+        }
+        public T FromField<T>(T min, T max)
+        {
+            var f = Fields.getField<T>();
+            if (f.RandGen != RandomGenType.FromRange)
+                throw new NotSupportedException("Field does not support this generation");
+            return f.Random(Bytes(),Tuple.Create(min,max));
+        }
+        public T FromField<T>(T min, T max, object special)
+        {
+            var f = Fields.getField<T>();
+            if (f.RandGen != RandomGenType.Special)
+                throw new NotSupportedException("Field does not support this generation");
+            return f.Random(Bytes(), Tuple.Create(min, max), special);
+        }
     }
     public abstract class ByteEnumeratorGenerator : RandomGenerator
     {
-        protected abstract IEnumerator<byte> Bytes();
         public override byte[] Bytes(int length)
         {
-            List<byte> ret = new List<byte>(length);
-            int c = length;
-            while (true)
-            {
-                var tor = Bytes();
-                while (tor.MoveNext())
-                {
-                    ret.Add(tor.Current);
-                    c--;
-                    if (c <= 0)
-                        return ret.ToArray();
-                }
-            }
+            return Bytes().Take(length).ToArray(length);
         }
     }
     public class LocalRandomGenerator : RandomGenerator
@@ -245,12 +245,12 @@ namespace Edge.RandomGen
     {
         private readonly SHA256 _sha;
         private readonly IList<byte> _seed;
-        public ShaGenerator(byte[] seed)
+        public ShaGenerator(IEnumerable<byte> seed)
         {
             _sha = SHA256.Create();
             _seed = new List<byte>(seed);
         }
-        protected override IEnumerator<byte> Bytes()
+        public override IEnumerable<byte> Bytes()
         {
             while (true)
             {
@@ -270,7 +270,7 @@ namespace Edge.RandomGen
     }
     namespace ThreadEntropy
     {
-        public class EntropyRandomGenerator : ByteEnumeratorGenerator, IDisposable
+        public class EntropyRandomGenerator : RandomGenerator, IDisposable
         {
             private volatile int _val = 0;
             private readonly Thread[] _runners;
@@ -291,7 +291,7 @@ namespace Edge.RandomGen
             }
             protected virtual void Dispose(bool disposing)
             {
-                foreach (Thread runner in _runners)
+                if( disposing) foreach (Thread runner in _runners)
                 {
                     runner.Abort();
                 }
@@ -301,15 +301,9 @@ namespace Edge.RandomGen
                 Dispose(true);
                 GC.SuppressFinalize(this);
             }
-            protected override IEnumerator<byte> Bytes()
-            {
-                byte[] intBytes = BitConverter.GetBytes(_val);
-                if (BitConverter.IsLittleEndian)
-                    Array.Reverse(intBytes);
-                return (IEnumerator<byte>)intBytes.GetEnumerator();
-            }
             public override int Int(int min, int max)
             {
+                _val *= 258745143;
                 return (Math.Abs(_val % (max - min)) + min);
             }
         }

@@ -103,13 +103,13 @@ namespace Edge.Processes
         public static void openexplorer(string path = "")
         {
             string arg = path;
-            ProcessStartInfo pfi = new ProcessStartInfo("Explorer.exe", arg);
+            ProcessStartInfo pfi = new ProcessStartInfo("Explorer.exe", '"' + arg + '"');
             Process.Start(pfi);
         }
         public static void openexplorerselectfile(string path = "D:")
         {
             string arg = @"/select," + path;
-            ProcessStartInfo pfi = new ProcessStartInfo("Explorer.exe", arg);
+            ProcessStartInfo pfi = new ProcessStartInfo("Explorer.exe", '"'+arg+'"');
             Process.Start(pfi);
         }
         public static void openbrowser(string url = "www.google.com")

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using Edge.Arrays;
 using Edge.Fielding;
 using Edge.Funnels;
@@ -63,7 +64,7 @@ namespace Edge.Complex
             public override ComplexNumber Conjugate(ComplexNumber a) => a.Conjugate();
             public override ComplexNumber divide(ComplexNumber a, ComplexNumber b) => a / b;
             public override ComplexNumber mod(ComplexNumber a, ComplexNumber b) => a % b;
-            public override ComplexNumber fromFraction(int numerator, int denumerator) => ComplexNumber.FromRectangular(numerator / (double)denumerator);
+            public override ComplexNumber fromFraction(int numerator, int denumerator) => FromRectangular(numerator / (double)denumerator);
             public override ComplexNumber Invert(ComplexNumber x) => 1 / x;
             public override bool isNegative(ComplexNumber x) => x.Isreal() && x.RealPart < 0;
             public override ComplexNumber log(ComplexNumber a) => a.log();
@@ -76,6 +77,19 @@ namespace Edge.Complex
             public override ComplexNumber Parse(string s)
             {
                 return ComplexNumber.Parse(s);
+            }
+            public override RandomGenType RandGen => RandomGenType.FromRange;
+            public override ComplexNumber Random(IEnumerable<byte> bytes, Tuple<ComplexNumber, ComplexNumber> bounds = null, object special = null)
+            {
+                var f = Fields.getField<double>();
+                bounds = bounds ?? Tuple.Create(FromRectangular(0), FromRectangular(1, 1));
+                return FromRectangular(f.Random(bytes.Step(), Tuple.Create(bounds.Item1.RealPart, bounds.Item2.RealPart)),
+                    f.Random(bytes.Skip(1).Step(), Tuple.Create(bounds.Item1.ImaginaryPart, bounds.Item2.ImaginaryPart)));
+            }
+            public override FieldShape shape =>FieldShape.None;
+            public override ComplexNumber fromFraction(double a)
+            {
+                return a;
             }
         }
         // ReSharper disable once InconsistentNaming

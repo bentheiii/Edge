@@ -44,6 +44,14 @@ namespace Edge.Formulas
         public override Formula<G> subtract(Formula<G> a, Formula<G> b) => a - b;
         public override double? toDouble(Formula<G> a) => _int.toDouble(a[_int.zero]);
         public override bool ModduloAble => false;
+        public override Formula<G> fromFraction(double a)
+        {
+            return new ConstantFormula<G>(_int.fromFraction(a));
+        }
+        public override Formula<G> fromFraction(int a, int b)
+        {
+            return new ConstantFormula<G>(_int.fromFraction(a,b));
+        }
     }
     public abstract class Formula<T> : IEquatable<Formula<T>>
     {

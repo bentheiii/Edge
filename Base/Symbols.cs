@@ -14,7 +14,7 @@ namespace Edge.Symbols
     {
         private class SymbolicField : Field<Symbol>
         {
-            public SymbolicField() : base(0, 1, Symbol.e) { }
+            public SymbolicField() : base(0, 1, e) { }
             public override Symbol add(Symbol a, Symbol b) => a + b;
             public override Symbol pow(Symbol a, Symbol b) => a ^ b;
             public override int Compare(Symbol x, Symbol y) => x.Approximate(0.000001).CompareTo(y.Approximate(0.000001));
@@ -38,13 +38,17 @@ namespace Edge.Symbols
             public override bool ModduloAble => false;
             public override double? toDouble(Symbol a) => (double)a.Approximate(0.000001);
         }
-
+        static Symbol()
+        {
+            Fields.setField(new SymbolicField());
+        }
         // ReSharper disable InconsistentNaming
         public static readonly Symbol e = new InfSum(i => new BigRational(1, i.BigFactorial()),1);
         public static readonly Symbol pi = new InfSum(i => new BigRational((i % 2 == 0 ? 1.0 : -1.0) * 4.0 / (2.0 * i + 1)));
         public static readonly Symbol GoldenRatio = (1 + ((Symbol)5).Root()) / 2;
         public static readonly Symbol InverseGoldenRatio = (-1 + ((Symbol)5).Root()) / 2;
         public static readonly Symbol Ln2 = ((Symbol)2).log();
+        public static readonly Symbol PrimeConstant = new InfSum(i=> i.isPrime() ? new BigRational(1,BigInteger.Pow(2,i)) : 0,2);
         // ReSharper restore InconsistentNaming
         public virtual Symbol Multiply(Symbol s2)
         {

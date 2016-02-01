@@ -46,6 +46,37 @@ namespace Edge.Matrix
             throw new NotSupportedException();
         }
         public override bool ModduloAble => false;
+        public override RandomGenType RandGen => _int.RandGen == RandomGenType.None ? RandomGenType.None : RandomGenType.Special;
+        public override Matrix<G> Random(IEnumerable<byte> bytes, Tuple<Matrix<G>, Matrix<G>> bounds = null, object special = null)
+        {
+            var size = special as Tuple<int, int, object> ?? Tuple.Create(0, 0, (object)null);
+            int cells = size.Item1 * size.Item2;
+            Tuple<G, G> gbounds = null;
+            if (bounds != null && bounds.Item1.Any() && bounds.Item2.Any())
+                gbounds = Tuple.Create(bounds.Item1[0, 0], bounds.Item2[0, 0]);
+            Func<IEnumerable<byte>, G> gen = null;
+            switch (_int.RandGen)
+            {
+                case RandomGenType.FromBytes:
+                    gen = bytes1 => _int.Random(bytes1);
+                    break;
+                case RandomGenType.FromRange:
+                    gen = bytes1 => _int.Random(bytes1, gbounds);
+                    break;
+                case RandomGenType.Special:
+                    gen = bytes1 => _int.Random(bytes1, gbounds, size.Item3);
+                    break;
+            }
+            return new ExplicitMatrix<G>(Loops.Range(cells).Select(a => bytes.Skip(a).Step(cells)).SelectToArray(a => gen(a)).to2DArr(size.Item2));
+        }
+        public override Matrix<G> fromFraction(double a)
+        {
+            return new UnitMatrix<G>(_int.fromFraction(a));
+        }
+        public override Matrix<G> fromFraction(int a, int b)
+        {
+            return new UnitMatrix<G>(_int.fromFraction(a,b));
+        }
     }
     public abstract class Matrix<T> : IEnumerable<T>
     {

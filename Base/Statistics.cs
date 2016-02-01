@@ -423,6 +423,55 @@ namespace Edge.Statistics
     }
     namespace Dice
     {
+        public class DieField<G> : Field<IDie<G>>
+        {
+            private readonly Field<G> _int;
+            public DieField(Field<G> i)
+            {
+                this._int = i;
+            }
+            public override bool Invertible => false;
+            public override bool ModduloAble => false;
+            public override bool Negatable => false;
+            public override IDie<G> Negate(IDie<G> x)
+            {
+                return -x;
+            }
+            public override bool Parsable => false;
+            public override RandomGenType RandGen => RandomGenType.None;
+            public override IDie<G> abs(IDie<G> x)
+            {
+                return new AbsDie<G>(x);
+            }
+            public override IDie<G> add(IDie<G> a, IDie<G> b)
+            {
+                return a+b;
+            }
+            public override IDie<G> fromFraction(double a)
+            {
+                return new ConstDie<G>(_int.fromFraction(a));
+            }
+            public override IDie<G> fromInt(int x)
+            {
+                return new ConstDie<G>(_int.fromInt(x));
+            }
+            public override IDie<G> fromInt(ulong x)
+            {
+                return new ConstDie<G>(_int.fromInt(x));
+            }
+            public override IDie<G> multiply(IDie<G> a, IDie<G> b)
+            {
+                return a*b;
+            }
+            public override IDie<G> subtract(IDie<G> a, IDie<G> b)
+            {
+                return a-b;
+            }
+            public override IDie<G> one => new ConstDie<G>(_int.one);
+            public override IDie<G> zero => new ConstDie<G>(_int.zero);
+            public override IDie<G> naturalbase => new ConstDie<G>(_int.naturalbase);
+            public override IDie<G> negativeone => new ConstDie<G>(_int.negativeone);
+        }
         public enum RollAttribute
         {
             Regular = 0,
@@ -430,141 +479,140 @@ namespace Edge.Statistics
             Minimum = 1,
             NoneError = -1
         };
-        public class DieRoll
+        public class DieRoll<T>
         {
-            public DieRoll(int value, RollAttribute attributes)
+            public DieRoll(T value, RollAttribute attributes)
             {
                 this.attributes = attributes;
                 this.value = value;
             }
-            public int value { get; }
+            public T value { get; }
             public RollAttribute attributes {get;}
         }
-        public abstract class IDie : IStatistic<double> {
-            public abstract int Maximum { get; }
-            public abstract int Minimum { get; }
-            public DieRoll RandomRoll()
+        public abstract class IDie<T> : IStatistic<T> {
+            public abstract T Maximum { get; }
+            public abstract T Minimum { get; }
+            public DieRoll<T> RandomRoll()
             {
                 return RandomRoll(new GlobalRandomGenerator());
             }
-            public DieRoll RandomRoll(RandomGenerator g)
+            public DieRoll<T> RandomRoll(RandomGenerator g)
             {
-                var res = this.RandomInt(g);
+                var res = this.RandomMember(g);
                 var att = RollAttribute.Regular;
-                if (Maximum == res && res > Minimum)
+                if (Maximum.Equals(res) && res.ToFieldWrapper() > Minimum)
                     att = RollAttribute.Maximum;
-                if (Minimum == res && res < Maximum)
+                if (Minimum.Equals(res) && res.ToFieldWrapper() < Maximum)
                     att = RollAttribute.Minimum;
-                return new DieRoll(res, att);
+                return new DieRoll<T>(res, att);
             }
-            public override double expectedValue(Func<double, double> func)
+            public override T expectedValue(Func<T, T> func)
             {
-                return Loops.IRange(Minimum, Maximum).Sum(a => func(a) * ProbabilityFor(a));
+                return PossibleOutcomes().Select(a => func(a).ToFieldWrapper()*Fields.getField<T>().fromFraction(ProbabilityFor(a))).getSum();
             }
-            public static IDie operator +(IDie a, IDie b)
+            public static IDie<T> operator +(IDie<T> a, IDie<T> b)
             {
-                return new DiceCollection(a,b);
+                return new SumDice<T>(a,b);
             }
-            public static IDie operator +(IDie a, int b)
+            public static IDie<T> operator +(IDie<T> a, T b)
             {
-                return new DiceCollection(a, new ConstDie(b));
+                return new SumDice<T>(a, new ConstDie<T>(b));
             }
-            public abstract double ProbabilityForMax { get; }
-            public abstract double ProbabilityForMin { get; }
-            public virtual double ProbabilityFor(int x)
+            public static IDie<T> operator -(IDie<T> a, IDie<T> b)
             {
-                return base.ProbabilityFor(x);
+                return new SumDice<T>(a, -b);
             }
-            public int RandomInt()
+            public static IDie<T> operator -(IDie<T> a, T b)
             {
-                return RandomInt(new GlobalRandomGenerator());
+                return new SumDice<T>(a, new ConstDie<T>(-b.ToFieldWrapper()));
             }
-            public abstract int RandomInt(RandomGenerator g);
-            public override sealed double ProbabilityFor(double x)
+            public static IDie<T> operator *(IDie<T> a, IDie<T> b)
             {
-                return x.whole() && x.iswithin(Minimum, Maximum) ? this.ProbabilityFor((int) x) : 0;
+                return new ProdDice<T>(a, b);
             }
-            public override sealed double RandomMember(RandomGenerator g)
+            public static IDie<T> operator *(IDie<T> a, T b)
             {
-                return this.RandomInt(g);
+                return new ProdDice<T>(a, new ConstDie<T>(b));
             }
-            public virtual double CumulitiveDistributionFor(int x)
+            public static IDie<T> operator -(IDie<T> a)
             {
-                return base.CumulitiveDistributionFor(x);
+                return a * Fields.getField<T>().negativeone;
             }
-            public override sealed double CumulitiveDistributionFor(double x)
+            public virtual double ProbabilityForMax
             {
-                return CumulitiveDistributionFor((int)x);
+                get
+                {
+                    return base.ProbabilityFor(this.Maximum);
+                }
             }
-            
+            public virtual double ProbabilityForMin {
+                get
+                {
+                    return base.ProbabilityFor(this.Minimum);
+                }
+            }
         }
-        public static class Dice
+        public class ConstDie<T> : IDie<T>
         {
-            public static readonly IDie Coin = new Die(1, 0), D2 = Coin + 1, D3 = new Die(3), D4 = new Die(4),
-                                        D6 = new Die(6), D8 = new Die(8), D10 = new Die(10), D12 = new Die(12),
-                                        D20 = new Die(20), D100 = new Die(100);
-        }
-        public class ConstDie : IDie
-        {
-            public ConstDie(int val)
+            public ConstDie(T val)
             {
                 this.Val = val;
             }
-            public int Val { get; }
-            public override double expectedValue(Func<double, double> func)
+            public T Val { get; }
+            public override T expectedValue(Func<T, T> func)
             {
                 return func(Val);
             }
-            public override double Variance(Func<double, double> func) => 0;
-            public override int Maximum
+            public override T Variance(Func<T, T> func) => Fields.getField<T>().zero;
+            public override T Maximum
             {
                 get
                 {
                     return Val;
                 }
             }
-            public override int Minimum
+            public override T Minimum
             {
                 get
                 {
                     return Val;
                 }
             }
-            public override int RandomInt(RandomGenerator g)
+            public override T RandomMember(RandomGenerator g)
             {
                 return Val;
             }
             public override double ProbabilityForMax { get; } = 1;
             public override double ProbabilityForMin { get; } = 1;
-            public override double ProbabilityFor(int x)
+            public override double ProbabilityFor(T x)
             {
-                return x == this.Maximum ? 1 : 0;
+                return x.Equals(Val).Indicator();
             }
-            public override IEnumerable<double> PossibleOutcomes()
+            public override IEnumerable<T> PossibleOutcomes()
             {
-                return Val.Enumerate().Cast<double>();
+                return Val.Enumerate();
             }
         }
-        public class Die : IDie
+        public class Die<T> : IDie<T>
         {
-            public Die(int maximum, int minimum = 1)
+            public Die(T minimum, T maximum)
             {
                 this.Maximum = maximum;
                 this.Minimum = minimum;
             }
-            public override double expectedValue()
+            public override T expectedValue()
             {
-                return ((double)Minimum + Maximum) / 2;
+                return (Minimum.ToFieldWrapper() + Maximum) / 2;
             }
-            public override double Variance()
+            public override T Variance()
             {
-                return ((Maximum-Minimum+1).pow(2) -1.0)/12;
+                return ((Maximum.ToFieldWrapper()-Minimum+1).pow(2) - 1)/12;
             }
-            public override int Maximum { get; }
-            public override int Minimum { get; }
-            public override int RandomInt(RandomGenerator g)
+            public override T Maximum { get; }
+            public override T Minimum { get; }
+            public override T RandomMember(RandomGenerator g)
             {
-                return g.Int(Minimum, Maximum, true);
+                return g.FromField(Minimum,Maximum);
             }
             public override double ProbabilityForMax
             {
@@ -580,59 +628,66 @@ namespace Edge.Statistics
                     return ProbabilityFor(Minimum);
                 }
             }
-            public override double ProbabilityFor(int x)
+            public override double ProbabilityFor(T x)
             {
-                return x.iswithin(Minimum, Maximum) ? 1.0 / (Maximum - Minimum + 1.0) : 0;
+                var f = Fields.getField<T>();
+                if (f.shape.HasFlag(FieldShape.Discrete))
+                    return (x).iswithin(Minimum, Maximum) ? f.toDouble(f.Invert(Maximum.ToFieldWrapper() - Minimum))??0 : 0;
+                return 0;
             }
-            public override double CumulitiveDistributionFor(int x)
+            public override double CumulitiveDistributionFor(T v)
             {
-                return x < Minimum ? 0 : (x >= Maximum ? 1 : (x - Minimum + 1.0) / (Maximum - Minimum + 1.0));
+                var x = v.ToFieldWrapper();
+                return x < Minimum ? 0 : (x >= Maximum ? 1 : (double)((x - Minimum) / (Maximum.ToFieldWrapper() - Minimum)));
             }
-            public override IEnumerable<double> PossibleOutcomes()
+            public override IEnumerable<T> PossibleOutcomes()
             {
-                return Loops.Range(Minimum, Maximum).Cast<double>();
+                var f = Fields.getField<T>();
+                if (f.shape.HasFlag(FieldShape.Discrete))
+                    return Loops.Range(Minimum, Maximum);
+                return base.PossibleOutcomes();
             }
         }
-        public class DiceCollection : IDie
+        public class SumDice<T> : IDie<T>
         {
-            private readonly IEnumerable<IDie> _dice;
-            public DiceCollection(params IDie[] dice)
+            private readonly IEnumerable<IDie<T>> _dice;
+            public SumDice(params IDie<T>[] dice)
             {
                 this._dice = dice.ToArray();
             }
-            public override double expectedValue(Func<double, double> func)
+            public override T expectedValue(Func<T, T> func)
             {
-                return _dice.Sum(a=>a.expectedValue(func));
+                return _dice.Select(a=>a.expectedValue(func)).getSum();
             }
-            public override double expectedValue()
+            public override T expectedValue()
             {
-                return _dice.Select(a=>a.expectedValue()).Sum();
+                return _dice.Select(a=>a.expectedValue()).getSum();
             }
-            public override int Maximum
+            public override T Maximum
             {
                 get
                 {
-                   return _dice.Sum(a=>a.Maximum);
+                   return _dice.Select(a=>a.Maximum).getSum();
                 }
             }
-            public override int Minimum
+            public override T Minimum
             {
                 get
                 {
-                    return _dice.Sum(a => a.Minimum);
+                    return _dice.Select(a => a.Minimum).getSum();
                 }
             }
-            public override int RandomInt(RandomGenerator g)
+            public override T RandomMember(RandomGenerator g)
             {
-                return _dice.Sum(a => a.RandomInt(g));
+                return _dice.Select(a => a.RandomMember(g)).getSum();
             }
-            public override double Variance(Func<double, double> func)
+            public override T Variance(Func<T, T> func)
             {
-                return _dice.Sum(a=>a.Variance(func));
+                return _dice.Select(a=>a.Variance(func)).getSum();
             }
-            public override double Variance()
+            public override T Variance()
             {
-                return _dice.Sum(a => a.Variance());
+                return _dice.Select(a => a.Variance()).getSum();
             }
             public override double ProbabilityForMax
             {
@@ -648,259 +703,91 @@ namespace Edge.Statistics
                     return _dice.Select(a => a.ProbabilityForMin).getProduct((a, b) => a * b);
                 }
             }
-        }
-        public class FactorDie : IDie
-        {
-            private readonly IDie _int;
-            private readonly int _factor;
-            public FactorDie(IDie i, int factor)
+            public override IEnumerable<T> PossibleOutcomes()
             {
-                this._int = i;
-                this._factor = factor;
-            }
-            public override double expectedValue(Func<double, double> func)
-            {
-                return this._int.expectedValue(func) * _factor;
-            }
-            public override double expectedValue()
-            {
-                return this._int.expectedValue() * _factor;
-            }
-            public override int Maximum
-            {
-                get
-                {
-                    return this._int.Maximum * _factor;
-                }
-            }
-            public override int Minimum
-            {
-                get
-                {
-                    return this._int.Minimum * _factor;
-                }
-            }
-            public override int RandomInt(RandomGenerator g)
-            {
-                return _int.RandomInt(g)*_factor;
-            }
-            public override double Variance(Func<double, double> func)
-            {
-                return _int.Variance(func) * _factor * _factor;
-            }
-            public override double Variance()
-            {
-                return _int.Variance() * _factor * _factor;
-            }
-            public override double ProbabilityForMax
-            {
-                get
-                {
-                    return _int.ProbabilityForMax;
-                }
-            }
-            public override double ProbabilityForMin
-            {
-                get
-                {
-                    return _int.ProbabilityForMin;
-                }
-            }
-            public override double ProbabilityFor(int x)
-            {
-                return x % _factor != 0 ? 0 : _int.ProbabilityFor(x / _factor);
-            }
-            public override IEnumerable<double> PossibleOutcomes()
-            {
-                return _int.PossibleOutcomes().Select(a=>a*_factor);
-            }
-            public override double CumulitiveDistributionFor(int x)
-            {
-                return _int.CumulitiveDistributionFor(x / _factor);
+                return _dice.SelectToArray(a => a.PossibleOutcomes()).Join().Select(a => a.getSum()).Distinct();
             }
         }
-        public class MultiDie : IDie
+        public class DropDice<T> : IDie<T>
         {
-            protected readonly IDie _int;
+            protected readonly IDie<T> _int;
             protected readonly int _factor;
-            public MultiDie(IDie i, int factor)
+            private readonly int _drophighestcount;
+            private readonly int _droplowestcount;
+            public DropDice(IDie<T> i, int factor, int drophighestcount=0, int droplowestcount=0)
             {
-                this._int = i;
-                this._factor = factor;
+                if (factor < (drophighestcount + droplowestcount) && (factor > 0 && droplowestcount > 0 && drophighestcount > 0))
+                    throw new ArgumentException("factor must be larger than drophighest and droplowest combined ,and they all have to be positive");
+                _int = i;
+                _factor = factor;
+                _drophighestcount = drophighestcount;
+                _droplowestcount = droplowestcount;
             }
-            public override double expectedValue(Func<double, double> func)
-            {
-                return this._int.expectedValue(func) * _factor;
-            }
-            public override double expectedValue()
-            {
-                return this._int.expectedValue() * _factor;
-            }
-            public override int Maximum
+            public override T Maximum
             {
                 get
                 {
-                    return this._int.Maximum * _factor;
+                    return this._int.Maximum.ToFieldWrapper() * (_factor-_drophighestcount - _droplowestcount);
                 }
             }
-            public override int Minimum
+            public override T Minimum
             {
                 get
                 {
-                    return this._int.Minimum*_factor;
+                    return this._int.Minimum.ToFieldWrapper() * (_factor - _drophighestcount - _droplowestcount);
                 }
             }
-            public override int RandomInt(RandomGenerator g)
+            public override T RandomMember(RandomGenerator g)
             {
-                return Loops.Range(_factor).Sum(a=>_int.RandomInt(g));
-            }
-            public override double Variance(Func<double, double> func)
-            {
-                return _int.Variance(func) * _factor * _factor;
-            }
-            public override double Variance()
-            {
-                return _int.Variance() * _factor * _factor;
+                return Loops.Range(_factor).Select(a=>_int.RandomMember(g)).OrderBy().Skip(_droplowestcount).Take(_factor-_drophighestcount).getSum();
             }
             public override double ProbabilityForMax
             {
                 get
                 {
-                    return _int.ProbabilityForMax.pow(_factor);
+                    return _int.ProbabilityForMax.pow(_factor-_droplowestcount);
                 }
             }
             public override double ProbabilityForMin
             {
                 get
                 {
-                    return _int.ProbabilityForMin.pow(_factor);
+                    return _int.ProbabilityForMin.pow(_factor-_drophighestcount);
                 }
             }
         }
-        public class DropLowestDice : IDie
+        public class ExplodingDice<T> : IDie<T>
         {
-            protected readonly IDie _int;
-            protected readonly int _factor;
-            private readonly int _droplowest;
-            public DropLowestDice(int droplowest, int factor, IDie i)
-            {
-                this._droplowest = droplowest;
-                this._factor = factor;
-                this._int = i;
-            }
-            public override int Maximum
-            {
-                get
-                {
-                    return this._int.Maximum * (_factor-_droplowest);
-                }
-            }
-            public override int Minimum
-            {
-                get
-                {
-                    return this._int.Minimum * (_factor - _droplowest);
-                }
-            }
-            public override int RandomInt(RandomGenerator g)
-            {
-                return Loops.Range(_factor).SelectToArray(a=>_int.RandomInt(g)).Sort().Skip(_droplowest).Sum();
-            }
-            public override double ProbabilityForMax
-            {
-                get
-                {
-                    return _int.ProbabilityForMax.pow(_factor-_droplowest);
-                }
-            }
-            public override double ProbabilityForMin
-            {
-                get
-                {
-                    return _int.ProbabilityForMin.pow(_factor);
-                }
-            }
-        }
-        public class DropHighestDice : IDie
-        {
-            protected readonly IDie _int;
-            protected readonly int _factor;
-            private readonly int _drophighest;
-            public DropHighestDice(int droplowest, int factor, IDie i)
-            {
-                this._drophighest = droplowest;
-                this._factor = factor;
-                this._int = i;
-            }
-            public override int Maximum
-            {
-                get
-                {
-                    return this._int.Maximum * (_factor - _drophighest);
-                }
-            }
-            public override int Minimum
-            {
-                get
-                {
-                    return this._int.Minimum * (_factor - _drophighest);
-                }
-            }
-            public override int RandomInt(RandomGenerator g)
-            {
-                return Loops.Range(_factor).SelectToArray(a => _int.RandomInt(g)).Sort().Take(_factor- _drophighest).Sum();
-            }
-            public override double ProbabilityForMin
-            {
-                get
-                {
-                    return _int.ProbabilityForMin.pow(_factor-_drophighest);
-                }
-            }
-            public override double expectedValue(Func<double, double> func)
-            {
-                return Loops.IRange(Minimum, Maximum).Sum(a => func(a) / ProbabilityFor(a));
-            }
-            public override double ProbabilityForMax
-            {
-                get
-                {
-                    return _int.ProbabilityForMax.pow(_factor);
-                }
-            }
-        }
-        public class ExplodingDice : IDie
-        {
-            public ExplodingDice(IDie i)
+            public ExplodingDice(IDie<T> i)
             {
                 this._int = i;
             }
-            private IDie _int { get; }
-            public override double expectedValue()
+            private IDie<T> _int { get; }
+            public override T expectedValue()
             {
-                return _int.expectedValue() + _int.Maximum * (_int.ProbabilityForMax / (1 - _int.ProbabilityForMax));
+                return _int.expectedValue() + _int.Maximum.ToFieldWrapper() * (_int.ProbabilityForMax / (1 - _int.ProbabilityForMax));
             }
-            public override double expectedValue(Func<double, double> func)
+            public override T expectedValue(Func<T, T> func)
             {
-                return _int.expectedValue(func) + func(_int.Maximum) * (_int.ProbabilityForMax/(1-_int.ProbabilityForMax));
+                return _int.expectedValue(func) + func(_int.Maximum).ToFieldWrapper() * (_int.ProbabilityForMax/(1-_int.ProbabilityForMax));
             }
-            public override int Maximum
+            public override T Maximum
             {
                 get
                 {
                     throw new NotSupportedException("exploding dice have no maximum");
                 }
             }
-            public override int Minimum
+            public override T Minimum
             {
                 get
                 {
                     return _int.Minimum;
                 }
             }
-            public override int RandomInt(RandomGenerator g)
+            public override T RandomMember(RandomGenerator g)
             {
-                int ret = 0;
+                var ret = Fields.getField<T>().zero.ToFieldWrapper();
                 while (true)
                 {
                     var roll = _int.RandomRoll(g);
@@ -922,6 +809,134 @@ namespace Edge.Statistics
                 {
                     return _int.ProbabilityForMin;
                 }
+            }
+        }
+        public class ProdDice<T> : IDie<T>
+        {
+            private readonly IEnumerable<IDie<T>> _dice;
+            public ProdDice(params IDie<T>[] dice)
+            {
+                _dice = dice;
+            }
+            public override T expectedValue(Func<T, T> func)
+            {
+                return _dice.Select(a=>a.expectedValue(func)).getProduct();
+            }
+            public override T expectedValue()
+            {
+                return _dice.Select(a => a.expectedValue()).getProduct();
+            }
+            public override T Maximum
+            {
+                get
+                {
+                    return _dice.Select(a => a.Maximum).getProduct();
+                }
+            }
+            public override T Minimum
+            {
+                get
+                {
+                    return _dice.Select(a => a.Minimum).getProduct();
+                }
+            }
+            public override double ProbabilityForMax
+            {
+                get
+                {
+                    return _dice.Select(a => a.ProbabilityForMax).getProduct((a, b) => a * b);
+                }
+            }
+            public override double ProbabilityForMin
+            {
+                get
+                {
+                    return _dice.Select(a => a.ProbabilityForMin).getProduct((a, b) => a * b);
+                }
+            }
+            public override T RandomMember(RandomGenerator g)
+            {
+                return _dice.Select(a => a.RandomMember(g)).getProduct();
+            }
+            public override IEnumerable<T> PossibleOutcomes()
+            {
+                return _dice.SelectToArray(a=>a.PossibleOutcomes()).Join().Select(a=>a.getProduct()).Distinct();
+            }
+            public override T Variance(Func<T, T> func)
+            {
+                var esq = _dice.Select(a => a.expectedValue(func).ToFieldWrapper().pow(2)).Cache();
+                return _dice.Zip(esq).Select(a => a.Item1.Variance(func) + a.Item2).getProduct((a, b) => a * b) - esq.getProduct((a, b) => a * b);
+            }
+            public override T Variance()
+            {
+                var esq = _dice.Select(a => a.expectedValue().ToFieldWrapper().pow(2)).Cache();
+                return _dice.Zip(esq).Select(a => a.Item1.Variance() + a.Item2).getProduct((a, b) => a * b) - esq.getProduct((a, b) => a * b);
+            }
+        }
+        public class AbsDie<T> : IDie<T>
+        {
+            private readonly IDie<T> _int;
+            private readonly sbyte _minormaxhigher;
+            public AbsDie(IDie<T> i)
+            {
+                _int = i;
+                _minormaxhigher = (i.Minimum.ToFieldWrapper().abs() == i.Maximum.ToFieldWrapper().abs()) ? (sbyte)0 : (i.Maximum.ToFieldWrapper().abs() > i.Minimum.ToFieldWrapper().abs() ? (sbyte)1 : (sbyte)-1);
+            }
+            public override T Maximum
+            {
+                get
+                {
+                    return _minormaxhigher >= 0 ? _int.Maximum : _int.Minimum;
+                }
+            }
+            public override T Minimum
+            {
+                get
+                {
+                    return Fields.getField<T>().zero.iswithin(_int.Minimum, _int.Maximum) ? Fields.getField<T>().zero : (_minormaxhigher < 0 ? _int.Maximum : _int.Minimum);
+                }
+            }
+            public override double ProbabilityForMax
+            {
+                get
+                {
+                    if (_minormaxhigher == 0)
+                        return _int.ProbabilityForMax + _int.ProbabilityForMin;
+                    return _minormaxhigher > 0 ? _int.ProbabilityForMax : _int.ProbabilityForMin;
+                }
+            }
+            public override double ProbabilityForMin
+            {
+                get
+                {
+                    if (Fields.getField<T>().zero.iswithin(_int.Minimum, _int.Maximum))
+                        return _int.ProbabilityFor(Fields.getField<T>().zero);
+                    return _minormaxhigher < 0 ? _int.ProbabilityForMax : _int.ProbabilityForMin;
+                }
+            }
+            public override T RandomMember(RandomGenerator g)
+            {
+                return _int.RandomMember(g).ToFieldWrapper().abs();
+            }
+            public override double CumulitiveDistributionFor(T x)
+            {
+                return _int.CumulitiveDistributionFor(x) - _int.CumulitiveDistributionFor(-x.ToFieldWrapper()) + _int.ProbabilityFor(x);
+            }
+            public override IEnumerable<T> PossibleOutcomes()
+            {
+                return _int.PossibleOutcomes().Select(a=>a.ToFieldWrapper().abs().val).Distinct();
+            }
+            public override T Variance(Func<T, T> func)
+            {
+                return _int.Variance(a=>func(a.ToFieldWrapper().abs()));
+            }
+            public override T expectedValue(Func<T, T> func)
+            {
+                return _int.expectedValue(a => func(a.ToFieldWrapper().abs()));
+            }
+            public override double ProbabilityFor(T x)
+            {
+                return _int.ProbabilityFor(x) + _int.ProbabilityFor(-x.ToFieldWrapper());
             }
         }
     }

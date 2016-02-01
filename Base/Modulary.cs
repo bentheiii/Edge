@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Edge.Fielding;
 using Edge.NumbersMagic;
 using Edge.SystemExtensions;
@@ -41,6 +42,13 @@ namespace Edge.Modular
             public override double? toDouble(Modulary a) => a.val;
             public override bool ModduloAble => false;
             public override OrderType Order => OrderType.ReflexiveZero;
+            public override RandomGenType RandGen => RandomGenType.Special;
+            public override FieldShape shape => FieldShape.Finite;
+            public override Modulary Random(IEnumerable<byte> bytes, Tuple<Modulary, Modulary> bounds = null, object special = null)
+            {
+                int max = special as int? ?? 0;
+                return max == 0 ? new Zero() : new Modulary(Fields.getField<int>().Random(bytes,Tuple.Create(0,max)),max);
+            }
         }
         static Modulary()
         {

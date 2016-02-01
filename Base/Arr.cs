@@ -11,7 +11,6 @@ using Edge.NumbersMagic;
 using Edge.SpecialNumerics;
 using Edge.RandomGen;
 using Edge.SystemExtensions;
-using Edge.WordsPlay;
 
 namespace Edge.Arrays
 {
@@ -40,8 +39,10 @@ namespace Edge.Arrays
             return false;
         }
         //maximum is exclusive
-        public static int binSearch(Func<int, int> searcher, int min, int max)
+        public static int binSearch(Func<int, int> searcher, int min, int max, int failvalue = -1)
         {
+            if (failvalue.iswithin(min,max))
+                throw new ArgumentException("failval cannot be within searched values");
             while (min < max)
             {
                 int i = (min + max) / 2;
@@ -57,17 +58,16 @@ namespace Edge.Arrays
                 else
                     max = i;
             }
-            return -1;
+            return failvalue;
         }
         /// <summary>
         /// returns the last index at which searcher returns positive
         /// </summary>
-        /// <param name="searcher"></param>
-        /// <param name="min"></param>
-        /// <param name="max"></param>
         /// <returns></returns>
-        public static int binSearch(Func<int, bool> searcher, int min, int max)
+        public static int binSearch(Func<int, bool> searcher, int min, int max, int failvalue = -1)
         {
+            if (failvalue.iswithin(min, max))
+                throw new ArgumentException("failval cannot be within searched values");
             int rangemax = max;
             while (min < max)
             {
@@ -82,7 +82,7 @@ namespace Edge.Arrays
                     min = i + 1;
                 }
             }
-            return -1;
+            return failvalue;
         }
         /// <summary>
         /// returns the last index at which searcher returns positive
@@ -196,8 +196,7 @@ namespace Edge.Arrays
         }
         private static int RecommendSize<T>(this IEnumerable<T> @this)
         {
-            var collection = @this as ICollection<T>;
-            return collection?.Count ?? 0;
+            return (@this as IReadOnlyCollection<T>)?.Count ?? ((@this as ICollection<T>)?.Count ?? 0);
         }
         public static T[] ToArray<T>(this IEnumerable<T> @this, Action<int> reporter)
         {
@@ -328,18 +327,37 @@ namespace Edge.Arrays
         {
             return Sort(tosort, Comparer<T>.Default);
         }
+        public static T[] Sort<T>(this T[] tosort, int startindex, int length)
+        {
+            return Sort(tosort, startindex, length, Comparer<T>.Default);
+        }
         public static T[] Sort<T>(this T[] tosort, IComparer<T> comparer)
         {
             T[] ret = tosort.Copy();
             Array.Sort(ret, comparer);
             return ret;
         }
+        public static T[] Sort<T>(this T[] tosort,int startindex, int length, IComparer<T> comparer)
+        {
+            T[] ret = tosort.Copy();
+            Array.Sort(ret, startindex, length, comparer);
+            return ret;
+        }
+        public static T getMedianNoAlloc<T>(this IEnumerable<T> @this, IComparer<T> comparer, out int index)
+        {
+            if (!@this.Any())
+                throw new ArgumentException("cannot be empty", nameof(@this));
+            int c = @this.Count();
+            var res = @this.CountBind().OrderBy(new FunctionComparer<Tuple<T,int>>((a,b)=>comparer.Compare(a.Item1,b.Item1))).Skip(c / 2).First();
+            index = res.Item2;
+            return res.Item1;
+        }
         public static T getMedian<T>(this IEnumerable<T> tosearch, IComparer<T> comparer, out int index)
         {
             if (!tosearch.Any())
                 throw new ArgumentException("cannot be empty", nameof(tosearch));
-            Tuple<T, int>[] arr =
-                tosearch.CountBind().ToArray().Sort(new FunctionComparer<Tuple<T, int>>((a, b) => comparer.Compare(a.Item1, b.Item1)));
+            Tuple<T, int>[] arr = tosearch.CountBind().ToArray();
+            Array.Sort(arr,0,(arr.Length/2)+1, new FunctionComparer<Tuple<T, int>>((a, b) => comparer.Compare(a.Item1, b.Item1)));
             var ret = arr[arr.Length / 2];
             index = ret.Item2;
             return ret.Item1;
@@ -362,10 +380,10 @@ namespace Edge.Arrays
         {
             if (!tosearch.Any())
                 throw new ArgumentException("cannot be empty", nameof(tosearch));
-            T ret = tosearch.FirstOrDefault();
+            T ret = tosearch.First();
             index = 0;
             int i = 0;
-            foreach (T var in tosearch)
+            foreach (T var in tosearch.Skip(1))
             {
                 if (compare.Compare(var, ret) < 0)
                 {
@@ -811,6 +829,126 @@ namespace Edge.Arrays
         {
             _data.Clear();
             _initialized.Clear();
+        }
+    }
+    public class LazyDictionary<K,V>
+    {
+        private readonly IDictionary<K, V> _dic;
+        private readonly Func<K, V> _gen;
+        public LazyDictionary(Func<K, V> gen, int capacity=0)
+        {
+            _gen = gen;
+            _dic = new Dictionary<K, V>(capacity);
+        }
+        public V this[K key]
+        {
+            get
+            {
+                if (!_dic.ContainsKey(key))
+                    _dic[key] = _gen(key);
+                return _dic[key];
+            }
+        }
+        public bool Contains(K key)
+        {
+            return _dic.ContainsKey(key);
+        }
+    }
+    public class BoundLazyDictionary<K, V> : IReadOnlyDictionary<K,V>
+    {
+        private readonly LazyDictionary<K, V> _dic;
+        private readonly ISet<K> _keys;
+        public BoundLazyDictionary(Func<K, V> gen, IEnumerable<K> keys)
+        {
+            _dic = new LazyDictionary<K, V>(gen,keys.Count());
+            _keys = new HashSet<K>(keys);
+        }
+        public bool TryGetValue(K key, out V value)
+        {
+            value = default(V);
+            if (!ContainsKey(key))
+                return false;
+            value = this[key];
+            return true;
+        }
+        public V this[K key]
+        {
+            get
+            {
+                if (!_keys.Contains(key))
+                    throw new ArgumentOutOfRangeException("key does not exist");
+                return _dic[key];
+            }
+        }
+        public IEnumerable<K> Keys => _keys;
+        public IEnumerable<V> Values => _keys.Select(a => _dic[a]);
+        public bool ContainsKey(K key)
+        {
+            return _keys.Contains(key);
+        }
+        public IEnumerator<KeyValuePair<K, V>> GetEnumerator()
+        {
+            return _keys.Select(a => new KeyValuePair<K,V>(a, _dic[a])).GetEnumerator();
+        }
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return GetEnumerator();
+        }
+        public int Count => _keys.Count;
+    }
+    public class EnumerableCache<T> : IReadOnlyList<T>
+    {
+        private readonly IEnumerator<T> _tor;
+        private readonly IList<T> _cache;
+        private bool _formed = false;
+        public EnumerableCache(IEnumerable<T> tor)
+        {
+            _tor = tor.GetEnumerator();
+            _cache = new List<T>();
+        }
+        private bool InflateToIndex(int index)
+        {
+            while (_cache.Count <= index)
+            {
+                if (_formed || !_tor.MoveNext())
+                {
+                    _formed = true;
+                    return false;
+                }
+                _cache.Add(_tor.Current);
+            }
+            return true;
+        }
+        public T this[int ind]
+        {
+            get
+            {
+                if (ind < 0)
+                    throw new ArgumentOutOfRangeException("ind cannot be negative");
+                if (!InflateToIndex(ind))
+                    throw new ArgumentOutOfRangeException("IEnumerator ended unexpectedly");
+                return _cache[ind];
+            }
+        }
+        public IEnumerator<T> GetEnumerator()
+        {
+            int i = 0;
+            while (InflateToIndex(i))
+            {
+                yield return _cache[i];
+                i++;
+            }
+        }
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return ((IEnumerable)_cache).GetEnumerator();
+        }
+        public int Count
+        {
+            get
+            {
+                return _formed ? _cache.Count : this.Count();
+            }
         }
     }
     namespace Arr2D

@@ -4,11 +4,14 @@ using Edge.SystemExtensions;
 namespace Edge.Guard
 {
     public enum AccessType {Get, Set, other};
-    public class Guard<T> : ICloneable
+    public interface IGuard<T> : ICloneable
+    {
+        T value { get; set; }
+    }
+    public class Guard<T> : IGuard<T>
     {
         public T value { get; set; }
-        public Guard() : this(default(T)) { }
-        public Guard(T load)
+        public Guard(T load = default(T))
         {
             this.value = load;
         }
@@ -82,7 +85,10 @@ namespace Edge.Guard
         /// </summary>
         public event GuardDrawHandler drawn;
         public EventGuard() : base(default(T)) {}
-        public EventGuard(T load) : base (load) {}
+        public EventGuard(T load)
+        {
+            value = load;
+        }
         public override object Clone()
         {
             var ret = new EventGuard<T>(value);

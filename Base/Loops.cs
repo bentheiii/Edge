@@ -8,6 +8,7 @@ using Edge.Guard;
 using Edge.NumbersMagic;
 using Edge.SystemExtensions;
 using CCDefault.Annotations;
+using Edge.Arrays.Arr2D;
 
 namespace Edge.Looping
 {
@@ -619,6 +620,35 @@ namespace Edge.Looping
 				    break;
 		    }
 	    }
+        public static IEnumerable<T[]> Join<T>(this IList<IEnumerable<T>> @this)
+        {
+            var tors = @this.SelectToArray(a => a.GetEnumerator());
+            //initialization
+            if (tors.Any(a=>!a.MoveNext()))
+                yield break;
+            //yield initial
+            yield return tors.SelectToArray(a => a.Current);
+            while (true)
+            {
+                int nexttorind = 0;
+                while (true)
+                {
+                    if (!tors.isWithinBounds(nexttorind))
+                        yield break;
+                    if (!tors[nexttorind].MoveNext())
+                    {
+                        tors[nexttorind] = @this[nexttorind].GetEnumerator();
+                        tors[nexttorind].MoveNext();
+                        nexttorind++;
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+                yield return tors.SelectToArray(a => a.Current);
+            }
+        }
 		public static IEnumerable<Tuple<T, int>> CountBind<T>(this IEnumerable<T> a, int start = 0)
 	    {
 		    return a.Zip(Count(start));
@@ -825,12 +855,14 @@ namespace Edge.Looping
                 action?.Invoke(t);
             }
         }
-        public static IEnumerable<T> EnumerationHook<T>(this IEnumerable<T> @this,Action preNumeration = null, Action postNumeration = null)
+        public static IEnumerable<T> EnumerationHook<T>(this IEnumerable<T> @this,Action preNumeration = null, Action postNumeration = null, Action<T> preYield = null, Action<T> postYield = null)
         {
             preNumeration?.Invoke();
             foreach (var t in @this)
             {
+                preYield?.Invoke(t);
                 yield return t;
+                postYield?.Invoke(t);
             }
             postNumeration?.Invoke();
         }
@@ -881,5 +913,21 @@ namespace Edge.Looping
                 yield return gen();
             }
         }
+        public static EnumerableCache<T> Cache<T>(this IEnumerable<T> @this)
+        {
+            return new EnumerableCache<T>(@this);
+        }
+        public static IEnumerable<T> Step<T>(this IEnumerable<T> @this, int step = 2)
+        {
+            int c = 0;
+            foreach (var t in @this)
+            {
+                if (c == 0)
+                    yield return t;
+                c++;
+                if (c == step)
+                    c = 0;
+            }
+        } 
     }
 }

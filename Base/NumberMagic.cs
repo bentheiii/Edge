@@ -18,6 +18,8 @@ namespace Edge.NumbersMagic
 	{
 		public const double Phi = 1.618033988749894848204586834365638117720309179805762862;
 		public const double Tau = 2 * Math.PI;
+	    public const double MillsConstant = 1.3063778838630806904686144926;
+	    public const double PrimeConstant = 0.414682509851111660248109622;
         public static BigInteger Ackermann(int a, int b)
         {
             return Ackermann(new BigInteger(a), new BigInteger(b));
@@ -1160,6 +1162,10 @@ namespace Edge.NumbersMagic
 		{
 			return iswithinexclusive(x, border1, border2) || x == border1 || x == border2;
 		}
+        public static bool iswithin<T>(this T x, T border1, T border2)
+        {
+            return iswithinexclusive(x, border1, border2) || x.Equals(border1) || x.Equals(border2);
+        }
         public static bool iswithinPartialExclusive(this int x, int border1, int border2)
         {
             return iswithinexclusive(x, border1, border2) || (x == border1 && x != border2);
@@ -1171,6 +1177,10 @@ namespace Edge.NumbersMagic
         public static bool iswithinPartialExclusive(this float x, float border1, float border2)
         {
             return iswithinexclusive(x, border1, border2) || (x == border1 && x != border2);
+        }
+        public static bool iswithinPartialExclusive<T>(this T x, T border1, T border2)
+        {
+            return iswithinexclusive(x, border1, border2) || (x.Equals(border1) && !x.Equals(border2));
         }
         /// <summary>
         /// both min and max are inclusive
@@ -1192,6 +1202,11 @@ namespace Edge.NumbersMagic
         {
             minmax(ref border1, ref border2);
             return x > border1 && x < border2;
+        }
+        public static bool iswithinexclusive<T>(this T x, T border1, T border2)
+        {
+            minmax(ref border1, ref border2);
+            return x.ToFieldWrapper() >  border1 && x.ToFieldWrapper() > border2;
         }
         public static bool isInfinity(this double x)
 		{

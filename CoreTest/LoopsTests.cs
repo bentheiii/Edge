@@ -372,7 +372,7 @@ namespace CoreTest
             foreach (var t in Loops.Range(10).Attach(a => 1.0 / a).Detach(val))
             {
                 AreEqual(t, n++);
-                AreEqual(val, 1.0 / t);
+                AreEqual(val.value, 1.0 / t);
             }
         }
         [TestMethod] public void SimpleTwo()
@@ -383,19 +383,18 @@ namespace CoreTest
             foreach (var t in Loops.Range(10).Attach(a => 1.0 / a).Attach((i, j) => i * i).Detach(val, val2))
             {
                 AreEqual(t, n++);
-                AreEqual(val, 1.0 / t);
-                AreEqual(val2, t * t);
+                AreEqual(val.value, 1.0 / t);
+                AreEqual(val2.value, t * t);
             }
         }
         [TestMethod] public void TwoTwo()
         {
-            var val = new Guard<double>();
             var val2 = new Guard<int>();
             var n = 0;
             foreach (var t in Loops.Range(10).Attach(a => 1.0 / a).Attach((i, j) => i * i).Detach(val2))
             {
                 AreEqual(t.Item1, n++);
-                AreEqual(val2, t.Item1 * t.Item1);
+                AreEqual(val2.value, t.Item1 * t.Item1);
             }
         }
         [TestMethod] public void SimpleThree()
@@ -407,34 +406,31 @@ namespace CoreTest
             foreach (var t in Loops.Range(10).Attach(a => 1.0 / a).Attach((i, j) => i * i).Attach((i, j, k) => -i).Detach(val, val2, val3))
             {
                 AreEqual(t, n++);
-                AreEqual(val, 1.0 / t);
-                AreEqual(val2, t * t);
-                AreEqual(val3, -t);
+                AreEqual(val.value, 1.0 / t);
+                AreEqual(val2.value, t * t);
+                AreEqual(val3.value, -t);
             }
         }
         [TestMethod] public void TwoThree()
         {
-            var val = new Guard<double>();
             var val2 = new Guard<int>();
             var val3 = new Guard<int>();
             var n = 0;
             foreach (var t in Loops.Range(10).Attach(a => 1.0 / a).Attach((i, j) => i * i).Attach((i, j, k) => -i).Detach(val2, val3))
             {
                 AreEqual(t.Item1, n++);
-                AreEqual(val2, t.Item1 * t.Item1);
-                AreEqual(val3, -t.Item1);
+                AreEqual(val2.value, t.Item1 * t.Item1);
+                AreEqual(val3.value, -t.Item1);
             }
         }
         [TestMethod] public void ThreeThree()
         {
-            var val = new Guard<double>();
-            var val2 = new Guard<int>();
             var val3 = new Guard<int>();
             var n = 0;
             foreach (var t in Loops.Range(10).Attach(a => 1.0 / a).Attach((i, j) => i * i).Attach((i, j, k) => -i).Detach(val3))
             {
                 AreEqual(t.Item1, n++);
-                AreEqual(val3, -t.Item1);
+                AreEqual(val3.value, -t.Item1);
             }
         }
     }

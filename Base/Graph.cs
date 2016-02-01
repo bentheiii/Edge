@@ -665,7 +665,8 @@ namespace Edge.Graphs
         public static IDirectedGraph<VT, ET> getMinimumSpanningTree<VT, ET>(this IDirectedGraph<VT, ET> @this, Comparer<ET> comparer)
         {
             IDirectedGraph<VT, ET> ret = new DirectedGraph<VT, ET>(@this.getVertexes().ToArray());
-            GraphEdge<VT, ET>[] edges = @this.getAllEdges().Sort(new FunctionComparer<GraphEdge<VT,ET>>(a=>a.weight,comparer));
+            GraphEdge<VT, ET>[] edges = @this.getAllEdges();
+            Array.Sort(edges, new FunctionComparer<GraphEdge<VT, ET>>(a => a.weight, comparer));
             foreach (GraphEdge<VT, ET> graphEdge in edges)
             {
                 if (ret.isConnected())
