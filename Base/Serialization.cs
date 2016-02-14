@@ -3,9 +3,11 @@ using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Numerics;
 using System.Runtime.Serialization.Formatters.Binary;
 using Edge.Arrays;
 using Edge.Looping;
+using Edge.Streams;
 using Edge.WordsPlay;
 
 namespace Edge.Serializations
@@ -14,12 +16,12 @@ namespace Edge.Serializations
     {
         public interface INumberSerializer
         {
-            ulong FromBytes(IEnumerable<byte> bytes);
-            IEnumerable<byte> ToBytes(ulong num);
+            BigInteger FromBytes(IEnumerable<byte> bytes);
+            IEnumerable<byte> ToBytes(BigInteger num);
         }
         private class FullcodeNumberSerializer : INumberSerializer
         {
-            public IEnumerable<byte> ToBytes(ulong num)
+            public IEnumerable<byte> ToBytes(BigInteger num)
             {
                 while (num != 0)
                 {
@@ -27,7 +29,7 @@ namespace Edge.Serializations
                     num /= 256;
                 }
             }
-            public ulong FromBytes(IEnumerable<byte> bytes)
+            public BigInteger FromBytes(IEnumerable<byte> bytes)
             {
                 ulong ret = 0;
                 ulong pow = 1;
@@ -49,7 +51,7 @@ namespace Edge.Serializations
                     throw new ArgumentException("closed list must be unique and non-empty");
                 _closed = closedList.Sort();
             }
-            public ulong FromBytes(IEnumerable<byte> bytes)
+            public BigInteger FromBytes(IEnumerable<byte> bytes)
             {
                 ulong ret = 0;
                 ulong pow = 1;
@@ -60,18 +62,18 @@ namespace Edge.Serializations
                 }
                 return ret;
             }
-            public IEnumerable<byte> ToBytes(ulong num)
+            public IEnumerable<byte> ToBytes(BigInteger num)
             {
                 while (num != 0)
                 {
-                    yield return _closed[num % (uint)_closed.Length];
+                    yield return _closed[(uint)(num % (uint)_closed.Length)];
                     num /= (uint)_closed.Length;
                 }
             }
         }
         public static readonly INumberSerializer FullCodeSerializer = new FullcodeNumberSerializer();
         public static readonly INumberSerializer AlphaNumbreicSerializer = new ClosedListNumberSerializer(Loops.IRange('a','z').Concat(Loops.IRange('0','9')));
-        public static ulong FromString(this INumberSerializer @this, string s)
+        public static BigInteger FromString(this INumberSerializer @this, string s)
         {
             return @this.FromBytes(s.Select(a => (byte)a));
         }
@@ -107,14 +109,13 @@ namespace Edge.Serializations
             return s.Substring(0, length);
         }
     }
-    public static class Compresion
+    public static class Compression
     {
         public static byte[] Compress(this byte[] raw)
         {
             using (MemoryStream memory = new MemoryStream())
             {
-                using (GZipStream gzip = new GZipStream(memory,
-                CompressionMode.Compress, true))
+                using (GZipStream gzip = new GZipStream(memory, CompressionMode.Compress, true))
                 {
                     gzip.Write(raw, 0, raw.Length);
                 }
@@ -125,22 +126,7 @@ namespace Edge.Serializations
         {
             using (GZipStream stream = new GZipStream(new MemoryStream(gzip), CompressionMode.Decompress))
             {
-                const int size = 4096;
-                byte[] buffer = new byte[size];
-                using (MemoryStream memory = new MemoryStream())
-                {
-                    int count;
-                    do
-                    {
-                        count = stream.Read(buffer, 0, size);
-                        if (count > 0)
-                        {
-                            memory.Write(buffer, 0, count);
-                        }
-                    }
-                    while (count > 0);
-                    return memory.ToArray();
-                }
+                return stream.ReadAll();
             }
         }
     }
@@ -165,12 +151,12 @@ namespace Edge.Serializations
             if (o == null)
                 throw new ArgumentNullException(nameof(o));
             BinaryFormatter bf = new BinaryFormatter();
-            MemoryStream ms = new MemoryStream();
-            bf.Serialize(ms, o);
-            return ms.ToArray();
+            using (MemoryStream ms = new MemoryStream()) {
+                bf.Serialize(ms, o);
+                return ms.ToArray();
+            }
         }
     }
-	
     public static class Hashing
     {
         public static ulong CalculateHash(string read)

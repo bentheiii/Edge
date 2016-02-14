@@ -82,6 +82,10 @@ namespace Edge.Controls
         {
             c.BindEnum(default(T));
         }
+        public static double Ratio(this TrackBar @this)
+        {
+            return (@this.Value - @this.Minimum) / (double)(@this.Maximum - @this.Minimum);
+        }
     }
 }
 namespace Edge.Window

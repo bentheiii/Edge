@@ -598,11 +598,12 @@ namespace CoreTest
         }
         [TestMethod] public void Match()
         {
-            var val = Loops.Range(9).Match(new EqualityFunctionComparer<int>(a => a % 3));
-            foreach (var i in val.CountBind())
+            var eq = new EqualityFunctionComparer<int, int>(a => a % 3);
+            var val = Loops.Range(9).ToLookup(eq);
+            foreach (var i in val)
             {
-                IsTrue(i.Item1.Select(a => a % 3).All(a => a == i.Item2));
-                IsTrue(i.Item1.Count() == 3);
+                IsTrue(i.AllEqual(eq));
+                IsTrue(i.Count() == 3);
             }
         }
         private enum Sample
@@ -746,6 +747,19 @@ namespace CoreTest
             IsTrue(
                 Loops.Range(8).Trail5(true).SequenceEqual(
                     Loops.Range(8).Select(a => Tuple.Create(a, (a + 1) % 8, (a + 2) % 8, (a + 3) % 8, (a + 4) % 8))));
+        }
+    }
+    [TestClass]
+    public class SplitTest
+    {
+        [TestMethod] public void Simple()
+        {
+            var val = new int[] {0, 3, 6, 12, 0, 9, 2, 5, 14, 1, 12, 0};
+            var s = val.Split(new EqualityFunctionComparer<int>(a => a % 3));
+            IsTrue(
+                s.SequenceEqual(
+                    new int[][] {new int[] {0, 3, 6, 12, 0, 9}, new int[] {2, 5, 14}, new int[] {1}, new int[] {12, 0}},
+                    new EqualityFunctionComparer<IEnumerable<int>>((a, b) => a.SequenceEqual(b), ints => ints.GetHashCode())));
         }
     }
 }

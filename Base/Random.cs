@@ -28,7 +28,7 @@ namespace Edge.RandomGen
         }
         public virtual int Int(int min, int max)
         {
-            return Fields.getField<int>().Random(Bytes(sizeof(int)),Tuple.Create(min,max));
+            return Fields.getField<int>().Generate(Bytes(sizeof(int)),Tuple.Create(min,max));
         }
         public int Int(int min, int max, bool inclusive)
         {
@@ -40,7 +40,7 @@ namespace Edge.RandomGen
         }
         public virtual long Long(long min, long max)
         {
-            return Fields.getField<long>().Random(Bytes(sizeof(long)), Tuple.Create(min, max));
+            return Fields.getField<long>().Generate(Bytes(sizeof(long)), Tuple.Create(min, max));
         }
         public long Long(long min, long max, bool inclusive)
         {
@@ -52,7 +52,7 @@ namespace Edge.RandomGen
         }
         public virtual ulong ULong(ulong min, ulong max)
         {
-            return Fields.getField<ulong>().Random(Bytes(sizeof(ulong)), Tuple.Create(min, max));
+            return Fields.getField<ulong>().Generate(Bytes(sizeof(ulong)), Tuple.Create(min, max));
         }
         public ulong ULong(ulong min, ulong max, bool inclusive)
         {
@@ -68,7 +68,7 @@ namespace Edge.RandomGen
         }
         public virtual double Double(double min, double max)
         {
-            return Fields.getField<double>().Random(Bytes(sizeof(double)), Tuple.Create(min, max));
+            return Fields.getField<double>().Generate(Bytes(sizeof(double)), Tuple.Create(min, max));
         }
         public bool success(double odds)
         {
@@ -107,23 +107,27 @@ namespace Edge.RandomGen
         public T FromField<T>()
         {
             var f = Fields.getField<T>();
-            if (f.RandGen == RandomGenType.None || f.RandGen == RandomGenType.Special)
+            if (f.GenType == GenerationType.None || f.GenType == GenerationType.Special)
                 throw new NotSupportedException("Field does not support this generation");
-            return f.Random(Bytes());
+            return f.Generate(Bytes());
         }
         public T FromField<T>(T min, T max)
         {
             var f = Fields.getField<T>();
-            if (f.RandGen != RandomGenType.FromRange)
+            if (f.GenType != GenerationType.FromRange)
                 throw new NotSupportedException("Field does not support this generation");
-            return f.Random(Bytes(),Tuple.Create(min,max));
+            return f.Generate(Bytes(),Tuple.Create(min,max));
         }
         public T FromField<T>(T min, T max, object special)
         {
             var f = Fields.getField<T>();
-            if (f.RandGen != RandomGenType.Special)
+            if (f.GenType != GenerationType.Special)
                 throw new NotSupportedException("Field does not support this generation");
-            return f.Random(Bytes(), Tuple.Create(min, max), special);
+            return f.Generate(Bytes(), Tuple.Create(min, max), special);
+        }
+        public T FromList<T>(IList<T> arr)
+        {
+            return arr[this.Int(arr.Count)];
         }
     }
     public abstract class ByteEnumeratorGenerator : RandomGenerator

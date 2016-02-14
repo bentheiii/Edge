@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Edge.Arrays;
 using Edge.Comparison;
 using Edge.SystemExtensions;
+using Edge.Tuples;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using static Microsoft.VisualStudio.TestTools.UnitTesting.Assert;
 
@@ -45,7 +46,7 @@ namespace CoreTest
     [TestClass]
     public class SymmetryTestComp
     {
-        private static readonly IEqualityComparer<int> _comp = new EqualityFunctionComparer<int>(a => a % 3);
+        private static readonly IEqualityComparer<int> _comp = new EqualityFunctionComparer<int,int>(a => a % 3);
         [TestMethod] public void TrueOdd()
         {
             var val = new int[] {0, 1, 2, 4, 3};
@@ -243,7 +244,7 @@ namespace CoreTest
     [TestClass]
     public class AllEqualComp
     {
-        private static readonly IEqualityComparer<int> _comp = new EqualityFunctionComparer<int>(a => a % 3);
+        private static readonly IEqualityComparer<int> _comp = new EqualityFunctionComparer<int, int>(a => a % 3);
         [TestMethod] public void True()
         {
             var val = new int[] {1, 1, 7, 1, 4};

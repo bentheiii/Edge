@@ -8,7 +8,7 @@ using Edge.Arrays;
 using Edge.Looping;
 using Edge.NumbersMagic;
 using Edge.RecursiveQuerier;
-using Edge.Statistics.Dice;
+using Edge.Dice;
 using Edge.SystemExtensions;
 using Edge.WordsPlay;
 using Microsoft.CSharp.RuntimeBinder;
@@ -171,7 +171,7 @@ namespace Edge.Fielding {
         ReflexiveZero = 1, AntiSymmetric = 2, Transitive = 4, Total = 8,
         NoOrder = 0, PartialOrder = ReflexiveZero|AntiSymmetric|Transitive, TotalOrder = PartialOrder|Total
     }
-    public enum RandomGenType
+    public enum GenerationType
     {
         None, FromBytes, FromRange, Special
     }
@@ -281,8 +281,8 @@ namespace Edge.Fielding {
             return this.Compare(zero, x) > 0;
         }
         public virtual OrderType Order => OrderType.TotalOrder;
-        public virtual RandomGenType RandGen => RandomGenType.None;
-        public virtual T Random(IEnumerable<byte> bytes, Tuple<T, T> bounds = null, object special = null)
+        public virtual GenerationType GenType => GenerationType.None;
+        public virtual T Generate(IEnumerable<byte> bytes, Tuple<T, T> bounds = null, object special = null)
         {
             throw new NotSupportedException();
         }
@@ -367,6 +367,43 @@ namespace Edge.Fielding {
             throw new NotSupportedException();
         }
         public virtual FieldShape shape => FieldShape.None;
+    }
+    public class ImpotentField<T> : Field<T>
+    {
+        public override T zero => default(T);
+        public override T one => default(T);
+        public override T negativeone => default(T);
+        public override T naturalbase => default(T);
+        public override int Compare(T x, T y) => 0;
+        public override T Conjugate(T a) => a;
+        public override T Factorial(int x) => default(T);
+        public override GenerationType GenType => GenerationType.None;
+        public override T Generate(IEnumerable<byte> bytes, Tuple<T, T> bounds = null, object special = null) => default(T);
+        public override T Invert(T x) => x;
+        public override bool Invertible => false;
+        public override bool ModduloAble => false;
+        public override bool Negatable => false;
+        public override T Negate(T x) => x;
+        public override OrderType Order => OrderType.NoOrder;
+        public override bool Parsable => false;
+        public override T Parse(string s) => default(T);
+        public override T Pow(T @base, int x) => @base;
+        public override string String(T a) => a.ToString();
+        public override T abs(T x) => x;
+        public override T add(T a, T b) => a;
+        public override T divide(T a, T b) => a;
+        public override T fromFraction(double a) => default(T);
+        public override T fromFraction(int numerator, int denumerator) => default(T);
+        public override T fromInt(int x) => default(T);
+        public override T fromInt(ulong x) => default(T);
+        public override bool isNegative(T x) => false;
+        public override T log(T a) => default(T);
+        public override T mod(T a, T b) => a;
+        public override T multiply(T a, T b) => a;
+        public override T pow(T a, T b) => a;
+        public override FieldShape shape => FieldShape.None;
+        public override T subtract(T a, T b) => a;
+        public override double? toDouble(T a) => null;
     }
     public class QueryEnabledField<T> : Field<T>
     {
@@ -460,15 +497,15 @@ namespace Edge.Fielding {
             {
                 return double.Parse(s);
             }
-            public override RandomGenType RandGen => RandomGenType.FromRange;
-            public override double Random(IEnumerable<byte> bytes, Tuple<double, double> bounds = null, object special = null)
+            public override GenerationType GenType => GenerationType.FromRange;
+            public override double Generate(IEnumerable<byte> bytes, Tuple<double, double> bounds = null, object special = null)
             {
                 bounds = bounds ?? new Tuple<double, double>(0, 1);
                 if (bounds.Item1 == 0 && bounds.Item2 == 1)
                 {
                     var seedn = bytes.Take(sizeof(ulong));
-                    var seedd = bytes.Skip(sizeof(ulong));
-                    ulong d = BitConverter.ToUInt64(seedd.ToArray(),0)+1;
+                    var seedd = bytes.Skip(sizeof(ulong)).Take(sizeof(ulong));
+                    ulong d = BitConverter.ToUInt64(seedd.ToArray(),0)%(int.MaxValue)+1;
                     ulong n = BitConverter.ToUInt64(seedn.ToArray(), 0)%d;
                     return n / (double)d;
                 }
@@ -476,7 +513,7 @@ namespace Edge.Fielding {
                 {
                     var max = bounds.Item2;
                     var min = bounds.Item1;
-                    var @base = Random(bytes);
+                    var @base = Generate(bytes);
                     @base *= (max-min);
                     return @base + min;
                 }
@@ -513,16 +550,16 @@ namespace Edge.Fielding {
             {
                 return float.Parse(s);
             }
-            public override RandomGenType RandGen => RandomGenType.FromRange;
+            public override GenerationType GenType => GenerationType.FromRange;
             public override FieldShape shape => FieldShape.Linear;
-            public override float Random(IEnumerable<byte> bytes, Tuple<float, float> bounds = null, object special = null)
+            public override float Generate(IEnumerable<byte> bytes, Tuple<float, float> bounds = null, object special = null)
             {
                 bounds = bounds ?? new Tuple<float, float>(0, 1);
                 if (bounds.Item1 == 0 && bounds.Item2 == 1)
                 {
                     var seedn = bytes.Take(sizeof(ulong));
-                    var seedd = bytes.Skip(sizeof(ulong));
-                    ulong d = BitConverter.ToUInt64(seedd.ToArray(), 0) + 1;
+                    var seedd = bytes.Skip(sizeof(ulong)).Take(sizeof(ulong));
+                    ulong d = BitConverter.ToUInt64(seedd.ToArray(), 0) % (int.MaxValue) + 1;
                     ulong n = BitConverter.ToUInt64(seedn.ToArray(), 0) % d;
                     return n / (float)d;
                 }
@@ -530,7 +567,7 @@ namespace Edge.Fielding {
                 {
                     var max = bounds.Item2;
                     var min = bounds.Item1;
-                    var @base = Random(bytes);
+                    var @base = Generate(bytes);
                     @base *= (max - min);
                     return @base + min;
                 }
@@ -566,16 +603,16 @@ namespace Edge.Fielding {
             {
                 return decimal.Parse(s);
             }
-            public override RandomGenType RandGen => RandomGenType.FromRange;
+            public override GenerationType GenType => GenerationType.FromRange;
             public override FieldShape shape => FieldShape.Linear;
-            public override decimal Random(IEnumerable<byte> bytes, Tuple<decimal, decimal> bounds = null, object special = null)
+            public override decimal Generate(IEnumerable<byte> bytes, Tuple<decimal, decimal> bounds = null, object special = null)
             {
                 bounds = bounds ?? new Tuple<decimal, decimal>(0, 1);
                 if (bounds.Item1 == 0 && bounds.Item2 == 1)
                 {
                     var seedn = bytes.Take(sizeof(ulong));
-                    var seedd = bytes.Skip(sizeof(ulong));
-                    ulong d = BitConverter.ToUInt64(seedd.ToArray(), 0) + 1;
+                    var seedd = bytes.Skip(sizeof(ulong)).Take(sizeof(ulong));
+                    ulong d = BitConverter.ToUInt64(seedd.ToArray(), 0) % (int.MaxValue) + 1;
                     ulong n = BitConverter.ToUInt64(seedn.ToArray(), 0) % d;
                     return n / (decimal)d;
                 }
@@ -583,7 +620,7 @@ namespace Edge.Fielding {
                 {
                     var max = bounds.Item2;
                     var min = bounds.Item1;
-                    var @base = Random(bytes);
+                    var @base = Generate(bytes);
                     @base *= (max - min);
                     return @base + min;
                 }
@@ -620,11 +657,13 @@ namespace Edge.Fielding {
             {
                 return int.Parse(s);
             }
-            public override RandomGenType RandGen => RandomGenType.FromRange;
+            public override GenerationType GenType => GenerationType.FromRange;
             public override FieldShape shape => FieldShape.Discrete|FieldShape.Linear;
-            public override int Random(IEnumerable<byte> bytes, Tuple<int, int> bounds = null, object special = null)
+            public override int Generate(IEnumerable<byte> bytes, Tuple<int, int> bounds = null, object special = null)
             {
                 var @base = BitConverter.ToInt32(bytes.Take(sizeof(int)).ToArray(),0);
+                if (@base < 0)
+                    @base = -@base;
                 var max = bounds?.Item2 ?? 0;
                 var min = bounds?.Item1 ?? 0;
                 if (bounds != null)
@@ -665,11 +704,13 @@ namespace Edge.Fielding {
             {
                 return long.Parse(s);
             }
-            public override RandomGenType RandGen => RandomGenType.FromRange;
+            public override GenerationType GenType => GenerationType.FromRange;
             public override FieldShape shape => FieldShape.Discrete | FieldShape.Linear;
-            public override long Random(IEnumerable<byte> bytes, Tuple<long, long> bounds = null, object special = null)
+            public override long Generate(IEnumerable<byte> bytes, Tuple<long, long> bounds = null, object special = null)
             {
                 var @base = BitConverter.ToInt64(bytes.Take(sizeof(long)).ToArray(), 0);
+                if (@base < 0)
+                    @base = -@base;
                 var max = bounds?.Item2 ?? 0;
                 var min = bounds?.Item1 ?? 0;
                 if (bounds != null)
@@ -721,9 +762,9 @@ namespace Edge.Fielding {
             {
                 return uint.Parse(s);
             }
-            public override RandomGenType RandGen => RandomGenType.FromRange;
+            public override GenerationType GenType => GenerationType.FromRange;
             public override FieldShape shape => FieldShape.Discrete | FieldShape.HalfFinite;
-            public override uint Random(IEnumerable<byte> bytes, Tuple<uint, uint> bounds = null, object special = null)
+            public override uint Generate(IEnumerable<byte> bytes, Tuple<uint, uint> bounds = null, object special = null)
             {
                 var @base = BitConverter.ToUInt32(bytes.Take(sizeof(uint)).ToArray(), 0);
                 var max = bounds?.Item2 ?? 0;
@@ -777,9 +818,9 @@ namespace Edge.Fielding {
             {
                 return ulong.Parse(s);
             }
-            public override RandomGenType RandGen => RandomGenType.FromRange;
+            public override GenerationType GenType => GenerationType.FromRange;
             public override FieldShape shape => FieldShape.Discrete | FieldShape.HalfFinite;
-            public override ulong Random(IEnumerable<byte> bytes, Tuple<ulong, ulong> bounds = null, object special = null)
+            public override ulong Generate(IEnumerable<byte> bytes, Tuple<ulong, ulong> bounds = null, object special = null)
             {
                 var @base = BitConverter.ToUInt64(bytes.Take(sizeof(ulong)).ToArray(), 0);
                 var max = bounds?.Item2 ?? 0;
@@ -833,9 +874,9 @@ namespace Edge.Fielding {
             {
                 return byte.Parse(s);
             }
-            public override RandomGenType RandGen => RandomGenType.FromRange;
+            public override GenerationType GenType => GenerationType.FromRange;
             public override FieldShape shape => FieldShape.Discrete | FieldShape.HalfFinite;
-            public override byte Random(IEnumerable<byte> bytes, Tuple<byte, byte> bounds = null, object special = null)
+            public override byte Generate(IEnumerable<byte> bytes, Tuple<byte, byte> bounds = null, object special = null)
             {
                 var @base = bytes.First();
                 var max = bounds?.Item2 ?? 0;
@@ -885,11 +926,13 @@ namespace Edge.Fielding {
             {
                 return sbyte.Parse(s);
             }
-            public override RandomGenType RandGen => RandomGenType.FromRange;
+            public override GenerationType GenType => GenerationType.FromRange;
             public override FieldShape shape => FieldShape.Discrete | FieldShape.Linear;
-            public override sbyte Random(IEnumerable<byte> bytes, Tuple<sbyte, sbyte> bounds = null, object special = null)
+            public override sbyte Generate(IEnumerable<byte> bytes, Tuple<sbyte, sbyte> bounds = null, object special = null)
             {
                 var @base = (sbyte)bytes.First();
+                if (@base < 0)
+                    @base = (sbyte)-@base;
                 var max = bounds?.Item2 ?? 0;
                 var min = bounds?.Item1 ?? 0;
                 if (bounds != null)
@@ -937,11 +980,13 @@ namespace Edge.Fielding {
             {
                 return short.Parse(s);
             }
-            public override RandomGenType RandGen => RandomGenType.FromRange;
+            public override GenerationType GenType => GenerationType.FromRange;
             public override FieldShape shape => FieldShape.Discrete | FieldShape.Linear;
-            public override short Random(IEnumerable<byte> bytes, Tuple<short, short> bounds = null, object special = null)
+            public override short Generate(IEnumerable<byte> bytes, Tuple<short, short> bounds = null, object special = null)
             {
                 var @base = BitConverter.ToInt16(bytes.Take(sizeof(short)).ToArray(),0);
+                if (@base < 0)
+                    @base = (short)-@base;
                 var max = bounds?.Item2 ?? 0;
                 var min = bounds?.Item1 ?? 0;
                 if (bounds != null)
@@ -993,9 +1038,9 @@ namespace Edge.Fielding {
             {
                 return ushort.Parse(s);
             }
-            public override RandomGenType RandGen => RandomGenType.FromRange;
+            public override GenerationType GenType => GenerationType.FromRange;
             public override FieldShape shape => FieldShape.Discrete | FieldShape.HalfFinite;
-            public override ushort Random(IEnumerable<byte> bytes, Tuple<ushort, ushort> bounds = null, object special = null)
+            public override ushort Generate(IEnumerable<byte> bytes, Tuple<ushort, ushort> bounds = null, object special = null)
             {
                 var @base = BitConverter.ToUInt16(bytes.Take(sizeof(short)).ToArray(), 0);
                 var max = bounds?.Item2 ?? 0;
@@ -1082,8 +1127,8 @@ namespace Edge.Fielding {
             {
                 return s;
             }
-            public override RandomGenType RandGen => RandomGenType.Special;
-            public override string Random(IEnumerable<byte> bytes, Tuple<string, string> bounds = null, object special = null)
+            public override GenerationType GenType => GenerationType.Special;
+            public override string Generate(IEnumerable<byte> bytes, Tuple<string, string> bounds = null, object special = null)
             {
                 int length = special as int? ?? 0;
                 if (length == 0)
@@ -1092,7 +1137,7 @@ namespace Edge.Fielding {
                 if (!string.IsNullOrEmpty(bounds?.Item1) && !string.IsNullOrEmpty(bounds.Item2))
                     charbounds = Tuple.Create(bounds.Item1[0], bounds.Item2[0]);
                 var cf = getField<char>();
-                return bytes.Group(sizeof(char)).Select(a => cf.Random(a,charbounds)).Take(length).convertToString();
+                return bytes.Group(sizeof(char)).Select(a => cf.Generate(a,charbounds)).Take(length).convertToString();
             }
             public override string fromFraction(double a)
             {
@@ -1153,9 +1198,9 @@ namespace Edge.Fielding {
                 return s[0];
             }
             public override OrderType Order => OrderType.TotalOrder;
-            public override RandomGenType RandGen => RandomGenType.FromRange;
+            public override GenerationType GenType => GenerationType.FromRange;
             public override FieldShape shape => FieldShape.Discrete | FieldShape.HalfFinite;
-            public override char Random(IEnumerable<byte> bytes, Tuple<char, char> bounds = null, object special = null)
+            public override char Generate(IEnumerable<byte> bytes, Tuple<char, char> bounds = null, object special = null)
             {
                 var @base = BitConverter.ToChar(bytes.Take(sizeof(char)).ToArray(), 0);
                 var max = bounds?.Item2 ?? 0;
@@ -1197,20 +1242,20 @@ namespace Edge.Fielding {
             {
                 return new BigRational(double.Parse(s));
             }
-            public override RandomGenType RandGen => RandomGenType.FromRange;
+            public override GenerationType GenType => GenerationType.FromRange;
             public override FieldShape shape => FieldShape.Linear;
-            public override BigRational Random(IEnumerable<byte> bytes, Tuple<BigRational, BigRational> bounds = null, object special = null)
+            public override BigRational Generate(IEnumerable<byte> bytes, Tuple<BigRational, BigRational> bounds = null, object special = null)
             {
                 bounds = bounds ?? Tuple.Create(BigRational.Zero, BigRational.One);
                 if (bounds.Item1.Numerator.IsZero && bounds.Item2 == 1)
                 {
-                    return getField<decimal>().Random(bytes);
+                    return getField<decimal>().Generate(bytes);
                 }
                 else
                 {
                     var max = bounds.Item2;
                     var min = bounds.Item1;
-                    var @base = Random(bytes);
+                    var @base = Generate(bytes);
                     @base *= (max - min);
                     return @base + min;
                 }
@@ -1247,15 +1292,17 @@ namespace Edge.Fielding {
             {
                 return BigInteger.Parse(s);
             }
-            public override RandomGenType RandGen => RandomGenType.FromRange;
+            public override GenerationType GenType => GenerationType.FromRange;
             public override FieldShape shape => FieldShape.Discrete | FieldShape.Linear;
-            public override BigInteger Random(IEnumerable<byte> bytes, Tuple<BigInteger, BigInteger> bounds = null, object special = null)
+            public override BigInteger Generate(IEnumerable<byte> bytes, Tuple<BigInteger, BigInteger> bounds = null, object special = null)
             {
                 bounds = bounds ?? Tuple.Create(BigInteger.Zero, (BigInteger)2);
                 int bytecount = Math.Max(bounds.Item1.ToByteArray().Length, bounds.Item2.ToByteArray().Length);
                 var max = bounds.Item2;
                 var min = bounds.Item1;
                 var @base = new BigInteger(bytes.Take(bytecount).ToArray());
+                if (@base < 0)
+                    @base = -@base;
                 @base %= (max - min);
                 return @base + min;
             }
@@ -1322,9 +1369,9 @@ namespace Edge.Fielding {
             {
                 return bool.Parse(s);
             }
-            public override RandomGenType RandGen => RandomGenType.FromBytes;
+            public override GenerationType GenType => GenerationType.FromBytes;
             public override FieldShape shape => FieldShape.Finite;
-            public override bool Random(IEnumerable<byte> bytes, Tuple<bool, bool> bounds = null, object special = null)
+            public override bool Generate(IEnumerable<byte> bytes, Tuple<bool, bool> bounds = null, object special = null)
             {
                 return (bytes.First()&1) == 1;
             }
@@ -1380,13 +1427,20 @@ namespace Edge.Fielding {
                     }
                     catch { }
                 }
-                return new Field<T>((T)(dynamic)0, (T)(dynamic)1, (T)(dynamic)2);
+                try
+                {
+                    return new Field<T>((T)(dynamic)0, (T)(dynamic)1, (T)(dynamic)2);
+                }
+                catch (Exception)
+                {
+                    return new ImpotentField<T>();
+                }
             }
         }
         public static bool setField<T>(Field<T> f, int surroundingFieldDepth = DEFAULT_SURROUNDING_FIELD_DEPTH)
         {
-            var ret = _quickFieldDictionary.ContainsKey(typeof(T));
-            _quickFieldDictionary.Add(typeof(T), f);
+            var ret = _quickFieldDictionary.ContainsKey(f.getSubjectType());
+            _quickFieldDictionary.Add(f.getSubjectType(), f);
             if (surroundingFieldDepth > 0)
             {
                 setField(new Matrix.MatrixField<T>(f), surroundingFieldDepth - 1);

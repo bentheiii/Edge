@@ -78,13 +78,13 @@ namespace Edge.Complex
             {
                 return ComplexNumber.Parse(s);
             }
-            public override RandomGenType RandGen => RandomGenType.FromRange;
-            public override ComplexNumber Random(IEnumerable<byte> bytes, Tuple<ComplexNumber, ComplexNumber> bounds = null, object special = null)
+            public override GenerationType GenType => GenerationType.FromRange;
+            public override ComplexNumber Generate(IEnumerable<byte> bytes, Tuple<ComplexNumber, ComplexNumber> bounds = null, object special = null)
             {
                 var f = Fields.getField<double>();
                 bounds = bounds ?? Tuple.Create(FromRectangular(0), FromRectangular(1, 1));
-                return FromRectangular(f.Random(bytes.Step(), Tuple.Create(bounds.Item1.RealPart, bounds.Item2.RealPart)),
-                    f.Random(bytes.Skip(1).Step(), Tuple.Create(bounds.Item1.ImaginaryPart, bounds.Item2.ImaginaryPart)));
+                return FromRectangular(f.Generate(bytes.Step(), Tuple.Create(bounds.Item1.RealPart, bounds.Item2.RealPart)),
+                    f.Generate(bytes.Skip(1).Step(), Tuple.Create(bounds.Item1.ImaginaryPart, bounds.Item2.ImaginaryPart)));
             }
             public override FieldShape shape =>FieldShape.None;
             public override ComplexNumber fromFraction(double a)

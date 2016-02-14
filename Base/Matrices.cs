@@ -46,8 +46,8 @@ namespace Edge.Matrix
             throw new NotSupportedException();
         }
         public override bool ModduloAble => false;
-        public override RandomGenType RandGen => _int.RandGen == RandomGenType.None ? RandomGenType.None : RandomGenType.Special;
-        public override Matrix<G> Random(IEnumerable<byte> bytes, Tuple<Matrix<G>, Matrix<G>> bounds = null, object special = null)
+        public override GenerationType GenType => _int.GenType == Fielding.GenerationType.None ? Fielding.GenerationType.None : Fielding.GenerationType.Special;
+        public override Matrix<G> Generate(IEnumerable<byte> bytes, Tuple<Matrix<G>, Matrix<G>> bounds = null, object special = null)
         {
             var size = special as Tuple<int, int, object> ?? Tuple.Create(0, 0, (object)null);
             int cells = size.Item1 * size.Item2;
@@ -55,16 +55,16 @@ namespace Edge.Matrix
             if (bounds != null && bounds.Item1.Any() && bounds.Item2.Any())
                 gbounds = Tuple.Create(bounds.Item1[0, 0], bounds.Item2[0, 0]);
             Func<IEnumerable<byte>, G> gen = null;
-            switch (_int.RandGen)
+            switch (_int.GenType)
             {
-                case RandomGenType.FromBytes:
-                    gen = bytes1 => _int.Random(bytes1);
+                case Fielding.GenerationType.FromBytes:
+                    gen = bytes1 => _int.Generate(bytes1);
                     break;
-                case RandomGenType.FromRange:
-                    gen = bytes1 => _int.Random(bytes1, gbounds);
+                case Fielding.GenerationType.FromRange:
+                    gen = bytes1 => _int.Generate(bytes1, gbounds);
                     break;
-                case RandomGenType.Special:
-                    gen = bytes1 => _int.Random(bytes1, gbounds, size.Item3);
+                case Fielding.GenerationType.Special:
+                    gen = bytes1 => _int.Generate(bytes1, gbounds, size.Item3);
                     break;
             }
             return new ExplicitMatrix<G>(Loops.Range(cells).Select(a => bytes.Skip(a).Step(cells)).SelectToArray(a => gen(a)).to2DArr(size.Item2));

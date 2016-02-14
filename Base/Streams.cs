@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Edge.Looping;
 
 namespace Edge.Streams
 {
@@ -68,12 +69,30 @@ namespace Edge.Streams
 	{
 		public static IEnumerable<string> Loop(this TextReader @this)
 		{
-			string ret = @this.ReadLine();
-			while (ret != null)
-			{
-				yield return ret;
-				ret = @this.ReadLine();
-			}
-		} 
+		    return Loops.Generate(@this.ReadLine).TakeWhile(a => a != null);
+		}
+	    public static byte[] ReadAll(this Stream @this, int initialchunksize = 256)
+	    {
+	        if (!@this.CanRead)
+                throw new ArgumentException("stream is unreadable");
+            byte[] buffer = new byte[initialchunksize/2];
+	        int written = 0;
+	        int r = int.MaxValue;
+	        while (r > 0)
+	        {
+                Array.Resize(ref buffer, buffer.Length*2);
+	            r = @this.Read(buffer, written, buffer.Length-written);
+	            written += r;
+	        }
+            Array.Resize(ref buffer,written);
+	        return buffer;
+	    }
+	    public static IEnumerable<byte> Loop(this Stream @this)
+	    {
+            if (!@this.CanRead)
+                throw new ArgumentException("stream is unreadable");
+	        return Loops.Generate(@this.ReadByte).TakeWhile(a => a > 0).Select(a=>(byte)a);
+
+	    }
 	}
 }

@@ -7,8 +7,9 @@ using Edge.Fielding;
 using Edge.Guard;
 using Edge.NumbersMagic;
 using Edge.SystemExtensions;
-using CCDefault.Annotations;
 using Edge.Arrays.Arr2D;
+using Edge.Comparison;
+using Edge.Tuples;
 
 namespace Edge.Looping
 {
@@ -20,7 +21,18 @@ namespace Edge.Looping
         }
         public static IEnumerable<T> Duplicates<T>(this IEnumerable<T> arr, IEqualityComparer<T> comp, ulong minoccurances = 2)
         {
-            return arr.ToOccurances(comp).Where(a => a.Value >= minoccurances).Select(a => a.Key);
+            var occurances = new Dictionary<T, ulong>(comp);
+            foreach (var t in arr)
+            {
+                if (occurances.EnsureDefinition(t) && occurances[t] == 0)
+                    continue;
+                occurances[t]++;
+                if (occurances[t] >= minoccurances)
+                {
+                    yield return t;
+                    occurances[t] = 0;
+                }
+            }
         }
         public static IEnumerable<T> Uniques<T>(this IEnumerable<T> arr, ulong maxoccurances = 1)
         {
@@ -123,7 +135,7 @@ namespace Edge.Looping
             {
                 throw new ArgumentException("cannot be zero", nameof(step));
             }
-            if ((field.Negatable && (field.isNegative(max.ToFieldWrapper() - start) != field.isNegative(step))) ||
+            if (!field.Equals(max,start) && (field.Negatable && (field.isNegative(max.ToFieldWrapper() - start) != field.isNegative(step))) ||
                 (!field.Negatable && (max.ToFieldWrapper() < start)))
             {
                 throw new ArgumentException($"{nameof(max)} must be higher than {nameof(start)} or the {nameof(step)} must be negative");
@@ -149,7 +161,7 @@ namespace Edge.Looping
             {
                 throw new ArgumentException("cannot be zero", nameof(step));
             }
-            if (max - start < 0 != step < 0)
+            if (max != start && max - start < 0 != step < 0)
             {
                 throw new ArgumentException($"{nameof(max)} must be higher than {nameof(start)} or the {nameof(step)} must be negative");
             }
@@ -188,7 +200,7 @@ namespace Edge.Looping
             {
                 throw new ArgumentException("cannot be zero", nameof(step));
             }
-            if (max - start < 0 != step < 0)
+            if (max != start && max - start < 0 != step < 0)
             {
                 throw new ArgumentException($"{nameof(max)} must be higher than {nameof(start)} or the {nameof(step)} must be negative");
             }
@@ -201,48 +213,6 @@ namespace Edge.Looping
         public static IEnumerable<int> IRange(int max)
         {
             return IRange(0, max);
-        }
-        public static IEnumerable<T> CRange<T>(T max)
-        {
-            var f = Fields.getField<T>();
-            return CRange(max, f.zero);
-        }
-        public static IEnumerable<T> CRange<T>(T start,T max)
-        {
-            var f = Fields.getField<T>();
-            return Range(start, max, f.negativeone);
-        }
-        public static IEnumerable<int> CRange(int start, int min=0)
-        {
-            return Range(start, min, -1);
-        }
-        public static IEnumerable<ulong> CRange(ulong start, ulong min=0)
-        {
-            for (ulong i = start; i > min; i--)
-            {
-                yield return i;
-            }
-        }
-        public static IEnumerable<T> CiRange<T>(T max)
-        {
-            var f = Fields.getField<T>();
-            return CiRange(max, f.zero);
-        }
-        public static IEnumerable<T> CiRange<T>(T start, T max)
-        {
-            var f = Fields.getField<T>();
-            return IRange(start, max, f.negativeone);
-        }
-        public static IEnumerable<int> CiRange(int start, int min = 0)
-        {
-            return Range(start, min, -1);
-        }
-        public static IEnumerable<ulong> CiRange(ulong start, ulong min = 0)
-        {
-            for (ulong i = start; i >= min; i--)
-            {
-                yield return i;
-            }
         }
         public static IEnumerable<double> Count(double start, double step = 1)
         {
@@ -306,6 +276,16 @@ namespace Edge.Looping
                 }
             }
         }
+        public static IEnumerable<T> Repeat<T>(this IEnumerable<T> @this, ulong count)
+        {
+            foreach (int i in Range(count))
+            {
+                foreach (var t in @this)
+                {
+                    yield return t;
+                }
+            }
+        }
         public static IEnumerable<T1> Detach<T1, T2>(this IEnumerable<Tuple<T1, T2>> @this, Guard<T2> informer1)
         {
             foreach (var t in @this)
@@ -357,6 +337,10 @@ namespace Edge.Looping
                 informer3.value = t.Item4;
                 yield return Tuple.Create(t.Item1, t.Item2, t.Item3);
             }
+        }
+        public static IEnumerable<Tuple<T1, T2>> AttachEnumerable<T1, T2>(this IEnumerable<T1> @this, Func<IEnumerable<T1>, IEnumerable<T2>> selector)
+        {
+            return @this.Zip(selector(@this));
         }
         public static IEnumerable<Tuple<T1, T2>> Attach<T1, T2>(this IEnumerable<T1> @this, Func<T1, T2> selector)
         {
@@ -597,29 +581,81 @@ namespace Edge.Looping
                 }
             }
         }
-	    public static IEnumerable<T[]> Join<T>(this T[] @this, int cartesLength)
+	    public static IEnumerable<T[]> Join<T>(this IEnumerable<T> @this, int cartesLength, CartesianType t = CartesianType.AllPairs)
 	    {
-			int[] indexes = new int[cartesLength];
-			indexes.Fill(0);
-		    while (true)
-		    {
-			    yield return indexes.SelectToArray(i => @this[i]);
-			    for (int i = 0; i < indexes.Length; i++)
-			    {
-				    indexes[i]++;
-				    if (indexes[i] >= @this.Length)
-				    {
-					    indexes[i] = 0;
-				    }
-				    else
-				    {
-					    break;
-				    }
-			    }
-			    if (indexes.All(a => a == 0))
-				    break;
-		    }
-	    }
+            var tors = @this.Enumerate().Repeat(cartesLength).SelectToArray(a => a.CountBind().GetEnumerator());
+            //initialization
+	        if (t.HasFlag(CartesianType.NoReflexive))
+	        {
+	            foreach (var enumerator in tors.CountBind())
+	            {
+	                foreach (var i in Range(tors.Length-enumerator.Item2))
+	                {
+	                    if (!enumerator.Item1.MoveNext())
+	                        yield break;
+	                }
+	            }
+	        }
+            else {
+                if (tors.Any(a => !a.MoveNext()))
+                    yield break;
+            }
+            //yield initial
+            yield return tors.SelectToArray(a => a.Current.Item1);
+            while (true)
+            {
+                int nexttorind = 0;
+                while (true)
+                {
+                    if (!tors.isWithinBounds(nexttorind))
+                        yield break;
+                    if (!tors[nexttorind].MoveNext())
+                    {
+                        tors[nexttorind] = @this.CountBind().GetEnumerator();
+                        tors[nexttorind].MoveNext();
+                        nexttorind++;
+                    }
+                    else
+                    {
+                        if (t.HasFlag(CartesianType.NoSymmatry) && nexttorind > 0)
+                        {
+                            bool retry = false;
+                            foreach (var i in Range(0, nexttorind))
+                            {
+                                foreach (int i1 in Range(tors[nexttorind].Current.Item2 + (t.HasFlag(CartesianType.NoReflexive) ? i + 1 : 0)))
+                                {
+                                    if (!tors[nexttorind - i - 1].MoveNext())
+                                    {
+                                        retry = true;
+                                        break;
+                                    }
+                                }
+                                if (retry)
+                                    break;
+                            }
+                            if (retry)
+                            {
+                                foreach (int i in IRange(nexttorind))
+                                {
+                                    tors[i] = @this.CountBind().GetEnumerator();
+                                    tors[i].MoveNext();
+                                }
+                                nexttorind++;
+                                continue;
+                            }
+                        }
+                        break;
+                    }
+                }
+                if (t.HasFlag(CartesianType.NoReflexive) && !t.HasFlag(CartesianType.NoSymmatry) &&
+                        tors.Join(CartesianType.NoReflexive | CartesianType.NoSymmatry).Any(
+                            a => a.Item1.Current.Item2 == a.Item2.Current.Item2))
+                {
+                    continue;
+                }
+                yield return tors.SelectToArray(a => a.Current.Item1);
+            }
+        }
         public static IEnumerable<T[]> Join<T>(this IList<IEnumerable<T>> @this)
         {
             var tors = @this.SelectToArray(a => a.GetEnumerator());
@@ -649,7 +685,19 @@ namespace Edge.Looping
                 yield return tors.SelectToArray(a => a.Current);
             }
         }
-		public static IEnumerable<Tuple<T, int>> CountBind<T>(this IEnumerable<T> a, int start = 0)
+        public static IEnumerable<IEnumerable<T>> SubSets<T>(this IEnumerable<T> @this)
+        {
+            return Count().Select(@this.SubSets).TakeWhile(a=>a.Any()).Concat();
+        }
+        public static IEnumerable<IEnumerable<T>> SubSets<T>(this IEnumerable<T> @this, int setSize)
+        {
+            return @this.Join(setSize, CartesianType.NoReflexive | CartesianType.NoSymmatry);
+        }
+        public static IEnumerable<IEnumerable<T>> Permutations<T>(this IEnumerable<T> @this)
+        {
+            return @this.Join(@this.Count(), CartesianType.NoReflexive);
+        }
+        public static IEnumerable<Tuple<T, int>> CountBind<T>(this IEnumerable<T> a, int start = 0)
 	    {
 		    return a.Zip(Count(start));
 	    }
@@ -702,6 +750,10 @@ namespace Edge.Looping
                     }
                 }
             }
+        }
+        public static IEnumerable<Tuple<object, int[]>> CoordinateBind(this Array @this)
+        {
+            return @this.getSize().SelectToArray(Range).Join().Select(a => Tuple.Create(@this.GetValue(a),a));
         }
         public static IEnumerable<Tuple<T, int, int>> CoordinateBind<T>(this IEnumerable<IEnumerable<T>> @this)
         {
@@ -818,26 +870,13 @@ namespace Edge.Looping
 		{
 			return @this.Trail(5, wrap).Select(a => a.ToTuple5());
 		}
-		public static IEnumerable<IEnumerable<T>> Match<T>(this IEnumerable<T> @this, IEqualityComparer<T> matcher)
-	    {
-		    ICollection<T> matched = new HashSet<T>(matcher);
-		    foreach (T t in @this)
-		    {
-				if (matched.Contains(t))
-					continue;
-                ICollection<T> ret = new List<T>();
-                matched.Add(t);
-			    foreach (T t1 in @this)
-			    {
-				    if (matcher.Equals(t, t1))
-					    ret.Add(t1);
-			    }
-			    yield return ret;
-		    }
-	    }
-        public static IEnumerable<T> SubEnumerable<T>(this IEnumerable<T> @this, int start = 0, int count = -1)
+		public static ILookup<T,T> ToLookup<T>(this IEnumerable<T> @this, IEqualityComparer<T> matcher)
+		{
+		    return @this.ToLookup(a => a, matcher);
+		}
+        public static IEnumerable<T> SubEnumerable<T>(this IEnumerable<T> @this, int start = 0, int count = -1, int step = 1)
         {
-            var temp = @this.Skip(start);
+            var temp = @this.Skip(start).Step(step);
             return count >= 0 ? temp.Take(count) : temp;
         }
         public static IEnumerable<T> MutateOnEnumerations<T>(this IEnumerable<T> @this, Action<T> mutation)
@@ -865,6 +904,60 @@ namespace Edge.Looping
                 postYield?.Invoke(t);
             }
             postNumeration?.Invoke();
+        }
+        public static IEnumerable<T> EnumerationHook<T,G>(this IEnumerable<T> @this, Func<G> preNumeration, Action<G> postNumeration = null, Func<T,G,G> preYield = null, Func<T,G,G> postYield = null)
+        {
+            var val = preNumeration.Invoke();
+            foreach (var t in @this)
+            {
+                if (preYield != null)
+                    val = preYield.Invoke(t,val);
+                yield return t;
+                if (postYield != null)
+                    val = postYield.Invoke(t,val);
+            }
+            postNumeration?.Invoke(val);
+        }
+        [Flags] public enum LoopControl { None=0, Skip=2, Break=3, After = 4, SkipAfter = Skip|After , BreakAfter = Break|After}
+        public static IEnumerable<T> EnumerationHook<T, G>(this IEnumerable<T> @this, Func<G> preNumeration, Action<G> postNumeration = null, Func<T, G, Tuple<G, LoopControl>> preYield = null, Func<T, G, Tuple<G, LoopControl>> postYield = null)
+        {
+            var val = preNumeration.Invoke();
+            var preControl = LoopControl.None;
+            foreach (var t in @this)
+            {
+                if (preControl.HasFlag(LoopControl.After))
+                    preControl &= ~LoopControl.After;
+                else
+                    preControl = LoopControl.None;
+                if (preYield != null)
+                {
+                    var o = preYield.Invoke(t, val);
+                    val = o.Item1;
+                    var curControl = o.Item2;
+                    if (o.Item2.HasFlag(LoopControl.After))
+                        curControl = LoopControl.None;
+                    var control = curControl | preControl;
+                    preControl = o.Item2;
+                    if (control.HasFlag(LoopControl.Break))
+                        break;
+                    if (control.HasFlag(LoopControl.Skip))
+                        continue;
+                }
+                yield return t;
+                if (postYield != null)
+                {
+                    var o = preYield.Invoke(t, val);
+                    val = o.Item1;
+                    var curControl = o.Item2;
+                    if (o.Item2.HasFlag(LoopControl.After))
+                        curControl = LoopControl.None;
+                    var control = curControl | preControl;
+                    preControl = o.Item2;
+                    if (control.HasFlag(LoopControl.Break))
+                        break;
+                }
+            }
+            postNumeration?.Invoke(val);
         }
         public static IEnumerable<T> Enum<T>() where T : struct, IConvertible
         {
@@ -906,6 +999,26 @@ namespace Edge.Looping
         {
             return @this.ToDictionary(a => a.Item1, a => a.Item2);
         }
+        public static IEnumerable<T> Generate<T>(Func<Tuple<T,LoopControl>> gen)
+        {
+            bool skipfrombefore = false;
+            while (true)
+            {
+                var val = gen();
+                if (val.Item2 == LoopControl.Skip || skipfrombefore)
+                {
+                    skipfrombefore = false;
+                    continue;
+                }
+                if (val.Item2 == LoopControl.Break)
+                    break;
+                yield return val.Item1;
+                if (val.Item2 == LoopControl.BreakAfter)
+                    break;
+                if (val.Item2 == LoopControl.SkipAfter)
+                    skipfrombefore = true;
+            }
+        }
         public static IEnumerable<T> Generate<T>(Func<T> gen)
         {
             while (true)
@@ -917,9 +1030,9 @@ namespace Edge.Looping
         {
             return new EnumerableCache<T>(@this);
         }
-        public static IEnumerable<T> Step<T>(this IEnumerable<T> @this, int step = 2)
+        public static IEnumerable<T> Step<T>(this IEnumerable<T> @this, int step = 2, int start  = 0)
         {
-            int c = 0;
+            int c = start;
             foreach (var t in @this)
             {
                 if (c == 0)
@@ -928,6 +1041,93 @@ namespace Edge.Looping
                 if (c == step)
                     c = 0;
             }
-        } 
+        }
+        public static IEnumerable<IEnumerable<T>> Split<T>(this IEnumerable<T> @this, IEqualityComparer<T> splitter)
+        {
+            var splitpoints = @this.Trail2().CountBind(1).Where(a => !splitter.Equals(a.Item1.Item1, a.Item1.Item2)).Select(a => a.Item2);
+            splitpoints = 0.Enumerate().Concat(splitpoints).Concat(@this.Count().Enumerate());
+            var splitranges = splitpoints.Trail2().Select(a => Tuple.Create(a.Item1, a.Item2 - a.Item1));
+            return splitranges.Select(a => @this.SubEnumerable(a.Item1, a.Item2));
+        }
+        public static IEnumerable<T> PartialSums<T>(this IEnumerable<T> @this)
+        {
+            var f = Fields.getField<T>();
+            return @this.YieldAggregate(f.add, f.zero);
+        }
+        public static IEnumerable<T> PartialProduct<T>(this IEnumerable<T> @this)
+        {
+            var f = Fields.getField<T>();
+            return @this.YieldAggregate(f.multiply, f.one);
+        }
+    }
+    public static class Hooking
+    {
+        public static IEnumerable<T> HookMin<T>(this IEnumerable<T> @this, IGuard<T> output)
+        {
+            return HookMin(@this, output, Comparer<T>.Default);
+        }
+        public static IEnumerable<T> HookMin<T>(this IEnumerable<T> @this, IGuard<T> output, IComparer<T> comp)
+        {
+            bool any = false;
+            foreach (T t in @this)
+            {
+                if (!any || comp.Compare(output.value, t) > 0)
+                    output.value = t;
+                yield return t;
+                any = true;
+            }
+        }
+        public static IEnumerable<T> HookMax<T>(this IEnumerable<T> @this, IGuard<T> output)
+        {
+            return HookMax(@this, output, Comparer<T>.Default);
+        }
+        public static IEnumerable<T> HookMax<T>(this IEnumerable<T> @this, IGuard<T> output, IComparer<T> comp)
+        {
+            return HookMin(@this, output, comp.Reverse());
+        }
+        public static IEnumerable<T> HookCond<T>(this IEnumerable<T> @this, Func<T,bool> cond = null , IGuard<bool> any = null, IGuard<bool> all = null,IGuard<int> count = null)
+        {
+            any.CondSet(false);
+            all.CondSet(true);
+            count.CondSet(0);
+            foreach (var t in @this)
+            {
+                bool c = cond?.Invoke(t) ?? true;
+                if (c)
+                {
+                    any.CondSet(true);
+                    count.ContMutate(a=>a+1);
+                }
+                else
+                    all.CondSet(false);
+                yield return t;
+            }
+        }
+        public static IEnumerable<T> HookAggregate<T>(this IEnumerable<T> @this, IGuard<T> sum = null, IGuard<T> product = null, IGuard<T> max = null, IGuard<T> min = null, IGuard<T> last = null, IGuard<T> first = null)
+        {
+            return HookAggregate(@this, a=>a, sum, product, max, min, last, first);
+        }
+        public static IEnumerable<T> HookAggregate<T, G>(this IEnumerable<T> @this, Func<T, G> map, IGuard<G> sum = null, IGuard<G> product = null, IGuard<G> max = null, IGuard<G> min = null, IGuard<G> last = null, IGuard<G> first = null)
+        {
+            var f = Fields.getField<G>();
+            sum.CondSet(f.zero);
+            product.CondSet(f.one);
+            bool any = false;
+            foreach (T t in @this)
+            {
+                var v = map(t);
+                sum.ContMutate(a=>f.add(a, v));
+                product.ContMutate(a=>f.multiply(a, v));
+                if (first != null && !any)
+                    first.value = v;
+                if (min != null && (!any || f.Compare(v, min.value) < 0))
+                    min.value = v;
+                if (max != null && (!any || f.Compare(v, max.value) > 0))
+                    max.value = v;
+                last.CondSet(v);
+                any = true;
+                yield return t;
+            }
+        }
     }
 }

@@ -27,7 +27,7 @@ namespace CoreTest
         {
             var val = new int[] {1, 0, 1, 1, 2, 3, 5, 2, 2, 1, 3, 3, 8, 5};
             var expected = new Dictionary<int, ulong>() {{0, 4}, {1, 4}, {2, 6}};
-            foreach (KeyValuePair<int, ulong> keyValuePair in val.ToOccurances(new EqualityFunctionComparer<int>(a => a % 3)))
+            foreach (KeyValuePair<int, ulong> keyValuePair in val.ToOccurances(new EqualityFunctionComparer<int, int>(a => a % 3)))
                 AreEqual(expected[keyValuePair.Key], keyValuePair.Value);
         }
     }
@@ -58,7 +58,7 @@ namespace CoreTest
     [TestClass]
     public class UniquesComp
     {
-        private static readonly IEqualityComparer<int> _comp = new EqualityFunctionComparer<int>(a => a % 7);
+        private static readonly IEqualityComparer<int> _comp = new EqualityFunctionComparer<int, int>(a => a % 7);
         [TestMethod] public void Simple()
         {
             var val = new int[] {1, 0, 1, 1, 2, 3, 5, 2, 2, 1, 3, 3, 8, 5};
@@ -107,7 +107,7 @@ namespace CoreTest
     [TestClass]
     public class DuplicatesComp
     {
-        private static readonly IEqualityComparer<int> _comp = new EqualityFunctionComparer<int>(a => a % 7);
+        private static readonly IEqualityComparer<int> _comp = new EqualityFunctionComparer<int, int>(a => a % 7);
         [TestMethod] public void Simple()
         {
             var val = new int[] {1, 0, 1, 1, 2, 3, 5, 2, 2, 1, 3, 3, 8, 5};
@@ -126,7 +126,8 @@ namespace CoreTest
         [TestMethod] public void Limit0()
         {
             var val = new int[] {1, 0, 8, 0, 1, 1, 2, 3, 5, 2, 2, 1, 3, 3, 8, 5};
-            IsTrue(val.Duplicates(_comp, 0).OrderBy().SequenceEqual(new int[] {0, 1, 2, 3, 5}));
+            var s = val.Duplicates(_comp, 0);
+            IsTrue(s.OrderBy().SequenceEqual(new int[] {0, 1, 2, 3, 5}));
         }
     }
     [TestClass]

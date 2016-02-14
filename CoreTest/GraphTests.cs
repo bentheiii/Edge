@@ -6,6 +6,7 @@ using Edge.Comparison;
 using Edge.Graphs;
 using Edge.Looping;
 using Edge.NumbersMagic;
+using Edge.Tuples;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using static Microsoft.VisualStudio.TestTools.UnitTesting.Assert;
 

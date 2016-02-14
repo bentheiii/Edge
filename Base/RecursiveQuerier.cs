@@ -14,7 +14,7 @@ namespace Edge.RecursiveQuerier
         {
             if (i == 0)
                 return seed;
-            if (l.Initialized(i - 1) || i % 2 == 1)
+            if (i % 2 == 1 || l.Initialized(i - 1))
                 return agg(l[i - 1], baseValue);
             var x = l[i / 2];
             return agg(x, x);

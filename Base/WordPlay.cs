@@ -115,10 +115,6 @@ namespace Edge.WordsPlay
             }
             return ret;
         }
-        public static bool isvalidemail(this string tocheck)
-        {
-            return Regex.Match(tocheck,@"^[_a-z0-9-]+(\.[_a-z0-9-]+)*@[a-z0-9-]+(\.[a-z0-9-]+)*(\.[a-z]{2,4})$").Success;
-        }
         public static int countappearances(this string tosearch, string tofind)
         {
             return tosearch.getappearances(tofind).Count();

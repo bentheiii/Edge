@@ -82,12 +82,12 @@ namespace CoreTest
         }
         [TestMethod] public void Map()
         {
-            var val = new EqualityFunctionComparer<int>(a => a % 3);
+            var val = new EqualityFunctionComparer<int,int>(a => a % 3);
             IsWorking(val, 12, 4, 2);
         }
         [TestMethod] public void MapComp()
         {
-            var val = new EqualityFunctionComparer<int>(a => a % 3, EqualityComparer<int>.Default);
+            var val = new EqualityFunctionComparer<int,int>(a => a % 3, EqualityComparer<int>.Default);
             IsWorking(val, 5, 31, -300);
         }
     }
@@ -128,7 +128,7 @@ namespace CoreTest
         }
         [TestMethod] public void SpecialComparer()
         {
-            var val = new EnumerableCompararer<int>(new EqualityFunctionComparer<int>(a => a % 3));
+            var val = new EnumerableCompararer<int>(new EqualityFunctionComparer<int,int>(a => a % 3));
             IsWorking(val, new int[] {0, 1, 2}, new int[] {1, 2, 0}, new int[] {10, 3, 30});
         }
     }

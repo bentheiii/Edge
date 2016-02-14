@@ -17,27 +17,6 @@ namespace Edge.Arrays
     // ReSharper disable once InconsistentNaming
     public static class arrayExtensions
     {
-        public static bool SumDefinition<T, G>(this IDictionary<T, G> @this, T key, G val)
-        {
-            return AggregateDefinition(@this, key, val, Fields.getField<G>().add);
-        }
-        public static bool ProductDefinition<T, G>(this IDictionary<T, G> @this, T key, G val)
-        {
-            return AggregateDefinition(@this, key, val, Fields.getField<G>().multiply);
-        }
-        public static bool AggregateDefinition<T, G>(this IDictionary<T, G> @this, T key, G val, Func<G, G, G> aggfunc)
-        {
-            bool ret = @this.ContainsKey(key);
-            @this[key] = ret ? aggfunc(val, @this[key]) : val;
-            return ret;
-        }
-        public static bool EnsureDefinition<T, G>(this IDictionary<T, G> @this, T key, G defaultval = default(G))
-        {
-            if (@this.ContainsKey(key))
-                return true;
-            @this[key] = defaultval;
-            return false;
-        }
         //maximum is exclusive
         public static int binSearch(Func<int, int> searcher, int min, int max, int failvalue = -1)
         {
@@ -194,17 +173,17 @@ namespace Edge.Arrays
         {
             return filler1.Select(function).ToArray();
         }
-        private static int RecommendSize<T>(this IEnumerable<T> @this)
+        private static int? RecommendSize<T>(this IEnumerable<T> @this)
         {
-            return (@this as IReadOnlyCollection<T>)?.Count ?? ((@this as ICollection<T>)?.Count ?? 0);
+            return (@this as IReadOnlyCollection<T>)?.Count ?? ((@this as ICollection<T>)?.Count);
         }
         public static T[] ToArray<T>(this IEnumerable<T> @this, Action<int> reporter)
         {
-            return ToArray(@this, @this.RecommendSize(), (arg1, i) => reporter(i));
+            return ToArray(@this, @this.RecommendSize() ?? 0, (arg1, i) => reporter(i));
         }
         public static T[] ToArray<T>(this IEnumerable<T> @this, Action<T, int> reporter)
         {
-            return ToArray(@this, @this.RecommendSize(), reporter);
+            return ToArray(@this, @this.RecommendSize() ?? 0, reporter);
         }
         public static T[] ToArray<T>(this IEnumerable<T> @this, int capacity)
         {
@@ -266,11 +245,7 @@ namespace Edge.Arrays
         /// <returns>an array formed from the dictionary</returns>
         public static IEnumerable<T> FromOccurances<T>(this IEnumerable<KeyValuePair<T, ulong>> d)
         {
-            foreach (KeyValuePair<T, ulong> pair in d)
-            {
-                foreach (int i in Loops.Range(pair.Value))
-                    yield return pair.Key;
-            }
+            return d.Select(a => a.Key.Enumerate().Repeat(a.Value)).Concat();
         }
         public static bool ContainsAll<T>(this IEnumerable<T> @this, IEnumerable<T> vals)
         {
@@ -434,14 +409,18 @@ namespace Edge.Arrays
             var f = Fields.getField<T>();
             return f.pow(tosearch.getProduct(), f.Invert(f.fromInt(tosearch.Count())));
         }
-        public static T getMode<T>(this IEnumerable<T> tosearch, out int index)
+        public static T getMode<T>(this IEnumerable<T> tosearch, IEqualityComparer<T> comparer, out int index)
         {
             if (!tosearch.Any())
                 throw new ArgumentException("cannot be empty", nameof(tosearch));
-            var oc = tosearch.CountBind().ToOccurances(new EqualityFunctionComparer<Tuple<T, int>>(a => a.Item1));
+            var oc = tosearch.CountBind().ToOccurances(new EqualityFunctionComparer<Tuple<T, int>,T>(a => a.Item1, comparer));
             KeyValuePair<Tuple<T, int>, ulong> max = oc.getMax(new FunctionComparer<KeyValuePair<Tuple<T, int>, ulong>>(a => a.Value));
             index = max.Key.Item2;
             return max.Key.Item1;
+        }
+        public static T getMode<T>(this IEnumerable<T> tosearch, out int index)
+        {
+            return getMode(tosearch, EqualityComparer<T>.Default, out index);
         }
         public static T getMode<T>(this IEnumerable<T> tosearch)
         {
@@ -489,73 +468,67 @@ namespace Edge.Arrays
         {
             return @this.All(a => comp.Equals(a, @this.First()));
         }
-        public static Tuple<T2, T1> FlipTuple<T1, T2>(this Tuple<T1, T2> @this)
-        {
-            return Tuple.Create(@this.Item2, @this.Item1);
-        } 
-        public static Tuple<T1> ToTuple<T1>(this object[] @this)
-        {
-            return new Tuple<T1>((T1)@this[0]);
-        }
-        public static Tuple<T1, T2> ToTuple<T1, T2>(this object[] @this)
-        {
-            return new Tuple<T1, T2>((T1)@this[0], (T2)@this[1]);
-        }
-        public static Tuple<T1, T2, T3> ToTuple<T1, T2, T3>(this object[] @this)
-        {
-            return new Tuple<T1, T2, T3>((T1)@this[0], (T2)@this[1], (T3)@this[2]);
-        }
-        public static Tuple<T1, T2, T3, T4> ToTuple<T1, T2, T3, T4>(this object[] @this)
-        {
-            return new Tuple<T1, T2, T3, T4>((T1)@this[0], (T2)@this[1], (T3)@this[2], (T4)@this[3]);
-        }
-        public static Tuple<T1, T2, T3, T4, T5> ToTuple<T1, T2, T3, T4, T5>(this object[] @this)
-        {
-            return new Tuple<T1, T2, T3, T4, T5>((T1)@this[0], (T2)@this[1], (T3)@this[2], (T4)@this[3], (T5)@this[4]);
-        }
-        public static Tuple<T> ToTuple1<T>(this T[] @this)
-        {
-            return Tuple.Create(@this[0]);
-        }
-        public static Tuple<T, T> ToTuple2<T>(this T[] @this)
-        {
-            return Tuple.Create(@this[0], @this[1]);
-        }
-        public static Tuple<T, T, T> ToTuple3<T>(this T[] @this)
-        {
-            return Tuple.Create(@this[0], @this[1], @this[2]);
-        }
-        public static Tuple<T, T, T, T> ToTuple4<T>(this T[] @this)
-        {
-            return Tuple.Create(@this[0], @this[1], @this[2], @this[3]);
-        }
-        public static Tuple<T, T, T, T, T> ToTuple5<T>(this T[] @this)
-        {
-            return Tuple.Create(@this[0], @this[1], @this[2], @this[3], @this[4]);
-        }
-        public static Tuple<T1> ToTuple<T1>(this IEnumerable @this)
-        {
-            return @this.toObjArray().ToTuple<T1>();
-        }
-        public static Tuple<T1, T2> ToTuple<T1, T2>(this IEnumerable @this)
-        {
-            return @this.toObjArray().ToTuple<T1, T2>();
-        }
-        public static Tuple<T1, T2, T3> ToTuple<T1, T2, T3>(this IEnumerable @this)
-        {
-            return @this.toObjArray().ToTuple<T1, T2, T3>();
-        }
-        public static Tuple<T1, T2, T3, T4> ToTuple<T1, T2, T3, T4>(this IEnumerable @this)
-        {
-            return @this.toObjArray().ToTuple<T1, T2, T3, T4>();
-        }
-        public static Tuple<T1, T2, T3, T4, T5> ToTuple<T1, T2, T3, T4, T5>(this IEnumerable @this)
-        {
-            return @this.toObjArray().ToTuple<T1, T2, T3, T4, T5>();
-        }
         public static object[] toObjArray(this IEnumerable @this)
         {
             return @this.Cast<object>().ToArray();
+        }
+        public static int HammingDistance<T>(this IEnumerable<T> @this, IEnumerable<T> other)
+        {
+            return HammingDistance(@this, other, EqualityComparer<T>.Default);
+        }
+        public static int HammingDistance<T>(this IEnumerable<T> @this, IEnumerable<T> other, IEqualityComparer<T> comp)
+        {
+            return @this.Zip(other).Count(a => !comp.Equals(a.Item1, a.Item2));
+        }
+        public static int CompareCount<T0,T1>(this IEnumerable<T0> @this, IEnumerable<T1> other)
+        {
+            int? rect = @this.RecommendSize();
+            if (rect.HasValue)
+            {
+                int? reco = other.RecommendSize();
+                if (reco.HasValue)
+                    return rect.Value.CompareTo(reco.Value);
+            }
+            var tor = new IEnumerator[] { @this.GetEnumerator(), other.GetEnumerator()};
+            var next = tor.SelectToArray(a => a.MoveNext());
+            while (next.All(a=>a))
+            {
+                next = tor.SelectToArray(a => a.MoveNext());
+            }
+            if (next[0] == next[1])
+                return 0;
+            return next[0] ? 1 : -1;
+        }
+        public static bool CountAtLeast<T>(this IEnumerable<T> @this, int minCount, Func<T, bool> predicate = null)
+        {
+            var rec = @this.RecommendSize();
+            if (rec.HasValue)
+                return rec.Value >= minCount;
+            return predicate == null ? @this.Skip(minCount - 1).Any() : @this.Skip(minCount - 1).Any(predicate);
+        }
+    }
+    public static class DictionaryExtensions
+    {
+        public static bool SumDefinition<T, G>(this IDictionary<T, G> @this, T key, G val)
+        {
+            return AggregateDefinition(@this, key, val, Fields.getField<G>().add);
+        }
+        public static bool ProductDefinition<T, G>(this IDictionary<T, G> @this, T key, G val)
+        {
+            return AggregateDefinition(@this, key, val, Fields.getField<G>().multiply);
+        }
+        public static bool AggregateDefinition<T, G>(this IDictionary<T, G> @this, T key, G val, Func<G, G, G> aggfunc)
+        {
+            bool ret = @this.ContainsKey(key);
+            @this[key] = ret ? aggfunc(val, @this[key]) : val;
+            return ret;
+        }
+        public static bool EnsureDefinition<T, G>(this IDictionary<T, G> @this, T key, G defaultval = default(G))
+        {
+            if (@this.ContainsKey(key))
+                return true;
+            @this[key] = defaultval;
+            return false;
         }
     }
     public sealed class RotatorArray<T> : IList<T>
@@ -735,7 +708,6 @@ namespace Edge.Arrays
     }
     public class ExpandingArray<T> : IEnumerable<T>
     {
-        
         private readonly List<T> _data;
         public T defaultValue { get; }
         public ExpandingArray(T defaultValue = default(T), int capacity = 4)
@@ -951,6 +923,70 @@ namespace Edge.Arrays
             }
         }
     }
+    public class EnumerationStream : Stream
+    {
+        private IEnumerator<byte> _tor;
+        private readonly Lazy<int> _lcount; 
+        public EnumerationStream(IEnumerable<byte> tor)
+        {
+            _tor = tor.GetEnumerator();
+            _lcount = new Lazy<int>(tor.Count);
+        }
+        public override void Flush()
+        {
+            throw new NotSupportedException();
+        }
+        public override long Seek(long offset, SeekOrigin origin)
+        {
+            throw new NotSupportedException();
+        }
+        public override void SetLength(long value)
+        {
+            throw new NotSupportedException();
+        }
+        public override int Read(byte[] buffer, int offset, int count)
+        {
+            if (_tor == null)
+                return 0;
+            int ret = 0;
+            foreach (int i in Loops.Range(offset,count))
+            {
+                if (!_tor.MoveNext())
+                {
+                    _tor = null;
+                    break;
+                }
+                buffer[i] = _tor.Current;
+                ret++;
+            }
+            return ret;
+        }
+        public override void Write(byte[] buffer, int offset, int count)
+        {
+            throw new NotSupportedException();
+        }
+        public override bool CanRead => true;
+        public override bool CanSeek => false;
+        public override bool CanWrite => false;
+        public override long Length
+        {
+            get
+            {
+                return _lcount.Value;
+            }
+        }
+        public override long Position
+        {
+            get
+            {
+                throw new NotSupportedException();
+            }
+            set
+            {
+                throw new NotSupportedException();
+            }
+        }
+    }
     namespace Arr2D
     {
         public static class Array2D
@@ -994,7 +1030,7 @@ namespace Edge.Arrays
                 return arr.getSize().Zip(ind).All(a => a.Item2.iswithinPartialExclusive(0, a.Item1));
             }
             public static string ToTablePrintable<T>(this T[,] arr, string openerfirst = "/", string openermid = "|", string openerlast = @"\",
-                                                string closerfirst = @"\", string closermid = "|", string closerlast = "/", string divider = " ")
+                                                    string closerfirst = @"\", string closermid = "|", string closerlast = "/", string divider = " ")
             {
                 int s = arr.Cast<T>().Select(a=>a.ToString().Length).Concat(0.Enumerate()).Max();
                 StringBuilder ret = new StringBuilder();
@@ -1027,7 +1063,7 @@ namespace Edge.Arrays
                 {
                     case 0:
                         {
-                            if (!a.AllEqual(new EqualityFunctionComparer<T[,]>(x => x.GetLength(1))) || a.Length == 0)
+                            if (!a.AllEqual(new EqualityFunctionComparer<T[,], int>(x => x.GetLength(1))) || a.Length == 0)
                                 throw new ArgumentException("the arrays must be non-empty and of compatible sizes");
                             T[,] ret = new T[a.Sum(x => x.GetLength(0)), a[0].GetLength(1)];
                             int row = 0;
@@ -1044,7 +1080,7 @@ namespace Edge.Arrays
                         }
                     case 1:
                         {
-                            if (!a.AllEqual(new EqualityFunctionComparer<T[,]>(x => x.GetLength(0))) || a.Length == 0)
+                            if (!a.AllEqual(new EqualityFunctionComparer<T[,], int>(x => x.GetLength(0))) || a.Length == 0)
                                 throw new ArgumentException("the arrays must be non-empty and of compatible sizes");
                             T[,] ret = new T[a[0].GetLength(0), a.Sum(x => x.GetLength(1))];
                             int col = 0;
@@ -1070,36 +1106,34 @@ namespace Edge.Arrays
         public class SymmetricMatrix<T>
         {
             private readonly T[] _data;
-            public int Size { get; }
+            private int Size { get; }
             public bool Reflexive { get; }
-            private readonly Func<int, int, int> _func;
             public SymmetricMatrix(int size, bool reflexive = true)
             {
                 this.Size = size;
                 if (Size < 0)
                     throw new ArgumentException("must be non-negative",nameof(size));
                 Reflexive = reflexive;
-                if (reflexive)
-                {
-                    _data = new T[this.Size * (this.Size + 1) / 2];
-                    this._func = (r, c) => (int)(r * (this.Size - (r + 1) / 2.0) + c);
-                }
-                else
-                {
-                    _data = new T[this.Size * (this.Size - 1) / 2];
-                    this._func = (r, c) =>
-                    {
-                        if (r == c)
-                            throw new IndexOutOfRangeException("this matrix is non-reflexive");
-                        return (int)(r * (this.Size - (r + 3) / 2.0) + c - 1);
-                    };
-                }
+                _data = new T[(this.Size * (this.Size + (reflexive ? 1 : -1))) / 2];
             }
             private int getindex(int r, int c)
             {
                 if (r >= this.Size || c >= this.Size)
                     throw new IndexOutOfRangeException();
-                return r > c ? this._func(c, r) : this._func(r, c);
+                if (r > c)
+                    return getindex(c, r);
+                if (this.Reflexive)
+                    return (int)(r * (this.Size - (r + 1) / 2.0) + c);
+                if (r == c)
+                    throw new IndexOutOfRangeException("this matrix is non-reflexive");
+                return (int)(r * (this.Size - (r + 3) / 2.0) + c - 1);
+            }
+            public int length
+            {
+                get
+                {
+                    return _data.Length;
+                }
             }
             public T this[int row, int col]
             {

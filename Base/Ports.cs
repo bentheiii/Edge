@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
@@ -225,7 +224,8 @@ namespace Edge.Ports
         }
         protected virtual void Dispose(bool disposing)
         {
-            _sock.Dispose();
+            if (disposing)
+                _sock.Dispose();
         }
         public void Dispose()
         {
@@ -236,7 +236,7 @@ namespace Edge.Ports
     public class TcpServer : IPortBound, ICreator<IConnection>
     {
         private readonly Socket _sock;
-        public int Backlog { get; set; }
+        public int Backlog { get; }
         public TcpServer()
         {
             _sock = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
@@ -264,7 +264,8 @@ namespace Edge.Ports
         }
         protected virtual void Dispose(bool disposing)
         {
-            _sock.Dispose();
+            if (disposing)
+                _sock.Dispose();
         }
         public void Dispose()
         {
@@ -386,7 +387,8 @@ namespace Edge.Ports
         }
         protected virtual void Dispose(bool disposing)
         {
-            _sock.Dispose();
+            if (disposing)
+                _sock.Dispose();
         }
         public void Dispose()
         {
@@ -421,7 +423,7 @@ namespace Edge.Ports
         {
             _thread.Start();
         }
-        public void stop()
+        private void stop()
         {
             if(_thread.IsAlive)
                 _thread.Abort();
@@ -437,7 +439,8 @@ namespace Edge.Ports
         }
         protected virtual void Dispose(bool disposing)
         {
-            stop();
+            if (disposing)
+                stop();
         }
         public void Dispose()
         {
@@ -874,7 +877,7 @@ namespace Edge.Ports
                         if (_subscibers.Count == 0)
                         {
                             this.Dispose();
-                            ((RecieverThread)o).stop();
+                            ((RecieverThread)o).Dispose();
                         }
                     }
                     return false;

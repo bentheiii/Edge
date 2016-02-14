@@ -2,8 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
-using System.Xml.Schema;
 using Edge.Arrays;
+using Edge.Arrays.Arr2D;
 using Edge.Fielding;
 using Edge.Looping;
 using Edge.Matrix;
@@ -1874,6 +1874,57 @@ namespace Edge.NumbersMagic
             }
 	        return value;
 	    }
-	}
-    
+	    public static double Entropy(this IEnumerable<double> @this)
+	    {
+	        var sum = @this.EnumerationHook(preYield: d =>
+            {
+                if (d < 0)
+                    throw new ArgumentException("Enumerable has a negative value");
+            }).Sum();
+	        if (sum != 1.0)
+	            @this = @this.Select(a => a / sum);
+	        return @this.Where(a=>a>0).Sum(a => a * Math.Log(a, 2));
+	    }
+	    public static IEnumerable<int> Pentagonals(int start = 0)
+	    {
+	        return Loops.Count(start).SelectMany(a=>a==0? a.Enumerate() : new int[] {a,-a}).Select(a => (a * (3 * a - 1)) / 2);
+	    }
+	    public static IEnumerable<IEnumerable<int>> Partitions(this int @this, int? largestpart = int.MaxValue)
+	    {
+            if (@this < 0)
+                yield break;
+	        if (@this == 0)
+	        {
+	            yield return Enumerable.Empty<int>();
+	            yield break;
+	        }
+	        foreach (int i in Loops.IRange(Math.Min(largestpart ?? @this,@this),1,-1))
+	        {
+	            foreach (var p in (@this-i).Partitions(largestpart.HasValue ? i : (int?)null))
+	            {
+	                yield return i.Enumerate().Concat(p);
+	            }
+	        }
+	    }
+        public static int Partition(this int t)
+        {
+            var val = new int[]
+            {
+                1, 1, 2, 3, 5, 7, 11, 15, 22, 30, 42, 56, 77, 101, 135, 176, 231, 297, 385, 490, 627, 792, 1002, 1255, 1575, 1958, 2436, 3010,
+                3718, 4565, 5604, 6842, 8349, 10143, 12310, 14883, 17977, 21637, 26015, 31185, 37338, 44583, 53174, 63261, 75175, 89134, 105558,
+                124754, 147273, 173525
+            };
+            return new LazyArray<int>((@this, cache) =>
+            {
+                if (val.isWithinBounds(t))
+                    return val[t];
+                if (@this < 0)
+                    return 0;
+                var partindices = NumberMagic.Pentagonals(1).Select(a => @this - a).TakeWhile(a => a >= 0);
+                var parts = partindices.Select(a => cache[a]);
+                var sums = parts.Group2().Select(a => a.Item1 + a.Item2);
+                return sums.Group2().Sum(a => a.Item1 - a.Item2);
+            })[t];
+        }
+    }
 }

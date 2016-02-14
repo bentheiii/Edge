@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Edge.Arrays;
 using Edge.Fielding;
+using Edge.Looping;
 
 namespace Edge.Series
 {
@@ -22,12 +23,7 @@ namespace Edge.Series
         {
             if (count <= 0)
                 throw new Exception("array count must be higher than 0");
-            T[] ret = new T[count];
-            for (int i = 0; i < ret.Length; i++)
-            {
-                ret[i] = this[startindex + i];
-            }
-            return ret;
+            return arrayExtensions.Fill(count, i => this[i + startindex]);
         }
         internal Series(T a0)
         {
@@ -39,16 +35,9 @@ namespace Edge.Series
         }
         public virtual IEnumerator<T> GetEnumerator()
         {
-            int len = 10, start = 0;
-            while (true)
-            {
-                foreach (T i in getmemberarray(len, start))
-                {
-                    yield return i;
-                }
-                start += len;
-                len *= 2;
-            }
+            var gaps = Looping.Loops.YieldAggregate(s => s * 2, 1);
+            var gapsandlengths = gaps.Zip(0.Enumerate().Concat(gaps.YieldAggregate((val, sum) => val + sum, 0)));
+            return gapsandlengths.Select(a => getmemberarray(a.Item1, a.Item2)).Concat().GetEnumerator();
         }
         IEnumerator IEnumerable.GetEnumerator()
         {
