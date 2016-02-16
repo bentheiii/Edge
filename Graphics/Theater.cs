@@ -10,9 +10,9 @@ using Edge.NumbersMagic;
 using Edge.Shapes;
 using Edge.SystemExtensions;
 using Edge.Timer;
-using Edge.Units.Angle;
-using Edge.Units.Frequency;
-using Edge.Units.RotationalSpeed;
+using Edge.Units.Angles;
+using Edge.Units.Frequencies;
+using Edge.Units.Rotationals;
 
 namespace Edge.Plane
 {

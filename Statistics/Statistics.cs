@@ -6,9 +6,7 @@ using CCDefault.Annotations;
 using Edge.Arrays;
 using Edge.Fielding;
 using Edge.Looping;
-using Edge.NumbersMagic;
-using Edge.RandomGen;
-using Edge.SystemExtensions;
+using Edge.Random;
 
 namespace Edge.Statistics
 {

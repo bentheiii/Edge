@@ -4,12 +4,13 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using Edge.Arrays.Arr2D;
 using Edge.Comparison;
 using Edge.Fielding;
 using Edge.Looping;
 using Edge.NumbersMagic;
 using Edge.SpecialNumerics;
-using Edge.RandomGen;
+using Edge.Random;
 using Edge.SystemExtensions;
 
 namespace Edge.Arrays
@@ -282,13 +283,6 @@ namespace Edge.Arrays
         {
             return a.Select(x => kPrinter(x.Key) + definitionSeperator + vPrinter(x.Value)).ToPrintable(seperator,opening, closing);
         }
-        /// <summary>
-        /// returns number of members in array that are being searched for
-        /// </summary>
-        public static int Count<T>(this IEnumerable<T> tosearch, IEnumerable<T> valuestofind)
-        {
-            return tosearch.Count(valuestofind.Contains);
-        }
         public static void Swap<T>(this IList<T> toswap, int index1, int index2)
         {
             if (index1 != index2)
@@ -460,6 +454,14 @@ namespace Edge.Arrays
             }
             return x;
         }
+        public static void Append<T>(ref T[] @this, params T[] toAdd)
+        {
+            Array.Resize(ref @this, @this.Length+toAdd.Length);
+            foreach (var t in toAdd.CountBind(@this.Length))
+            {
+                @this[t.Item2] = t.Item1;
+            }
+        }
         public static bool AllEqual<T>(this IEnumerable<T> @this)
         {
             return AllEqual(@this, EqualityComparer<T>.Default);
@@ -505,6 +507,120 @@ namespace Edge.Arrays
             if (rec.HasValue)
                 return rec.Value >= minCount;
             return predicate == null ? @this.Skip(minCount - 1).Any() : @this.Skip(minCount - 1).Any(predicate);
+        }
+        public static Tuple<T[], T[]> SplitAt<T>(this IEnumerable<T> @this, int item1Length)
+        {
+            var ret1 = new ResizingArray<T>(item1Length);
+            var ret2 = new ResizingArray<T>((@this.RecommendSize() ?? item1Length) - item1Length);
+            var tor = @this.GetEnumerator();
+            while (ret1.Count < item1Length)
+            {
+                if (!tor.MoveNext())
+                    return Tuple.Create(ret1.arr,ret2.arr);
+                ret1.Add(tor.Current);
+            }
+            while (!tor.MoveNext())
+            {
+                ret2.Add(tor.Current);
+            }
+            return Tuple.Create(ret1.arr, ret2.arr);
+        }
+        public static Tuple<T[], T[]> SplitBy<T>(this IEnumerable<T> @this, Func<T,bool> takeWhile)
+        {
+            var rec = (@this.RecommendSize() ?? 0);
+            var ret1 = new ResizingArray<T>(rec/2);
+            var ret2 = new ResizingArray<T>(rec/2);
+            var tor = @this.GetEnumerator();
+            while (true)
+            {
+                if (!tor.MoveNext())
+                    return Tuple.Create<T[],T[]>(ret1, ret2);
+                if (takeWhile(tor.Current))
+                    ret1.Add(tor.Current);
+                else
+                {
+                    ret2.Add(tor.Current);
+                    break;
+                }
+            }
+            while (!tor.MoveNext())
+            {
+                ret2.Add(tor.Current);
+            }
+            return Tuple.Create<T[], T[]>(ret1, ret2);
+        }
+        public static int Count<T>(this IEnumerable<T> @this, T query)
+        {
+            return Count(@this, query, EqualityComparer<T>.Default);
+        }
+        public static int Count<T>(this IEnumerable<T> @this, T query, IEqualityComparer<T> comp)
+        {
+            return @this.Count(a=>comp.Equals(a,query));
+        }
+        public static int Count<T>(this IEnumerable<T> @this, IEnumerable<T> query)
+        {
+            return Count(@this, query, EqualityComparer<T>.Default);
+        }
+        public static int Count<T>(this IEnumerable<T> @this, IEnumerable<T> query, IEqualityComparer<T> comp)
+        {
+            return @this.Trail(query.Count()).Count(a => a.SequenceEqual(query, comp));
+        }
+        public static bool Balanced<T>(this IEnumerable<T> @this, IEnumerable<T> opener, IEnumerable<T> closer, int? maxdepth = null)
+        {
+            if (opener.Equals(closer))
+            {
+                int c = @this.Count(opener);
+                return c % 2 == 0 && (!maxdepth.HasValue || (c == 0 || maxdepth >= 1));
+            }
+            var openerindicies = @this.Trail(opener.Count()).CountBind().Where(a => a.Item1.SequenceEqual(opener)).Select(a => a.Item2);
+            var closerindicies = @this.Trail(closer.Count()).CountBind().Where(a => a.Item1.SequenceEqual(closer)).Select(a => a.Item2);
+            var parenonly = openerindicies.Attach(a => 0).Concat(closerindicies.Attach(a => 1)).OrderBy(a=>a.Item1).Select(a=>a.Item2);
+            return parenonly.Balanced(0, 1, maxdepth);
+        }
+        public static bool Balanced<T>(this IEnumerable<T> @this, T opener, T closer, int? maxdepth = null)
+        {
+            if (opener.Equals(closer))
+            {
+                int c = @this.Count(opener);
+                return c % 2 == 0 && (!maxdepth.HasValue || (c == 0 || maxdepth >= 1));
+            }
+            int ret = 0;
+            foreach (var t in @this)
+            {
+                if (t.Equals(opener))
+                {
+                    ret++;
+                    if (maxdepth.HasValue && maxdepth.Value < ret)
+                        return false;
+                }
+                else if (t.Equals(closer))
+                {
+                    ret--;
+                    if (ret < 0)
+                        return false;
+                }
+            }
+            return ret == 0;
+        }
+        public static bool Balanced<T>(this IEnumerable<T> @this, IEnumerable<Tuple<T, T>> couples, int? maxdepth = null)
+        {
+            Stack<T> layers = new Stack<T>(maxdepth ?? 0);
+            var dic = couples.ToDictionary();
+            foreach (T t in @this)
+            {
+                if (dic.ContainsKey(t))
+                {
+                    if (maxdepth.HasValue && layers.Count >= maxdepth.Value)
+                        return false;
+                    layers.Push(t);
+                }
+                else if (dic.Values.Contains(t))
+                {
+                    if (layers.Count == 0 || !dic[layers.Pop()].Equals(t))
+                        return false;
+                }
+            }
+            return layers.Count == 0;
         }
     }
     public static class DictionaryExtensions
@@ -987,6 +1103,77 @@ namespace Edge.Arrays
             }
         }
     }
+    public class ResizingArray<T> : ICollection<T>, IReadOnlyList<T>
+    {
+        public ResizingArray(int capacity = 0)
+        {
+            _arr = new T[capacity];
+        } 
+        public T[] arr
+        {
+            get
+            {
+                minimize();
+                return _arr;
+            }
+        }
+        public bool Remove(T item)
+        {
+            throw new NotSupportedException();
+        }
+        public int Count { get; private set; }= 0;
+        public bool IsReadOnly
+        {
+            get
+            {
+                return _arr.IsReadOnly;
+            }
+        }
+        private T[] _arr;
+        public void minimize()
+        {
+            Array.Resize(ref _arr,Count);
+        }
+        public void Add(T x)
+        {
+            while (!_arr.isWithinBounds(Count))
+                Array.Resize(ref _arr,arr.Length==0 ? 1 : arr.Length*2);
+            _arr[Count++] = x;
+        }
+        public void Clear()
+        {
+            _arr = new T[0];
+        }
+        public bool Contains(T item)
+        {
+            return _arr.Contains(item);
+        }
+        public void CopyTo(T[] array, int arrayIndex)
+        {
+            _arr.CopyTo(array, arrayIndex);
+        }
+        public IEnumerator<T> GetEnumerator()
+        {
+            return _arr.Take(Count).GetEnumerator();
+        }
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return this.GetEnumerator();
+        }
+        public T this[int index]
+        {
+            get
+            {
+                if (index >= Count)
+                    throw new ArgumentOutOfRangeException();
+                return _arr[index];
+            }
+        }
+        public static implicit operator T[](ResizingArray<T> @this)
+        {
+            return @this.arr;
+        }
+    }
     namespace Arr2D
     {
         public static class Array2D
@@ -1029,10 +1216,20 @@ namespace Edge.Arrays
                     throw new ArgumentException("mismatch on indices");
                 return arr.getSize().Zip(ind).All(a => a.Item2.iswithinPartialExclusive(0, a.Item1));
             }
-            public static string ToTablePrintable<T>(this T[,] arr, string openerfirst = "/", string openermid = "|", string openerlast = @"\",
-                                                    string closerfirst = @"\", string closermid = "|", string closerlast = "/", string divider = " ")
+            public static IEnumerable<IEnumerable<T>> Rows<T>(this T[,] @this)
             {
-                int s = arr.Cast<T>().Select(a=>a.ToString().Length).Concat(0.Enumerate()).Max();
+                return Loops.Range(@this.GetLength(0)).Select(a => Loops.Range(@this.GetLength(1)).Select(x => @this[a, x]));
+            }
+            public static IEnumerable<IEnumerable<T>> Cols<T>(this T[,] @this)
+            {
+                return Loops.Range(@this.GetLength(1)).Select(a => Loops.Range(@this.GetLength(0)).Select(x => @this[x, a]));
+            }
+            public static string ToTablePrintable<T>(this T[,] arr, string openerfirst = "/", string openermid = "|", string openerlast = @"\",
+                                                    string closerfirst = @"\", string closermid = "|", string closerlast = "/", string divider = " ", string linediv=null)
+            {
+                linediv = linediv ?? Environment.NewLine;
+                var cols = arr.Cols();
+                int[] collengths = cols.SelectToArray(a => a.Max(x => x.ToString().Length));
                 StringBuilder ret = new StringBuilder();
                 for (int i = 0; i < arr.GetLength(0); i++)
                 {
@@ -1046,14 +1243,14 @@ namespace Edge.Arrays
                     {
                         if (j > 0)
                             ret.Append(divider);
-                        ret.Append(arr[i, j].ToString().PadLeft(s));
+                        ret.Append(arr[i, j].ToString().PadLeft(collengths[j]));
                     }
                     string closer = closermid;
                     if (i == 0)
                         closer = closerfirst;
                     if (i == arr.GetLength(0) - 1)
                         closer = closerlast;
-                    ret.Append(closer + Environment.NewLine);
+                    ret.Append(closer + linediv);
                 }
                 return ret.ToString();
             }

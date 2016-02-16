@@ -7,7 +7,7 @@ using Edge.Arrays.Arr2D;
 using Edge.Fielding;
 using Edge.Looping;
 using Edge.Matrix;
-using Edge.RandomGen;
+using Edge.Random;
 using Edge.RecursiveQuerier;
 using Edge.SystemExtensions;
 using Numerics;

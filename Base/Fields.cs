@@ -8,7 +8,6 @@ using Edge.Arrays;
 using Edge.Looping;
 using Edge.NumbersMagic;
 using Edge.RecursiveQuerier;
-using Edge.Dice;
 using Edge.SystemExtensions;
 using Edge.WordsPlay;
 using Microsoft.CSharp.RuntimeBinder;
@@ -1382,7 +1381,6 @@ namespace Edge.Fielding {
         }
         
     #endregion
-        public const int DEFAULT_SURROUNDING_FIELD_DEPTH = 3;
         private static readonly IDictionary<Type,Field> _quickFieldDictionary = new Dictionary<Type, Field>();
         static Fields()
         {
@@ -1437,16 +1435,10 @@ namespace Edge.Fielding {
                 }
             }
         }
-        public static bool setField<T>(Field<T> f, int surroundingFieldDepth = DEFAULT_SURROUNDING_FIELD_DEPTH)
+        public static bool setField<T>(Field<T> f)
         {
             var ret = _quickFieldDictionary.ContainsKey(f.getSubjectType());
             _quickFieldDictionary.Add(f.getSubjectType(), f);
-            if (surroundingFieldDepth > 0)
-            {
-                setField(new Matrix.MatrixField<T>(f), surroundingFieldDepth - 1);
-                setField(new Formulas.FormulaField<T>(f), surroundingFieldDepth - 1);
-                setField(new DieField<T>(f), surroundingFieldDepth - 1);
-            }
             return ret;
         }
         public static FieldWrapper<T> ToFieldWrapper<T>(this T @this) => @this;

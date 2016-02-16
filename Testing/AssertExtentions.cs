@@ -1,6 +1,4 @@
-﻿using System;
-using Edge.Fielding;
-using static Microsoft.VisualStudio.TestTools.UnitTesting.Assert;
+﻿using Edge.Fielding;
 
 namespace Edge.Assert
 {

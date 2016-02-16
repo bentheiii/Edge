@@ -1049,6 +1049,17 @@ namespace Edge.Looping
             var splitranges = splitpoints.Trail2().Select(a => Tuple.Create(a.Item1, a.Item2 - a.Item1));
             return splitranges.Select(a => @this.SubEnumerable(a.Item1, a.Item2));
         }
+        public static IEnumerable<IEnumerable<T>> Split<T>(this IEnumerable<T> @this, T divider, bool includedivider = false)
+        {
+            return Split(@this, a=>a.Equals(divider), includedivider);
+        }
+        public static IEnumerable<IEnumerable<T>> Split<T>(this IEnumerable<T> @this, Func<T,bool> dividerdetector, bool includedivider = false)
+        {
+            var splitpoints = @this.CountBind().Where(a => dividerdetector(a.Item1)).Select(a => a.Item2);
+            splitpoints = (includedivider ? 0 : -1).Enumerate().Concat(splitpoints).Concat((@this.Count() + (includedivider ? 0 : 1)).Enumerate() );
+            var splitranges = splitpoints.Trail2().Select(a => Tuple.Create(a.Item1 + (includedivider ? 0 : 1), a.Item2 - a.Item1 + (includedivider ? 0 : -1)));
+            return splitranges.Select(a => @this.SubEnumerable(a.Item1, a.Item2));
+        }
         public static IEnumerable<T> PartialSums<T>(this IEnumerable<T> @this)
         {
             var f = Fields.getField<T>();

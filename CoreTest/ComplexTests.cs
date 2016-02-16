@@ -2,12 +2,13 @@
 using System.Linq;
 using Edge.Complex;
 using Edge.Looping;
-using Edge.Modular;
-using Edge.Units.Angle;
+using Edge.Units;
+using Edge.WordsPlay;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using static Edge.Complex.ComplexNumber;
 using static CoreTest.AssertComplexTest;
 using static Microsoft.VisualStudio.TestTools.UnitTesting.Assert;
+using Angle = Edge.Units.Angles.Angle;
 
 namespace CoreTest
 {
@@ -18,11 +19,11 @@ namespace CoreTest
             AreEqual(c.RealPart, real, 0.0001);
             AreEqual(c.ImaginaryPart, imag, 0.0001);
             AreEqual(c.Radius, radius, 0.0001);
-            AreEqual(c.Angle.Radians, angle, 0.0001);
+            AreEqual(c.Angle.InUnits(Angle.Radian), angle, 0.0001);
         }
         public static void CheckVital(ComplexNumber c, ComplexNumber other)
         {
-            CheckVital(c, other.RealPart, other.ImaginaryPart, other.Radius, other.Angle.Radians);
+            CheckVital(c, other.RealPart, other.ImaginaryPart, other.Radius, other.Angle.InUnits(Angle.Radian));
         }
     }
     [TestClass]
@@ -192,7 +193,7 @@ namespace CoreTest
         [TestMethod] public void SelfModulo()
         {
             var val1 = FromRectangular(1, 2);
-            CheckVital(val1 % val1, ComplexNumber.Zero);
+            CheckVital(val1 % val1, Zero);
         }
     }
     [TestClass]
@@ -557,7 +558,7 @@ namespace CoreTest
         [TestMethod] public void ZeroPow()
         {
             var val = FromPolar(3, 2);
-            CheckVital(val.pow(ComplexNumber.Zero), FromPolar(0));
+            CheckVital(val.pow(Zero), FromPolar(0));
         }
         [TestMethod] public void OnePow()
         {
@@ -572,7 +573,7 @@ namespace CoreTest
         [TestMethod] public void ZeroByZero()
         {
             var val = FromPolar(0, 0);
-            CheckVital(val.pow(ComplexNumber.Zero), FromPolar(0));
+            CheckVital(val.pow(Zero), FromPolar(0));
         }
         [TestMethod] public void Root()
         {
@@ -733,7 +734,7 @@ namespace CoreTest
             var primary = FromRectangular(1.36087, 0.33023);
             AreEqual(val.Length, mag);
             foreach (int i in Loops.Range(val.Length))
-                CheckVital(val[i], primary * new ComplexNumber(new Angle(i / (double)mag, Edge.Units.Angle.Angle.Turn)));
+                CheckVital(val[i], primary * new ComplexNumber(new Angle(i / (double)mag, Angle.Turn)));
         }
         [TestMethod] public void SimpleConjugate()
         {

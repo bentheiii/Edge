@@ -4,8 +4,6 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using Edge.Arrays;
-using Edge.Streams;
 using Microsoft.WindowsAPICodePack.Shell;
 
 namespace Edge.Path

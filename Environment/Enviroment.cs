@@ -1,13 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Drawing;
-using System.Globalization;
-using System.Linq;
 using System.Runtime.InteropServices;
-using System.Text.RegularExpressions;
 using System.Windows.Forms;
-using Edge.Units.DigitalInfo;
-using Microsoft.Win32;
+using Edge.Units.DataSizes;
 
 namespace Edge.Enviroment
 {
@@ -23,7 +18,6 @@ namespace Edge.Enviroment
 
         [DllImport("user32.dll", CharSet = CharSet.Auto, ExactSpelling = true)]
         private static extern short GetKeyState(int keyCode);
-
         private static KeyStates GetKeyState(Keys key)
         {
             KeyStates state = KeyStates.None;
@@ -41,64 +35,13 @@ namespace Edge.Enviroment
 
             return state;
         }
-
         public static bool IsKeyDown(Keys key)
         {
             return KeyStates.Down == (GetKeyState(key) & KeyStates.Down);
         }
-
         public static bool IsKeyToggled(Keys key)
         {
             return KeyStates.Toggled == (GetKeyState(key) & KeyStates.Toggled);
-        }
-    }
-    public static class DotNetFramework
-    {
-        //version names start with 'v', eg, 'v3.5' which needs to be trimmed off before conversion
-        static private double getversionbyregstring(string regstring)
-        {
-            Regex r = new Regex(@"^v[0-9]+((\.)?[0-9])*$");
-            if (r.IsMatch(regstring))
-            {
-                string t = regstring.Remove(0, 1);
-                if (t.IndexOf('.') != t.LastIndexOf('.'))
-                {
-                    t = t.Substring(0,t.LastIndexOf('.'));
-                }
-                return Convert.ToDouble(t, CultureInfo.InvariantCulture);
-            }
-            return -1;
-        }
-        static public double latestdotnetversion()
-        {
-            RegistryKey installed_Versions = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Microsoft\NET Framework Setup\NDP");
-// ReSharper disable once PossibleNullReferenceException
-            string[] version_Names = installed_Versions.GetSubKeyNames();
-            double v = getversionbyregstring(version_Names[version_Names.Length - 1]);
-            return v;
-        }
-        static public double[] alldotnetversions()
-        {
-            RegistryKey installed_Versions = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Microsoft\NET Framework Setup\NDP");
-// ReSharper disable once PossibleNullReferenceException
-            string[] version_Names = installed_Versions.GetSubKeyNames();
-            List<double> ret = new List<double>();
-            foreach (string s in version_Names)
-            {
-                double t = getversionbyregstring(s);
-                if (t != -1)
-                    ret.Add(t);
-            }
-            return ret.Distinct().ToArray();
-        }
-        static public bool dotnetversioninstalled(double version)
-        {
-            foreach (double d in alldotnetversions())
-            {
-                if (d.Equals(version))
-                    return true;
-            }
-            return false;
         }
     }
     public static class Platform
@@ -125,22 +68,22 @@ namespace Edge.Enviroment
             ulong f, t, ft;
             if (GetDiskFreeSpaceEx(driveletter+":", out f, out t, out ft))
             {
-                ret._Freespace = new BinaryData(f, BinaryData.Bit);
-                ret._TotalSpace = new BinaryData(t, BinaryData.Bit);
-                ret._TotalFreePpace = new BinaryData(ft, BinaryData.Bit);
+                ret._Freespace = new DataSize(f, DataSize.Bit);
+                ret._TotalSpace = new DataSize(t, DataSize.Bit);
+                ret._TotalFreePpace = new DataSize(ft, DataSize.Bit);
                 return ret;
             }
             return null;
         }
         public class DiskSpaceData
         {
-            internal BinaryData _Freespace;
-            internal BinaryData _TotalSpace;
-            internal BinaryData _TotalFreePpace;
+            internal DataSize _Freespace;
+            internal DataSize _TotalSpace;
+            internal DataSize _TotalFreePpace;
             /// <summary>
             /// measures in bytes
             /// </summary>
-            public BinaryData freespace
+            public DataSize freespace
             {
                 get
                 {
@@ -150,7 +93,7 @@ namespace Edge.Enviroment
             /// <summary>
             /// measures in bytes
             /// </summary>
-            public BinaryData totalspace
+            public DataSize totalspace
             {
                 get
                 {
@@ -160,7 +103,7 @@ namespace Edge.Enviroment
             /// <summary>
             /// measures in bytes
             /// </summary>
-            public BinaryData totalfreespace
+            public DataSize totalfreespace
             {
                 get
                 {

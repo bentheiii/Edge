@@ -55,8 +55,11 @@ namespace Edge.Formulas
     }
     public abstract class Formula<T> : IEquatable<Formula<T>>
     {
-        
-
+        static Formula()
+        {
+            System.Runtime.CompilerServices.RuntimeHelpers.RunClassConstructor(typeof(T).TypeHandle);
+            setField(new FormulaField<T>(getField<T>()));
+        }
         public abstract T this[params T[] x0] { get; }
         public abstract Formula<T> derive(int deriveindex = 0);
         public Formula<T> derive(IEnumerable<int> indices)

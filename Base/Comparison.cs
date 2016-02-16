@@ -38,6 +38,19 @@ namespace Edge.Comparison
             this._c = (a, b) => c.Compare(f(a), f(b));
         } 
     }
+    public class FunctionComparer<T,G> : IComparer<T>
+    {
+        private readonly Func<T, T, int> _c;
+        public int Compare(T x, T y)
+        {
+            return _c(x, y);
+        }
+        public FunctionComparer(Func<T, G> f) : this(f, Comparer<G>.Default) { }
+        public FunctionComparer(Func<T, G> f, IComparer<G> c)
+        {
+            this._c = (a, b) => c.Compare(f(a), f(b));
+        }
+    }
     public class EqualityFunctionComparer<T> : IEqualityComparer<T>
     {
         private readonly Func<T, T, bool> _func;
@@ -185,7 +198,7 @@ namespace Edge.Comparison
     {
         public static IEqualityComparer<T> ToEqualityComparer<T>(this IComparer<T> comp)
         {
-            return ToEqualityComparer<T>(comp, a=>a.GetHashCode());
+            return ToEqualityComparer(comp, a=>a.GetHashCode());
         }
         public static IEqualityComparer<T> ToEqualityComparer<T>(this IComparer<T> comp, Func<T,int> hash)
         {

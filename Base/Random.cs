@@ -10,7 +10,7 @@ using Edge.Fielding;
 using Edge.Looping;
 using Edge.WordsPlay;
 
-namespace Edge.RandomGen
+namespace Edge.Random
 {
     public abstract class RandomGenerator
     {
@@ -139,14 +139,14 @@ namespace Edge.RandomGen
     }
     public class LocalRandomGenerator : RandomGenerator
     {
-        private readonly Random _int;
+        private readonly System.Random _int;
         public LocalRandomGenerator()
         {
-            _int = new Random();
+            _int = new System.Random();
         }
         public LocalRandomGenerator(int seed)
         {
-            _int = new Random(seed);
+            _int = new System.Random(seed);
         }
         public override byte[] Bytes(int length)
         {

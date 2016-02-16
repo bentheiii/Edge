@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
-using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
 using CCDefault.Annotations;
@@ -12,6 +12,12 @@ namespace Edge.WordsPlay
 {
     public static class WordPlay
     {
+        public static string RegexDoubleNoSign = @"((\d+(\.\d+)?)((e|E)(\+|-)?\d+)?))";
+        public static string RegexDouble = $@"((\+|-)?{RegexDoubleNoSign}";
+        public static string ToString(this IFormattable @this, string format)
+        {
+            return @this.ToString(format, CultureInfo.CurrentCulture);
+        }
         public static string Removespecific(this string x, string toremove)
         {
             int i = x.IndexOf(toremove, StringComparison.Ordinal);
@@ -50,38 +56,6 @@ namespace Edge.WordsPlay
                 throw new Exception("count must be lower than string length");
             return count == 0 ? x : x.Remove(x.Length - count);
         }
-        public static IEnumerable<string> truesplit(this string a, string divisor = ",")
-        {
-            return truesplit(a, new string[] { divisor });
-        }
-        public static IEnumerable<string> truesplit(this string a, string[] divisors)
-        {
-            string tempa = a;
-            while (tempa.Length > 0)
-            {
-                int divindex = -1, divlength = 0;
-                foreach (string t1 in divisors)
-                {
-                    int t = tempa.IndexOf(t1, StringComparison.Ordinal);
-                    if ((t < divindex || divindex == -1) && t != -1)
-                    {
-                        divindex = t;
-                        divlength = t1.Length;
-                    }
-                }
-                if (divindex == -1)
-                {
-                    yield return tempa;
-                    yield break;
-                }
-                yield return tempa.Substring(0, divindex);
-                tempa = tempa.Substring(divindex + divlength) ;
-            }
-        }
-        public static string truejoin(this IEnumerable<string> coll, string divider = " ", bool divideatstart = false, bool divideatend = false)
-        {
-	        return coll.ToPrintable(divider, divideatstart ? divider : "", divideatend ? divider : "");
-        }
         public static string convertToString(this IEnumerable<byte> x)
         {
             return new string(x.Select(a=>(char)a).ToArray());
@@ -114,29 +88,6 @@ namespace Edge.WordsPlay
                 ret += plural;
             }
             return ret;
-        }
-        public static int countappearances(this string tosearch, string tofind)
-        {
-            return tosearch.getappearances(tofind).Count();
-        }
-        public static IEnumerable<int> getappearances(this string tosearch, string tofind)
-        {
-            string t = tosearch;
-            int ti = t.IndexOf(tofind, StringComparison.Ordinal);
-            while (ti != -1)
-            {
-                yield return ti;
-                ti = t.IndexOf(tofind, ti + 1, StringComparison.Ordinal);
-            }
-        }
-        public static string Reverse(this string x)
-        {
-            char[] ret = new char[x.Length];
-            for (int i = 0; i < x.Length; i++)
-            {
-                ret[i] = x[x.Length - i - 1];
-            }
-            return ret.convertToString();
         }
         private static string ToRomanNumerals(int i, char ones, char fives, char tens)
         {
@@ -193,10 +144,53 @@ namespace Edge.WordsPlay
         {
             return ((i>=1 || i <= (1/12.0)?((int) i).ToRomanNumerals():"") + ToRomanNumerals(i, '.', 'S'));
         }
-        public static void SplitbyIndex(this string @this, int charindex, out string first, out string second)
+        public static string[] SmartSplit(this string @this, string divisor, string opener, string closer)
         {
-            first = @this.Substring(0, charindex);
-            second = @this.Substring(charindex);
+            if (!@this.Balanced(opener,closer,1))
+                throw new ArgumentException("string is not balanced");
+            ResizingArray<string> ret = new ResizingArray<string>();
+            while (@this.StartsWith(opener))
+            {
+                ret.Add("");
+                @this = @this.Substring(opener.Length);
+            }
+            int divindex = -2;
+            int openerindex = -2;
+            while (@this.Length!=0)
+            {
+                if (@this.StartsWith(opener))
+                {
+                    @this = @this.Substring(opener.Length);
+                    int closerind = @this.IndexOf(closer);
+                    ret.Add(@this.Substring(0,closerind));
+                    @this = @this.Substring(closerind + closer.Length);
+                    continue;
+                }
+                if (divindex <= -2)
+                    divindex = @this.IndexOf(divisor);
+                if (openerindex <= -2)
+                    openerindex = @this.IndexOf(opener);
+                if (divindex == -1 && openerindex == -1)
+                {
+                    ret.Add(@this);
+                    break;
+                }
+                if (divindex == -1 || (openerindex != -1 && openerindex < divindex))
+                {
+                    ret.Add(@this.Substring(0, openerindex));
+                    @this = @this.Substring(openerindex);
+                    divindex -= openerindex;
+                    openerindex = -2;
+                }
+                else
+                {
+                    ret.Add(@this.Substring(0, divindex));
+                    @this = @this.Substring(divisor.Length + divindex);
+                    openerindex -= (divindex + divisor.Length);
+                    divindex = -2;
+                }
+            }
+            return ret;
         }
     }
     namespace Parsing

@@ -5,13 +5,13 @@ using Edge.Arrays;
 using Edge.Fielding;
 using Edge.Looping;
 using Edge.NumbersMagic;
-using Edge.RandomGen;
+using Edge.Random;
 using Edge.Statistics;
 using Edge.SystemExtensions;
 
 namespace Edge.Dice
 {
-    public class DieField<G> : Field<IDie<G>>
+    public class DieField<G> : Field<Die<G>>
     {
         private readonly Field<G> _int;
         public DieField(Field<G> i)
@@ -21,44 +21,44 @@ namespace Edge.Dice
         public override bool Invertible => false;
         public override bool ModduloAble => false;
         public override bool Negatable => false;
-        public override IDie<G> Negate(IDie<G> x)
+        public override Die<G> Negate(Die<G> x)
         {
             return -x;
         }
         public override bool Parsable => false;
         public override GenerationType GenType => GenerationType.None;
-        public override IDie<G> abs(IDie<G> x)
+        public override Die<G> abs(Die<G> x)
         {
             return new AbsDie<G>(x);
         }
-        public override IDie<G> add(IDie<G> a, IDie<G> b)
+        public override Die<G> add(Die<G> a, Die<G> b)
         {
             return a + b;
         }
-        public override IDie<G> fromFraction(double a)
+        public override Die<G> fromFraction(double a)
         {
             return new ConstDie<G>(_int.fromFraction(a));
         }
-        public override IDie<G> fromInt(int x)
+        public override Die<G> fromInt(int x)
         {
             return new ConstDie<G>(_int.fromInt(x));
         }
-        public override IDie<G> fromInt(ulong x)
+        public override Die<G> fromInt(ulong x)
         {
             return new ConstDie<G>(_int.fromInt(x));
         }
-        public override IDie<G> multiply(IDie<G> a, IDie<G> b)
+        public override Die<G> multiply(Die<G> a, Die<G> b)
         {
             return a * b;
         }
-        public override IDie<G> subtract(IDie<G> a, IDie<G> b)
+        public override Die<G> subtract(Die<G> a, Die<G> b)
         {
             return a - b;
         }
-        public override IDie<G> one => new ConstDie<G>(_int.one);
-        public override IDie<G> zero => new ConstDie<G>(_int.zero);
-        public override IDie<G> naturalbase => new ConstDie<G>(_int.naturalbase);
-        public override IDie<G> negativeone => new ConstDie<G>(_int.negativeone);
+        public override Die<G> one => new ConstDie<G>(_int.one);
+        public override Die<G> zero => new ConstDie<G>(_int.zero);
+        public override Die<G> naturalbase => new ConstDie<G>(_int.naturalbase);
+        public override Die<G> negativeone => new ConstDie<G>(_int.negativeone);
     }
     public enum RollAttribute
     {
@@ -77,8 +77,13 @@ namespace Edge.Dice
         public T value { get; }
         public RollAttribute attributes { get; }
     }
-    public abstract class IDie<T> : IStatistic<T>
+    public abstract class Die<T> : IStatistic<T>
     {
+        static Die()
+        {
+            System.Runtime.CompilerServices.RuntimeHelpers.RunClassConstructor(typeof(T).TypeHandle);
+            Fields.setField(new DieField<T>(Fields.getField<T>()));
+        } 
         public abstract T Maximum { get; }
         public abstract T Minimum { get; }
         public DieRoll<T> RandomRoll()
@@ -99,31 +104,31 @@ namespace Edge.Dice
         {
             return PossibleOutcomes().Select(a => func(a).ToFieldWrapper() * Fields.getField<T>().fromFraction(ProbabilityFor(a))).getSum();
         }
-        public static IDie<T> operator +(IDie<T> a, IDie<T> b)
+        public static Die<T> operator +(Die<T> a, Die<T> b)
         {
             return new SumDice<T>(a, b);
         }
-        public static IDie<T> operator +(IDie<T> a, T b)
+        public static Die<T> operator +(Die<T> a, T b)
         {
             return new SumDice<T>(a, new ConstDie<T>(b));
         }
-        public static IDie<T> operator -(IDie<T> a, IDie<T> b)
+        public static Die<T> operator -(Die<T> a, Die<T> b)
         {
             return new SumDice<T>(a, -b);
         }
-        public static IDie<T> operator -(IDie<T> a, T b)
+        public static Die<T> operator -(Die<T> a, T b)
         {
             return new SumDice<T>(a, new ConstDie<T>(-b.ToFieldWrapper()));
         }
-        public static IDie<T> operator *(IDie<T> a, IDie<T> b)
+        public static Die<T> operator *(Die<T> a, Die<T> b)
         {
             return new ProdDice<T>(a, b);
         }
-        public static IDie<T> operator *(IDie<T> a, T b)
+        public static Die<T> operator *(Die<T> a, T b)
         {
             return new ProdDice<T>(a, new ConstDie<T>(b));
         }
-        public static IDie<T> operator -(IDie<T> a)
+        public static Die<T> operator -(Die<T> a)
         {
             return a * Fields.getField<T>().negativeone;
         }
@@ -142,7 +147,7 @@ namespace Edge.Dice
             }
         }
     }
-    public class ConstDie<T> : IDie<T>
+    public class ConstDie<T> : Die<T>
     {
         public ConstDie(T val)
         {
@@ -183,9 +188,9 @@ namespace Edge.Dice
             return Val.Enumerate();
         }
     }
-    public class Die<T> : IDie<T>
+    public class UniformDie<T> : Die<T>
     {
-        public Die(T minimum, T maximum)
+        public UniformDie(T minimum, T maximum)
         {
             this.Maximum = maximum;
             this.Minimum = minimum;
@@ -239,10 +244,10 @@ namespace Edge.Dice
             return base.PossibleOutcomes();
         }
     }
-    public class SumDice<T> : IDie<T>
+    public class SumDice<T> : Die<T>
     {
-        private readonly IEnumerable<IDie<T>> _dice;
-        public SumDice(params IDie<T>[] dice)
+        private readonly IEnumerable<Die<T>> _dice;
+        public SumDice(params Die<T>[] dice)
         {
             this._dice = dice.ToArray();
         }
@@ -299,13 +304,13 @@ namespace Edge.Dice
             return _dice.SelectToArray(a => a.PossibleOutcomes()).Join().Select(a => a.getSum()).Distinct();
         }
     }
-    public class DropDice<T> : IDie<T>
+    public class DropDice<T> : Die<T>
     {
-        protected readonly IDie<T> _int;
+        protected readonly Die<T> _int;
         protected readonly int _factor;
         private readonly int _drophighestcount;
         private readonly int _droplowestcount;
-        public DropDice(IDie<T> i, int factor, int drophighestcount = 0, int droplowestcount = 0)
+        public DropDice(Die<T> i, int factor, int drophighestcount = 0, int droplowestcount = 0)
         {
             if (factor < (drophighestcount + droplowestcount) && (factor > 0 && droplowestcount > 0 && drophighestcount > 0))
                 throw new ArgumentException("factor must be larger than drophighest and droplowest combined ,and they all have to be positive");
@@ -347,13 +352,13 @@ namespace Edge.Dice
             }
         }
     }
-    public class ExplodingDice<T> : IDie<T>
+    public class ExplodingDice<T> : Die<T>
     {
-        public ExplodingDice(IDie<T> i)
+        public ExplodingDice(Die<T> i)
         {
             this._int = i;
         }
-        private IDie<T> _int { get; }
+        private Die<T> _int { get; }
         public override T expectedValue()
         {
             return _int.expectedValue() + _int.Maximum.ToFieldWrapper() * (_int.ProbabilityForMax / (1 - _int.ProbabilityForMax));
@@ -402,10 +407,10 @@ namespace Edge.Dice
             }
         }
     }
-    public class ProdDice<T> : IDie<T>
+    public class ProdDice<T> : Die<T>
     {
-        private readonly IEnumerable<IDie<T>> _dice;
-        public ProdDice(params IDie<T>[] dice)
+        private readonly IEnumerable<Die<T>> _dice;
+        public ProdDice(params Die<T>[] dice)
         {
             _dice = dice;
         }
@@ -464,11 +469,11 @@ namespace Edge.Dice
             return _dice.Zip(esq).Select(a => a.Item1.Variance() + a.Item2).getProduct((a, b) => a * b) - esq.getProduct((a, b) => a * b);
         }
     }
-    public class AbsDie<T> : IDie<T>
+    public class AbsDie<T> : Die<T>
     {
-        private readonly IDie<T> _int;
+        private readonly Die<T> _int;
         private readonly sbyte _minormaxhigher;
-        public AbsDie(IDie<T> i)
+        public AbsDie(Die<T> i)
         {
             _int = i;
             _minormaxhigher = (i.Minimum.ToFieldWrapper().abs() == i.Maximum.ToFieldWrapper().abs()) ? (sbyte)0 : (i.Maximum.ToFieldWrapper().abs() > i.Minimum.ToFieldWrapper().abs() ? (sbyte)1 : (sbyte)-1);

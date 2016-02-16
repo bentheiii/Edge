@@ -162,30 +162,6 @@ namespace CoreTest
         }
     }
     [TestClass]
-    public class CountTest
-    {
-        [TestMethod] public void Simple()
-        {
-            AreEqual(new int[] {0, 1, 1, 2, 0, 1, 0, 0, 5, 0}.Count(new[] {0}), 5);
-        }
-        [TestMethod] public void TwoParams()
-        {
-            AreEqual(new int[] {0, 1, 1, 2, 0, 1, 0, 0, 5, 0}.Count(new[] {0, 1}), 8);
-        }
-        [TestMethod] public void NoParams()
-        {
-            AreEqual(new int[] {0, 1, 1, 2, 0, 1, 0, 0, 5, 0}.Count(new int[] {}), 0);
-        }
-        [TestMethod] public void ZeroLength()
-        {
-            AreEqual(new int[] {}.Count(new[] {0, 1}), 0);
-        }
-        [TestMethod] public void Missing()
-        {
-            AreEqual(new int[] {0, 1, 1, 2, 0, 1, 0, 0, 5, 0}.Count(new[] {7}), 0);
-        }
-    }
-    [TestClass]
     public class AverageTest
     {
         [TestMethod] public void Simple()

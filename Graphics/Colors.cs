@@ -125,7 +125,7 @@ namespace Edge.Colors
             new ArraySegment<Color>(new Color[21]
             {
                 Color.White, Color.Gray, Color.Black, Color.FromArgb(255, 128, 128), Color.Red, Color.Crimson, Color.LightSalmon, Color.Orange,
-                Color.Brown, Color.Ivory, Color.Yellow, Color.Gold, Color.LightGreen, Color.Green, Color.DarkGreen, Color.LightBlue, Color.Blue,
+                Color.Brown, Color.Ivory, Color.Yellow, Color.Gold, Color.LightGreen, Color.Lime, Color.DarkGreen, Color.LightBlue, Color.Blue,
                 Color.DarkBlue, Color.Pink, Color.Purple, Color.FromArgb(64, 0, 64)
             }),
             PrimaryColors = new ArraySegment<Color>(new Color[3] {Color.Red, Color.Lime, Color.Blue});

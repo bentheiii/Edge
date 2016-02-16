@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
+using Edge.WordsPlay;
 using Edge.Arrays;
 using Edge.Fielding;
 using Edge.Funnels;
@@ -10,7 +10,7 @@ using Edge.Matrix;
 using Edge.NumbersMagic;
 using Edge.SystemExtensions;
 using Edge.Units;
-using Edge.Units.Angle;
+using Edge.Units.Angles;
 using Edge.WordsPlay.Parsing;
 
 namespace Edge.Complex
@@ -104,7 +104,7 @@ namespace Edge.Complex
             Fields.setField(new ComplexField());
         }
         private readonly Lazy<double> _real, _imag, _radius;
-        private readonly Lazy<AbsoluteAngle> _angle;
+        private readonly Lazy<Angle> _angle;
         public double RealPart
         {
             get
@@ -126,7 +126,7 @@ namespace Edge.Complex
                 return _radius.Value;
             }
         }
-        public AbsoluteAngle Angle
+        public Angle Angle
         {
             get
             {
@@ -145,7 +145,7 @@ namespace Edge.Complex
                     _real = new Lazy<double>(()=>v1);
                     _imag = new Lazy<double>(()=>v2);
                     _radius = new Lazy<double>(() => Math.Sqrt(RealPart * RealPart + ImaginaryPart * ImaginaryPart));
-                    _angle = new Lazy<AbsoluteAngle>(() => Radius == 0 ? new AbsoluteAngle(0, Units.Angle.Angle.Turn) : AbsoluteAngle.FromPoints(0, 0, RealPart, ImaginaryPart));
+                    _angle = new Lazy<Angle>(() => Radius == 0 ? new Angle(0, Units.Angles.Angle.Turn) : Angle.ATan(ImaginaryPart ,RealPart));
                     break;
                 case ComplexRepresentations.Polar:
                     if (v2 < 0)
@@ -154,16 +154,15 @@ namespace Edge.Complex
                         v1 = v1 + Math.PI / 2;
                     }
                     _radius = new Lazy<double>(() => v2);
-                    _angle = new Lazy<AbsoluteAngle>(() => Radius == 0 ? new AbsoluteAngle(0, Units.Angle.Angle.Turn) : new AbsoluteAngle(v1, Units.Angle.Angle.Radian));
-                    _real = new Lazy<double>(() => Radius * Angle.cos());
-                    _imag = new Lazy<double>(() => Radius * Angle.sin());
+                    _angle = new Lazy<Angle>(() => Radius == 0 ? new Angle(0) : new Angle(v1, true));
+                    _real = new Lazy<double>(() => Radius * Angle.Cos());
+                    _imag = new Lazy<double>(() => Radius * Angle.Sin());
                     break;
                 default:
                     throw new Exception("unrecognized representation");
             }
         }
-        public ComplexNumber(AbsoluteAngle a, double r=1) : this(a.InUnits(Units.Angle.Angle.Radian), r, ComplexRepresentations.Polar) { }
-        public ComplexNumber(Angle a, double r=1) : this(a.toAbsoluteAngle(), r) { }
+        public ComplexNumber(Angle a, double r=1) : this(a.Normalize().InUnits(Angle.Radian), r, ComplexRepresentations.Polar) { }
         public static ComplexNumber FromPolar(double angle, double radius=1)
         {
             return new ComplexNumber(angle, radius, ComplexRepresentations.Polar);
@@ -198,7 +197,7 @@ namespace Edge.Complex
         }
         public static ComplexNumber operator /(ComplexNumber a, ComplexNumber b)
         {
-            double angle = (a.Angle - b.Angle).toAbsoluteAngle().InUnits(Units.Angle.Angle.Radian);
+            double angle = (a.Angle - b.Angle).Normalize().InUnits(Units.Angles.Angle.Radian);
             if (b.Radius == 0)
                 throw new DivideByZeroException();
             double radius = a.Radius / b.Radius;
@@ -330,7 +329,7 @@ namespace Edge.Complex
         }
         public ComplexNumber pow(double power)
         {
-            double a = (this.Angle * power).InUnits(Units.Angle.Angle.Radian);
+            double a = (this.Angle * power).InUnits(Units.Angles.Angle.Radian);
             double r = Math.Pow(this.Radius, power);
             return FromPolar(a, r);
         }
@@ -344,8 +343,10 @@ namespace Edge.Complex
                 return One;
             if (this.Equals(Zero))
                 return Zero;
-            return this.Radius.pow(powpower.RealPart) * Math.E.pow(-this.Angle.Radians * powpower.ImaginaryPart) *
-                   FromPolar(this.Angle.Radians * powpower.RealPart + Math.Log(this.Radius) * powpower.ImaginaryPart);
+            var r = this.Radius.pow(powpower.RealPart);
+            var a = Math.E.pow(-this.Angle.InUnits(Angle.Radian) * powpower.ImaginaryPart);
+            var res = FromPolar(this.Angle.InUnits(Angle.Radian) * powpower.RealPart + Math.Log(this.Radius) * powpower.ImaginaryPart);
+            return r * a * res;
         }
         public ComplexNumber log(int logbase, int number=0)
         {
@@ -360,7 +361,7 @@ namespace Edge.Complex
                 throw new ArithmeticException("Cannot log 0");
             if (logbase <= 0)
                 throw new ArithmeticException("cannot use logarithm of non-positive base");
-            return new ComplexNumber(Math.Log(this.Radius), this.Angle.Radians + Math.PI * 2 * number) / Math.Log(logbase);
+            return new ComplexNumber(Math.Log(this.Radius), this.Angle.InUnits(Angle.Radian) + Math.PI * 2 * number) / Math.Log(logbase);
         }
         /// <summary>
         /// number represents Angle representation (θ = θ + 2πk)
@@ -421,7 +422,7 @@ namespace Edge.Complex
         }
         private ComplexNumber getnumberedroot(int power, int number)
         {
-            double a = (this.Angle.InUnits(Units.Angle.Angle.Radian) + 2 * Math.PI * number) / power;
+            double a = (this.Angle.InUnits(Units.Angles.Angle.Radian) + 2 * Math.PI * number) / power;
             double r = Math.Pow(this.Radius, 1.0 / power);
             return FromPolar(a, r);
         }
@@ -507,18 +508,7 @@ namespace Edge.Complex
         }
         /// <summary>
         /// accepted format is "R_{whatever format for the double real value}_{whatever format for the double imaginary value}" or
-        /// "P_{whatever format for the double radius}_{whatever format for the angle}
-        /// the last argument can be discarded to be replaced by the second
-        /// </summary>
-        /// <param name="format"></param>
-        /// <returns></returns>
-        public string ToString(string format)
-        {
-            return ToString(format, CultureInfo.CurrentCulture);
-        }
-        /// <summary>
-        /// accepted format is "R_{whatever format for the double real value}_{whatever format for the double imaginary value}" or
-        /// "P_{whatever format for the double radius}_{whatever format for the angle}
+        /// "P_{whatever format for the double radius}_({whatever format for the angle})
         /// the last argument can be discarded to be replaced by the second
         /// </summary>
         /// <param name="format"></param>
@@ -527,12 +517,14 @@ namespace Edge.Complex
         public string ToString(string format, IFormatProvider provider)
         {
             if (format == "")
-                format = "R__";
-            string[] split = format.Split('_');
+                format = "R_G_G";
+            string[] split = format.SmartSplit("_","(",")");
+            if (split.Length == 1)
+                split = new[] {split[0], "G", "G"};
             if (split.Length == 2)
                 split = new[] {split[0], split[1], split[1]};
             if (split.Length != 3)
-                throw new FormatException("Format must eiter be empty or unclude 1 or 2 dividers (_)");
+                throw new FormatException("Format must either be empty or include 1 or 2 dividers (_)");
             if (split[0] == "R")
             {
                 string realformat = split[1];
@@ -574,18 +566,18 @@ namespace Edge.Complex
         }
         private static readonly Funnel<string, ComplexNumber> DefaultParsers = new Funnel<string, ComplexNumber>
             {
-                new Parser<ComplexNumber>(@"^(?<re>[-,+]?[0-9]+(\.[0-9]*)?)((?<im>[+,-][0-9]+(\.[0-9]*)?)[i,j])?$", m =>
+                new Parser<ComplexNumber>($@"^(?<re>{WordPlay.RegexDouble})(((?<im>(\+|-){WordPlay.RegexDoubleNoSign})[i,j])?$", m =>
                     new ComplexNumber(double.Parse(m.Groups["re"].Value),
                         m.Groups["im"].Value.Length == 0 ? 0 : double.Parse(m.Groups["im"].Value))),
-                new Parser<ComplexNumber>(@"^(?<im>[+,-]?[0-9]+(\.[0-9]*)?)i$", m =>
+                new Parser<ComplexNumber>($@"^(?<im>{WordPlay.RegexDouble})i$", m =>
                     new ComplexNumber(0, m.Groups["im"].Value.Length == 0 ? 0 : double.Parse(m.Groups["im"].Value))),
                 new Parser<ComplexNumber>(
-                    @"^(?<r>[-,+]?([0-9]+(\.[0-9]*)?)?)(CIS|cis|Cis)\((?<a>[-,+]?[0-9]+(\.[0-9]*)?)\)$", m =>
+                    $@"^(?<r>{WordPlay.RegexDouble})?(CIS|cis|Cis)\((?<a>{WordPlay.RegexDouble})\)$", m =>
                         new ComplexNumber(double.Parse(m.Groups["a"].Value),
                             m.Groups["r"].Value.Length == 0 ? 1 : double.Parse(m.Groups["r"].Value),
                             ComplexRepresentations.Polar)),
                 new Parser<ComplexNumber>(
-                    @"^(?<r>[-,+]?([0-9]+(\.[0-9]*)?)?)(CIS|cis|Cis)\((?<a>[-,+]?[0-9]+(\.[0-9]*)?)(°|d|degrees)\)$", m =>
+                    $@"^(?<r>{WordPlay.RegexDouble})?(CIS|cis|Cis)\((?<a>{WordPlay.RegexDouble})(°|d|degrees)\)$", m =>
                         new ComplexNumber(double.Parse(m.Groups["a"].Value) * Math.PI / 180,
                             m.Groups["r"].Value.Length == 0 ? 1 : double.Parse(m.Groups["r"].Value),
                             ComplexRepresentations.Polar))
@@ -608,7 +600,7 @@ namespace Edge.Complex
             public int Compare(ComplexNumber x, ComplexNumber y)
             {
                 var radii = x.Radius.CompareTo(y.Radius);
-                return radii != 0 ? radii : x.Angle.Radians.CompareTo(y.Angle.Radians);
+                return radii != 0 ? radii : x.Angle.Arbitrary.CompareTo(y.Angle.Arbitrary);
             }
         }
         private class PartialOrderClass : IComparer<ComplexNumber>

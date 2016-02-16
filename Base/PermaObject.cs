@@ -756,7 +756,7 @@ namespace Edge.PermanentObject
                 LoadDictionary();
                 if (!_dic.ContainsKey(item.Key))
                 {
-                    _dic.Add(item.Key, getVPerma(NumberSerialization.AlphaNumbreicSerializer.ToString((ulong)(_data.value.nextname + 1)).Reverse()));
+                    _dic.Add(item.Key, getVPerma(NumberSerialization.AlphaNumbreicSerializer.ToString((ulong)(_data.value.nextname + 1)).Reverse().convertToString()));
                     _data.MutauteValue(a => new PermaDictionaryData(a.nextname + 1, SaveDictionaryToString()));
                 }
                 _dic[item.Key].value = item.Value;
@@ -937,7 +937,7 @@ namespace Edge.PermanentObject
                     if (ex != null)
                         this._definitions.value = "";
                     var defstring = this._definitions.value;
-                    this._dic = new Dictionary<string, IPermaObject<T>>(defstring.countappearances(_defSeperator));
+                    this._dic = new Dictionary<string, IPermaObject<T>>(defstring.Count(_defSeperator));
                     var keys = (defstring == ""
                         ? System.Linq.Enumerable.Empty<string>() : defstring.Split(new string[] {_defSeperator}, StringSplitOptions.None));
                     foreach (string s in keys.Take(Math.Max(0,keys.Count()-1)))

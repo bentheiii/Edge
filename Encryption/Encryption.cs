@@ -11,10 +11,10 @@ namespace Edge.Crypto
 {
     public static class Encryption
     {
-        public const int IV_LENGTH = 16;
+        public const int IV_LENGTH = 128/8, KEY_LENGTH = 256/8;
         public static byte[] GenValidKey(string original)
         {
-            return Sha2Hashing.Hash(original).Take(32).ToArray(32);
+            return Sha2Hashing.Hash(original).Take(KEY_LENGTH).ToArray(KEY_LENGTH);
         }
         public static byte[] Encrypt(byte[] plainText,string key, out byte[] iv)
         {
@@ -108,7 +108,7 @@ namespace Edge.Crypto
     }
     public static class Sha2Hashing
     {
-        public const int HASH_LENGTH = 64;
+        public const int HASH_LENGTH = 512/8;
         public static IEnumerable<byte> Hash(string input)
         {
             return Hash(Encoding.Unicode.GetBytes(input));
@@ -143,10 +143,10 @@ namespace Edge.Crypto
         }
         public static byte[] Decrypt(byte[] enc, byte[] key)
         {
-            return !enc.Take(Sha2Hashing.HASH_LENGTH).SequenceEqual(Sha2Hashing.Hash(enc.Skip(Sha2Hashing.HASH_LENGTH)))
-                ? null
-                : Encryption.Decrypt(enc.Skip(Sha2Hashing.HASH_LENGTH + Encryption.IV_LENGTH).ToArray(), key,
-                    enc.Skip(Sha2Hashing.HASH_LENGTH).Take(Encryption.IV_LENGTH).ToArray(Encryption.IV_LENGTH));
+            if (!enc.Take(Sha2Hashing.HASH_LENGTH).SequenceEqual(Sha2Hashing.Hash(enc.Skip(Sha2Hashing.HASH_LENGTH))))
+                throw new FormatException("hash mismatch");
+            return Encryption.Decrypt(enc.Skip(Sha2Hashing.HASH_LENGTH + Encryption.IV_LENGTH).ToArray(), key,
+                enc.Skip(Sha2Hashing.HASH_LENGTH).Take(Encryption.IV_LENGTH).ToArray(Encryption.IV_LENGTH));
         }
     }
 }

@@ -1,4 +1,5 @@
-﻿using Edge.Funnels;
+﻿using System.Linq;
+using Edge.Funnels;
 using Edge.WordsPlay;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using static Microsoft.VisualStudio.TestTools.UnitTesting.Assert;
@@ -163,7 +164,7 @@ namespace CoreTest
             var t = "";
             val.Add("U", a => t = a.ToUpper());
             val.Add("L", a => t = a.ToLower());
-            val.Add("R", a => t = a.Reverse());
+            val.Add("R", a => t = a.Reverse().convertToString());
             val.Add(a => t = a);
             val.Process("LA");
             AreEqual(t, "a");

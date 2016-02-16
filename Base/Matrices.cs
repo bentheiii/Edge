@@ -80,6 +80,11 @@ namespace Edge.Matrix
     }
     public abstract class Matrix<T> : IEnumerable<T>
     {
+        static Matrix()
+        {
+            System.Runtime.CompilerServices.RuntimeHelpers.RunClassConstructor(typeof(T).TypeHandle);
+            Fields.setField(new MatrixField<T>(Fields.getField<T>()));
+        } 
         protected static readonly Field<T> Field = Fields.getField<T>();
         public virtual bool isInfinite
         {

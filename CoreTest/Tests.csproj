@@ -42,6 +42,26 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\BigRationalLibrary\bin\Debug\BigRationalLibrary.dll</HintPath>
     </Reference>
+    <Reference Include="Microsoft.WindowsAPICodePack, Version=1.1.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\WindowsAPICodePack-Core.1.1.1\lib\Microsoft.WindowsAPICodePack.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Microsoft.WindowsAPICodePack.ExtendedLinguisticServices, Version=1.1.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\WindowsAPICodePack-ExtendedLinguisticServices.1.1.1\lib\Microsoft.WindowsAPICodePack.ExtendedLinguisticServices.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Microsoft.WindowsAPICodePack.Sensors, Version=1.1.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\WindowsAPICodePack-Sensors.1.1.1\lib\Microsoft.WindowsAPICodePack.Sensors.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Microsoft.WindowsAPICodePack.Shell, Version=1.1.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\WindowsAPICodePack-Shell.1.1.1\lib\Microsoft.WindowsAPICodePack.Shell.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Microsoft.WindowsAPICodePack.ShellExtensions, Version=1.1.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\WindowsAPICodePack-ShellExtensions.1.1.1\lib\Microsoft.WindowsAPICodePack.ShellExtensions.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="PresentationCore" />
     <Reference Include="PresentationFramework" />
     <Reference Include="System" />
@@ -98,13 +118,53 @@
     <Compile Include="ToArrayTests.cs" />
     <Compile Include="SortTests.cs" />
     <Compile Include="Arr2dTests.cs" />
+    <Compile Include="UnitBetaTests.cs" />
     <Compile Include="VoidFunnelTests.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Base\Base.csproj">
+    <ProjectReference Include="..\Base\Core.csproj">
       <Project>{d40df14a-d7be-40c6-90fa-4158dc99f0e1}</Project>
-      <Name>Base</Name>
+      <Name>Core</Name>
     </ProjectReference>
+    <ProjectReference Include="..\Encryption\Encryption.csproj">
+      <Project>{b8cee601-26be-46b0-bcfb-a714d7e330b4}</Project>
+      <Name>Encryption</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Environment\Environment.csproj">
+      <Project>{c1a4aefc-678e-42c8-a8cb-2d2a2f12a1a0}</Project>
+      <Name>Environment</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Graphics\Graphics.csproj">
+      <Project>{4566b8d4-a0e1-4759-847d-18da6e39a77d}</Project>
+      <Name>Graphics</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Graphs\Graphs.csproj">
+      <Project>{555f107d-5e76-4fa9-8cf4-44bb0f6456be}</Project>
+      <Name>Graphs</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\MathSupplements\MathSupplements.csproj">
+      <Project>{dc064cf3-0a8c-4dc2-b74b-42169f38e7c9}</Project>
+      <Name>MathSupplements</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Mono\Mono.csproj">
+      <Project>{f0c115c7-1031-445d-929e-c07e1faf8dc8}</Project>
+      <Name>Mono</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Statistics\Statistics.csproj">
+      <Project>{e8f54242-308c-40de-872a-2e0e7fbb3820}</Project>
+      <Name>Statistics</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Testing\Testing.csproj">
+      <Project>{632acfe8-f2b2-4f3d-8c0b-37c224898829}</Project>
+      <Name>Testing</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\WinForms\WinForms.csproj">
+      <Project>{66b1e0a8-81a2-424c-9e6a-9ce19ce61d5c}</Project>
+      <Name>WinForms</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
   </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">

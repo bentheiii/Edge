@@ -5,7 +5,7 @@ using Edge.Arrays;
 using Edge.Fielding;
 using Edge.Looping;
 using Edge.NumbersMagic;
-using Edge.RandomGen;
+using Edge.Random;
 using Edge.Statistics;
 
 namespace Edge
@@ -20,7 +20,7 @@ namespace Edge
         public static IndescreteRegions<T> Create(IEnumerable<Tuple<T, int>> probabilities, double start = 0, bool checkforduplicates = true)
         {
             double sum = probabilities.Sum(a => a.Item2);
-            return Create(probabilities.Select(a=>Tuple.Create(a.Item1,a.Item2/sum)), start, checkforduplicates);
+            return Create(probabilities.Select(a=>Tuple.Create(a.Item1,(double)a.Item2)), start, checkforduplicates);
         }
         public static IndescreteRegions<T> Create(IEnumerable<Tuple<T, double>> probabilities, double start = 0, bool checkforduplicates = true)
         {

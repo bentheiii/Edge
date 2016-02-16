@@ -7,7 +7,7 @@ using Edge.NumbersMagic;
 using Edge.Shapes.Lines;
 using Edge.SystemExtensions;
 using Edge.Units;
-using Edge.Units.Angle;
+using Edge.Units.Angles;
 
 namespace Edge.Shapes
 {
@@ -72,13 +72,13 @@ namespace Edge.Shapes
         public static Point RotateAround(this Point @this, Point origin, Angle angle)
         {
             Point n = @this.subtract(origin);
-            n = new Point((int) (n.X*angle.cos() - n.Y*angle.sin()), (int) (n.X*angle.sin() + n.Y*angle.cos()));
+            n = new Point((int) (n.X*angle.Cos() - n.Y*angle.Sin()), (int) (n.X*angle.Sin() + n.Y*angle.Cos()));
             return n.add(origin);
         }
         public static PointF RotateAround(this PointF @this, PointF origin, Angle angle)
         {
             var n = @this.subtract(origin);
-            n = new PointF((float) (n.X * angle.cos() - n.Y * angle.sin()), (float) (n.X * angle.sin() + n.Y * angle.cos()));
+            n = new PointF((float) (n.X * angle.Cos() - n.Y * angle.Sin()), (float) (n.X * angle.Sin() + n.Y * angle.Cos()));
             return n.add(origin);
         }
         public static Point ScaleAround(this Point @this, Point origin, double scaleX, double scaleY)
@@ -120,8 +120,8 @@ namespace Edge.Shapes
         public class Line
         {
             public readonly PointF Origin;
-            public readonly AbsoluteAngle Slope;
-            public Line(AbsoluteAngle slope, PointF origin)
+            public readonly Angle Slope;
+            public Line(Angle slope, PointF origin)
             {
                 this.Slope = slope;
                 this.Origin = origin;
@@ -132,15 +132,15 @@ namespace Edge.Shapes
             }
             public PointF? intersect(Line other)
             {
-                if (this.Slope.tan() == other.Slope.tan())
+                if (this.Slope.Tan() == other.Slope.Tan())
                     return null;
-                float x = (float)((this.Origin.X * this.Slope.tan() - this.Origin.Y - (other.Origin.X * this.Slope.tan() - other.Origin.Y)) / (this.Slope.tan() - other.Slope.tan()));
+                float x = (float)((this.Origin.X * this.Slope.Tan() - this.Origin.Y - (other.Origin.X * this.Slope.Tan() - other.Origin.Y)) / (this.Slope.Tan() - other.Slope.Tan()));
                 PointF ret = get(x);
                 return (iswithinbounds(ret) && other.iswithinbounds(ret)) ? ret : (PointF?)null;
             }
             private PointF get(float x)
             {
-                return new PointF(x, (float)((x - this.Origin.X) * this.Slope.tan() + this.Origin.X));
+                return new PointF(x, (float)((x - this.Origin.X) * this.Slope.Tan() + this.Origin.X));
             }
         }
         public class LineSegment : Line
@@ -150,7 +150,7 @@ namespace Edge.Shapes
             {
                 return p.X.iswithin(this.Points.Item1.X, this.Points.Item2.X) && p.Y.iswithin(this.Points.Item1.Y, this.Points.Item2.Y);
             }
-            public LineSegment(PointF start, PointF end) : base(Angle.aTan(start.subtract(end).Quotient()).toAbsoluteAngle(), new PointF(0, 0))
+            public LineSegment(PointF start, PointF end) : base(Angle.ATan(start.subtract(end).Quotient()).Normalize(), new PointF(0, 0))
             {
                 this.Points = new Tuple<PointF, PointF>(start, end);
             }
@@ -161,10 +161,10 @@ namespace Edge.Shapes
         }
         public class Ray : Line
         {
-            public Ray(AbsoluteAngle slope, PointF origin) : base(slope, origin) { }
+            public Ray(Angle slope, PointF origin) : base(slope, origin) { }
             public override bool iswithinbounds(PointF p)
             {
-                AbsoluteAngle ang = Angle.aTan(p.subtract(this.Origin).Quotient()).toAbsoluteAngle();
+                Angle ang = Angle.ATan(p.subtract(this.Origin).Quotient()).Normalize();
                 return (ang - this.Slope).InUnits(Angle.Turn).abs() <= 0.1;
             }
         }
@@ -190,21 +190,21 @@ namespace Edge.Shapes
             {
                 return this.Edges().Trail2(true).Select(a => new LineSegment(a.Item1, a.Item2));
             }
-            public virtual IPolygon Rotate(AbsoluteAngle angle)
+            public virtual IPolygon Rotate(Angle angle)
             {
                 return new TransformationShape(this, angle, 1, 1, new PointF(0, 0));
             }
             public virtual IPolygon Scale(float scaleX, float scaleY)
             {
-                return new TransformationShape(this, Angle.Quantities.Empty.toAbsoluteAngle(), scaleX, scaleY, new PointF(0, 0));
+                return new TransformationShape(this, new Angle(0), scaleX, scaleY, new PointF(0, 0));
             }
             public virtual IPolygon Move(float x, float y)
             {
-                return new TransformationShape(this, Angle.Quantities.Empty.toAbsoluteAngle(), 1, 1, new PointF(x, y));
+                return new TransformationShape(this, new Angle(0), 1, 1, new PointF(x, y));
             }
             public virtual bool isWithin(PointF point)
             {
-                Ray r = new Ray(new AbsoluteAngle(0, Angle.Turn), point);
+                Ray r = new Ray(new Angle(0), point);
                 bool ret = false;
                 foreach (var segment in this.Segments())
                 {
@@ -220,7 +220,7 @@ namespace Edge.Shapes
                          .Select(x => x.Item1.intersect(x.Item2))
                          .FirstOrDefault(x => x.HasValue);
             }
-            public IPolygon Transform(AbsoluteAngle a, float scalex, float scaley, float x, float y)
+            public IPolygon Transform(Angle a, float scalex, float scaley, float x, float y)
             {
                 return Rotate(a).Scale(scalex, scaley).Move(x, y);
             }
@@ -230,10 +230,10 @@ namespace Edge.Shapes
             private readonly float _scalex;
             private readonly float _scaley;
             private readonly PointF _location;
-            private readonly AbsoluteAngle _rotation;
+            private readonly Angle _rotation;
             private readonly IPolygon _interior;
             protected PointF _focus;
-            public TransformationShape(IPolygon interior, AbsoluteAngle rotation, float scalex, float scaley, PointF location)
+            public TransformationShape(IPolygon interior, Angle rotation, float scalex, float scaley, PointF location)
             {
                 _rotation = rotation;
                 _scalex = scalex;
@@ -261,9 +261,9 @@ namespace Edge.Shapes
             {
                 return this._interior.Edges().Select(this.Transform);
             }
-            public override IPolygon Rotate(AbsoluteAngle angle)
+            public override IPolygon Rotate(Angle angle)
             {
-                return new TransformationShape(_interior, (_rotation + angle).toAbsoluteAngle(), _scalex, _scaley, _location);
+                return new TransformationShape(_interior, (_rotation + angle).Normalize(), _scalex, _scaley, _location);
             }
             public override IPolygon Scale(float scaleX, float scaleY)
             {
@@ -353,7 +353,7 @@ namespace Edge.Shapes
             }
             public override IEnumerable<PointF> Edges()
             {
-                var rot = new AbsoluteAngle(1.0 / _sides, Angle.Turn);
+                var rot = new Angle(1.0 / _sides, Angle.Turn);
                 var ret = _center.add(_radius, 0);
                 foreach (int i in Loops.Range(_sides))
                 {
@@ -388,7 +388,7 @@ namespace Edge.Shapes
             {
                 yield break;
             }
-            public override IPolygon Rotate(AbsoluteAngle angle)
+            public override IPolygon Rotate(Angle angle)
             {
                 return this;
             }

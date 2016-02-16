@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Threading;
-using Edge.Units.Frequency;
+using Edge.Units.Frequencies;
 using Edge.WordsPlay;
 
 namespace Edge.Timer
@@ -87,7 +87,7 @@ namespace Edge.Timer
 		private readonly Thread _timerThread = new Thread(TimerThreadMain);
 		private volatile int _ticks = 0;
  		public event TimerTickHandler onTick;
-	    public ActiveTimer(Frequency f) : this(1/f) { }
+	    public ActiveTimer(Frequency f) : this(1.0/f) { }
 	    public ActiveTimer(TimeSpan tickLength)
 		{
 			this.tickLength = tickLength;

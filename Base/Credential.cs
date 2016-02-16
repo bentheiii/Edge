@@ -1,9 +1,58 @@
 using System;
+using System.Security.Cryptography;
 
 namespace Edge.Credentials
 {
     [Serializable]
     public class Credential {}
+    [Serializable]
+    // ReSharper disable once InconsistentNaming
+    public class RSACredential : UnRefCredential<byte[]>
+    {
+        private RSACredential(byte[] sign) : base(sign) { }
+        public static RSACredential Create(byte[] message, RSAParameters privateKey)
+        {
+            //// The array to store the signed message in bytes
+            using (var rsa = new RSACryptoServiceProvider())
+            {
+                try
+                {
+                    //// Import the private key used for signing the message
+                    rsa.ImportParameters(privateKey);
+
+                    //// Sign the data, using SHA512 as the hashing algorithm 
+                    var signedBytes = rsa.SignData(message, CryptoConfig.MapNameToOID("SHA512"));
+                    return new RSACredential(signedBytes);
+                }
+                catch (CryptographicException e)
+                {
+                    Console.WriteLine(e.Message);
+                    return null;
+                }
+                finally
+                {
+                    //// Set the keycontainer to be cleared when rsa is garbage collected.
+                    rsa.PersistKeyInCsp = false;
+                }
+            }
+            //// Convert the a base64 string before returning
+        }
+        public static void GetKey(out RSAParameters @private, out RSAParameters @public, int size = 1024)
+        {
+            using (RSACryptoServiceProvider prov = new RSACryptoServiceProvider(size))
+            {
+                try
+                {
+                    @public = prov.ExportParameters(false);
+                    @private = prov.ExportParameters(true);
+                }
+                finally
+                {
+                    prov.PersistKeyInCsp = false;
+                }
+            }
+        }
+    }
     [Serializable]
     public class UnRefCredential<T> : Credential
     {
@@ -15,15 +64,6 @@ namespace Edge.Credentials
         public override string ToString()
         {
             return value.ToString();
-        }
-    }
-    [Serializable]
-    public class PasswordCredential : UnRefCredential<string>
-    {
-        public PasswordCredential(string value) : base(value) {}
-        public override string ToString()
-        {
-            return value;
         }
     }
     public interface ICredentialValidator
@@ -45,6 +85,44 @@ namespace Edge.Credentials
         public bool isValid(Credential c)
         {
             return ReferenceEquals(this.valid, c);
+        }
+    }
+    [Serializable]
+    // ReSharper disable once InconsistentNaming
+    public class RSAValidator : ICredentialValidator
+    {
+        private readonly byte[] _message;
+        private readonly RSAParameters _parameters;
+        public RSAValidator(byte[] message, RSAParameters parameters)
+        {
+            _message = message;
+            _parameters = parameters;
+        }
+        public bool isValid(Credential c)
+        {
+            var r = c as RSACredential;
+            if (c == null)
+                return false;
+            using (var rsa = new RSACryptoServiceProvider())
+            {
+                byte[] bytesToVerify = _message;
+                byte[] signedBytes = r.value;
+                try
+                {
+                    rsa.ImportParameters(_parameters);
+                    SHA512Managed hash = new SHA512Managed();
+                    byte[] hashedData = hash.ComputeHash(signedBytes);
+                    return rsa.VerifyData(bytesToVerify, CryptoConfig.MapNameToOID("SHA512"), signedBytes);
+                }
+                catch (CryptographicException)
+                {
+                    return false;
+                }
+                finally
+                {
+                    rsa.PersistKeyInCsp = false;
+                }
+            }
         }
     }
     [Serializable]

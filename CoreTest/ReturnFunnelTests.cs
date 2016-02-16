@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using Edge.Funnels;
 using Edge.WordsPlay;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -113,7 +114,7 @@ namespace CoreTest
             var val = new PrefixFunnel<string>();
             val.Add("U", a=>a.ToUpper());
             val.Add("L",a=>a.ToLower());
-            val.Add("R",a=>a.Reverse());
+            val.Add("R",a=>a.Reverse().convertToString());
             val.Add(a=>a);
             AreEqual(val.Process("LA"), "a");
             AreEqual(val.Process("Ub"), "B");

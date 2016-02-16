@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Data;
 using System.Data.OleDb;
 using System.Xml;
 using Edge.Looping;
@@ -49,7 +48,7 @@ namespace Edge.Data
 	    public static XmlDocument getDocFromString(string innertext)
 	    {
 	        XmlDocument ret = new XmlDocument();
-	        ret.InnerText = innertext;
+	        ret.LoadXml(innertext);
 	        return ret;
 	    }
 	}
