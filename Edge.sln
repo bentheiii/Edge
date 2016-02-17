@@ -11,6 +11,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Core", "Base\Core.csproj", 
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{E70492F5-E47C-4800-9C24-1FC01D81B1DA}"
 	ProjectSection(SolutionItems) = preProject
+		logo\Edge1.0.ico = logo\Edge1.0.ico
+		logo\Edge1.0.png = logo\Edge1.0.png
 		README.md = README.md
 	EndProjectSection
 EndProject

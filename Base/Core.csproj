@@ -21,7 +21,8 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <CodeAnalysisRuleSet>Base.ruleset</CodeAnalysisRuleSet>
+    <CodeAnalysisRuleSet>
+    </CodeAnalysisRuleSet>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -30,10 +31,12 @@
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <CodeAnalysisRuleSet>Base.ruleset</CodeAnalysisRuleSet>
+    <CodeAnalysisRuleSet>
+    </CodeAnalysisRuleSet>
   </PropertyGroup>
   <PropertyGroup>
-    <ApplicationIcon>Edge1.0.ico</ApplicationIcon>
+    <ApplicationIcon>
+    </ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="BigRationalLibrary, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
@@ -85,9 +88,6 @@
     <Compile Include="Funnel.cs" />
     <Compile Include="Guard.cs" />
     <Compile Include="RecursiveQuerier.cs" />
-    <Compile Include="PlaceHolderTextBox.cs">
-      <SubType>Component</SubType>
-    </Compile>
     <Compile Include="Loops.cs" />
     <Compile Include="Matrices.cs" />
     <Compile Include="Net.cs" />
@@ -107,18 +107,7 @@
     <Compile Include="Timer.cs" />
     <Compile Include="Tuples.cs" />
     <Compile Include="Units.cs" />
-    <Compile Include="FileFolderDialog.cs">
-      <SubType>Component</SubType>
-    </Compile>
     <Compile Include="WordPlay.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Base.ruleset" />
-    <None Include="packages.config" />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="Edge.ico" />
-    <Content Include="Edge1.0.ico" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="AfterBuild">
