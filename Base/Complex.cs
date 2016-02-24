@@ -74,6 +74,7 @@ namespace Edge.Complex
             public override double? toDouble(ComplexNumber a) => a.Isreal() ? a.RealPart : (double?)null;
             public override bool Parsable => true;
             public override OrderType Order => OrderType.PartialOrder;
+            // ReSharper disable once MemberHidesStaticFromOuterClass
             public override ComplexNumber Parse(string s)
             {
                 return ComplexNumber.Parse(s);
@@ -92,8 +93,11 @@ namespace Edge.Complex
                 return a;
             }
         }
-        // ReSharper disable once InconsistentNaming
-        public static readonly ComplexNumber ImaginaryUnit, Zero, One, EulersNumber, Pi;
+        public static ComplexNumber ImaginaryUnit { get; }
+        public static ComplexNumber Zero { get; }
+        public static ComplexNumber One { get; }
+        public static ComplexNumber EulersNumber { get; }
+        public static ComplexNumber Pi { get; }
         static ComplexNumber()
         {
             ImaginaryUnit = new ComplexNumber(0, 1);
@@ -145,7 +149,7 @@ namespace Edge.Complex
                     _real = new Lazy<double>(()=>v1);
                     _imag = new Lazy<double>(()=>v2);
                     _radius = new Lazy<double>(() => Math.Sqrt(RealPart * RealPart + ImaginaryPart * ImaginaryPart));
-                    _angle = new Lazy<Angle>(() => Radius == 0 ? new Angle(0, Units.Angles.Angle.Turn) : Angle.ATan(ImaginaryPart ,RealPart));
+                    _angle = new Lazy<Angle>(() => Radius == 0 ? new Angle(0, Angle.Turn) : Angle.ATan(ImaginaryPart ,RealPart));
                     break;
                 case ComplexRepresentations.Polar:
                     if (v2 < 0)
@@ -197,7 +201,7 @@ namespace Edge.Complex
         }
         public static ComplexNumber operator /(ComplexNumber a, ComplexNumber b)
         {
-            double angle = (a.Angle - b.Angle).Normalize().InUnits(Units.Angles.Angle.Radian);
+            double angle = (a.Angle - b.Angle).Normalize().InUnits(Angle.Radian);
             if (b.Radius == 0)
                 throw new DivideByZeroException();
             double radius = a.Radius / b.Radius;
@@ -329,7 +333,7 @@ namespace Edge.Complex
         }
         public ComplexNumber pow(double power)
         {
-            double a = (this.Angle * power).InUnits(Units.Angles.Angle.Radian);
+            double a = (this.Angle * power).InUnits(Angle.Radian);
             double r = Math.Pow(this.Radius, power);
             return FromPolar(a, r);
         }
@@ -422,7 +426,7 @@ namespace Edge.Complex
         }
         private ComplexNumber getnumberedroot(int power, int number)
         {
-            double a = (this.Angle.InUnits(Units.Angles.Angle.Radian) + 2 * Math.PI * number) / power;
+            double a = (this.Angle.InUnits(Angle.Radian) + 2 * Math.PI * number) / power;
             double r = Math.Pow(this.Radius, 1.0 / power);
             return FromPolar(a, r);
         }
@@ -539,12 +543,11 @@ namespace Edge.Complex
             {
                 string radiusformat = split[1];
                 string angleformat = split[2];
-                //TODO: fill in angle formats
                 if (this.Radius == 1)
-                    return "CiS(" + this.Angle + ")";
+                    return "CiS(" + this.Angle.ToString(angleformat) + ")";
                 if (this.Radius == 0)
                     return "0";
-                return this.Radius.ToString(radiusformat,provider) + "CiS(" + this.Angle + ")";
+                return this.Radius.ToString(radiusformat,provider) + "CiS(" + this.Angle.ToString(angleformat) + ")";
             }
             throw new FormatException("Format must either be empty or start with a R or a P");
         }

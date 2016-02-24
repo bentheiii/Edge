@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
@@ -17,44 +18,81 @@ namespace Edge.Ports
 {
     namespace AutoCommands
     {
-        public interface ConnectionAutoCommand
+        public interface IConnectionAutoCommand
         {
-            void onRecieve(ReadOnlyConnection c);
+            void onRecieve(IConnection c);
         }
         [Serializable]
-        public class ConnectionReplyCommand : ConnectionAutoCommand
+        public class ConnectionSendCommand : IConnectionAutoCommand
         {
             private string expectedreply { get; }
-            public ConnectionReplyCommand(string expectedreply)
+            public ConnectionSendCommand(string expectedreply)
             {
                 this.expectedreply = expectedreply;
             }
-            public void onRecieve(ReadOnlyConnection c)
+            public void onRecieve(IConnection c)
             {
                 c.Send(expectedreply);
             }
         }
         [Serializable]
-        public class ConnectionIgnoreCommand : ConnectionAutoCommand
+        public class ConnectionIgnoreCommand : IConnectionAutoCommand
         {
-            public void onRecieve(ReadOnlyConnection c)
+            public void onRecieve(IConnection c)
             {}
         }
         [Serializable]
-        public abstract class ConnectionChangeCommand : ConnectionAutoCommand
+        public class ConnectionChangeTargetCommand : IConnectionAutoCommand
         {
-            protected EndPoint target { get; set; }
-            public abstract void onRecieve(ReadOnlyConnection c);
+            public ConnectionChangeTargetCommand(EndPoint target)
+            {
+                this.target = target;
+            }
+            public EndPoint target { get; }
+            public void onRecieve(IConnection c)
+            {
+                c.Target = target;
+            }
+        }
+        [Serializable]
+        public class ConnectionChangeSourceCommand : IConnectionAutoCommand
+        {
+            public ConnectionChangeSourceCommand(EndPoint source)
+            {
+                this.source = source;
+            }
+            public EndPoint source { get; }
+            public void onRecieve(IConnection c)
+            {
+                c.Source = source;
+            }
+        }
+        [Serializable]
+        // ReSharper disable once ClassNeverInstantiated.Global
+        public class ConnectionGluedAutoCommand : IConnectionAutoCommand
+        {
+            public IConnectionAutoCommand[] commands { get; }
+            public ConnectionGluedAutoCommand(params IConnectionAutoCommand[] commands)
+            {
+                this.commands = commands;
+            }
+            public void onRecieve(IConnection c)
+            {
+                foreach (var autoCommand in commands)
+                {
+                    autoCommand.onRecieve(c);
+                }
+            }
         }
     }
     public interface IPortBound: IDisposable
     {
         EndPoint Source { get; set; }
     }
-    public interface IConnection:IPortBound
+    public interface IConnection: IPortBound
     {
         EndPoint Target { get; set; }
-        bool AutoCommandsEnabled { get; set; }
+        [CanBeNull] ISet<Type> EnabledAutoCommands { get; }
         int Send(object o);
         //receive without autocommands
         object silentrecieve(out EndPoint from, int buffersize);
@@ -66,10 +104,10 @@ namespace Edge.Ports
         public static object recieve(this IConnection c, out EndPoint from, int buffersize)
         {
             object r = c.silentrecieve(out from, buffersize);
-            ConnectionAutoCommand a = r as ConnectionAutoCommand;
-            if (a != null && c.AutoCommandsEnabled)
+            IConnectionAutoCommand a = r as IConnectionAutoCommand;
+            if (a != null && c.EnabledAutoCommands!=null && c.EnabledAutoCommands.Contains(a.GetType()))
             {
-                a.onRecieve(new ReadOnlyConnection(c));
+                a.onRecieve(c);
                 return r;
             }
             return r;
@@ -90,7 +128,7 @@ namespace Edge.Ports
             try
             {
                 const string pingstring = "ping0112358";
-                ConnectionReplyCommand p = new ConnectionReplyCommand(pingstring);
+                ConnectionSendCommand p = new ConnectionSendCommand(pingstring);
                 c.Send(p);
                 object reply = c.recieve();
                 ex = null;
@@ -126,6 +164,13 @@ namespace Edge.Ports
                 c.setLocalSource(0);
             }
             return c.Source;
+        }
+        public static bool AcceptsAutoCommand(this IConnection @this, IConnectionAutoCommand c)
+        {
+            if (c != null && @this.EnabledAutoCommands != null && @this.EnabledAutoCommands.Contains(c.GetType()))
+                return true;
+            var glued = c as ConnectionGluedAutoCommand;
+            return glued != null && glued.commands.All(@this.AcceptsAutoCommand);
         }
         public static T recieve<T>(this IConnection c)
         {
@@ -164,33 +209,14 @@ namespace Edge.Ports
             return (T)recievedval;
         } 
     }
-    public class ReadOnlyConnection
-    {
-        private readonly IConnection _c;
-        public ReadOnlyConnection(IConnection c)
-        {
-            this._c = c;
-        }
-        public bool AutoCommandsEnabled
-        {
-            get
-            {
-                return _c.AutoCommandsEnabled;
-            }
-        }
-        public int Send(object o)
-        {
-            return _c.Send(o);
-        }
-    }
     public class UdpConnection : IConnection
     {
         private readonly Socket _sock;
         public EndPoint Target { get; set; }
-        public bool AutoCommandsEnabled{ get; set; }
+        public ISet<Type> EnabledAutoCommands{ get; }
         public UdpConnection()
         {
-            this.AutoCommandsEnabled = false;
+            this.EnabledAutoCommands = new HashSet<Type>();
             this.Target = null;
             _sock = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
         }
@@ -274,11 +300,11 @@ namespace Edge.Ports
         }
         private class PrivateTcpServerConnection : IConnection
         {
-            public bool AutoCommandsEnabled { get; set; }
+            public ISet<Type> EnabledAutoCommands { get; }
             private readonly Socket _sock;
             public PrivateTcpServerConnection(Socket sock)
             {
-                this.AutoCommandsEnabled = false;
+                this.EnabledAutoCommands = new HashSet<Type>();
                 this._sock = sock;
             }
             public EndPoint Source
@@ -328,12 +354,12 @@ namespace Edge.Ports
     }
     public class TcpClient : IConnection
     {
-        public bool AutoCommandsEnabled { get; set; }
+        public ISet<Type> EnabledAutoCommands { get; }
         private readonly Socket _sock;
         private EndPoint _target;
         public TcpClient()
         {
-            this.AutoCommandsEnabled = false;
+            this.EnabledAutoCommands = new HashSet<Type>();
             _sock = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
             _target = null;
         }
@@ -694,15 +720,11 @@ namespace Edge.Ports
                 }
             }
             public EndPoint Target { get; set; }
-            public bool AutoCommandsEnabled
+            public ISet<Type> EnabledAutoCommands
             {
                 get
                 {
-                    return false;
-                }
-                set
-                {
-                    throw new Exception("MultiPortListener's cannot handle autocommands");
+                    return null;
                 }
             }
             public int Send(object o)
@@ -756,15 +778,11 @@ namespace Edge.Ports
                     this._int.Target = value;
                 }
             }
-            public bool AutoCommandsEnabled
+            public ISet<Type> EnabledAutoCommands
             {
                 get
                 {
-                    return this._int.AutoCommandsEnabled;
-                }
-                set
-                {
-                    this._int.AutoCommandsEnabled = value;
+                    return this._int.EnabledAutoCommands;
                 }
             }
             public int Send(object o)
@@ -822,15 +840,11 @@ namespace Edge.Ports
                     _int.Target = value;
                 }
             }
-            public bool AutoCommandsEnabled
+            public ISet<Type> EnabledAutoCommands
             {
                 get
                 {
-                    return false;
-                }
-                set
-                {
-                    throw new Exception("MultiPort doesn't support autocommands");
+                    return null;
                 }
             }
             public int Send(object o)

@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Data.OleDb;
 using System.Xml;
 using Edge.Looping;
 using Edge.SystemExtensions;
@@ -54,6 +53,13 @@ namespace Edge.Data
 	}
     public static class EntityManager
     {
+        public static void DropAllCollections(this LiteDatabase @this)
+        {
+            foreach (string col in @this.GetCollectionNames())
+            {
+                @this.DropCollection(col);
+            }
+        }
         public static void Update<T>(this LiteCollection<T> @this, int id, Action<T> mutation) where T : new()
         {
             @this.Update(@this.FindById(id),mutation);

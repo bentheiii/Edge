@@ -152,7 +152,7 @@ namespace CoreTest
             g.FillEdges(true, 0, 1, 0, 2, 0, 3, 1, 2, 1, 3, 1, 5, 2, 5, 4, 6, 6, 7);
             IsTrue(
                 g.Components().Select(a => a.OrderBy()).OrderBy(a => a.First()).SequenceEqual(
-                    new int[][] {new int[] {0, 1, 2, 3, 5}, new int[] {4, 6, 7}}, new EnumerableCompararer<int>()));
+                    new int[][] {new int[] {0, 1, 2, 3, 5}, new int[] {4, 6, 7}}, new EnumerableEqualityCompararer<int>()));
         }
         [TestMethod] public void IsConnectedUnDirected()
         {

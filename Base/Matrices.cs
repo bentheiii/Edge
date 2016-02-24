@@ -46,7 +46,7 @@ namespace Edge.Matrix
             throw new NotSupportedException();
         }
         public override bool ModduloAble => false;
-        public override GenerationType GenType => _int.GenType == Fielding.GenerationType.None ? Fielding.GenerationType.None : Fielding.GenerationType.Special;
+        public override GenerationType GenType => _int.GenType == GenerationType.None ? GenerationType.None : GenerationType.Special;
         public override Matrix<G> Generate(IEnumerable<byte> bytes, Tuple<Matrix<G>, Matrix<G>> bounds = null, object special = null)
         {
             var size = special as Tuple<int, int, object> ?? Tuple.Create(0, 0, (object)null);
@@ -57,13 +57,13 @@ namespace Edge.Matrix
             Func<IEnumerable<byte>, G> gen = null;
             switch (_int.GenType)
             {
-                case Fielding.GenerationType.FromBytes:
+                case GenerationType.FromBytes:
                     gen = bytes1 => _int.Generate(bytes1);
                     break;
-                case Fielding.GenerationType.FromRange:
+                case GenerationType.FromRange:
                     gen = bytes1 => _int.Generate(bytes1, gbounds);
                     break;
-                case Fielding.GenerationType.Special:
+                case GenerationType.Special:
                     gen = bytes1 => _int.Generate(bytes1, gbounds, size.Item3);
                     break;
             }

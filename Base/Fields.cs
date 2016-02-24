@@ -16,7 +16,7 @@ using Numerics;
 namespace Edge.Fielding {
     public class FieldWrapper<T> : IComparable<T>, IComparable<FieldWrapper<T>>
     {
-        private static readonly Field<T> _field = Fields.getField<T>();
+        private static readonly Field<T> _field;
         public FieldWrapper(T val)
         {
             this.val = val;
@@ -32,6 +32,10 @@ namespace Edge.Fielding {
         public FieldWrapper(ulong i)
         {
             val = _field.fromInt(i);
+        }
+        static FieldWrapper()
+        {
+            _field = Fields.getField<T>();
         }
         public T val { get; }
         public static implicit operator FieldWrapper<T>(T w)
@@ -50,6 +54,14 @@ namespace Edge.Fielding {
         {
             return new FieldWrapper<T>(w);
         }
+        public FieldWrapper<T> log()
+        {
+            return _field.log(val);
+        }
+        public FieldWrapper<T> log(T @base)
+        {
+            return _field.log(val, @base);
+        } 
         public FieldWrapper<T> abs()
         {
             return _field.abs(val);
@@ -144,6 +156,10 @@ namespace Edge.Fielding {
         public override int GetHashCode()
         {
             return val.GetHashCode();
+        }
+        public override string ToString()
+        {
+            return Field.String(val);
         }
         public int CompareTo(T other)
         {
@@ -241,6 +257,10 @@ namespace Edge.Fielding {
         public virtual T log(T a)
         {
             return ((dynamic)a).log();
+        }
+        public virtual T log(T a, T b)
+        {
+            return divide(log(a),log(b));
         }
         public virtual T mod(T a, T b)
         {
@@ -487,6 +507,7 @@ namespace Edge.Fielding {
             public override double Invert(double x) => 1/x;
             public override bool isNegative(double x) => x < 0;
             public override double log(double a) => Math.Log(a);
+            public override double log(double a, double b) => Math.Log(a, b);
             public override double multiply(double a, double b) => a*b;
             public override double Negate(double x) => -x;
             public override double subtract(double a, double b) => a-b;
@@ -540,6 +561,7 @@ namespace Edge.Fielding {
             public override float Invert(float x) => 1 / x;
             public override bool isNegative(float x) => x < 0;
             public override float log(float a) => (float)Math.Log(a);
+            public override float log(float a, float b) => (float)Math.Log(a, b);
             public override float multiply(float a, float b) => a * b;
             public override float Negate(float x) => -x;
             public override float subtract(float a, float b) => a - b;
@@ -593,6 +615,7 @@ namespace Edge.Fielding {
             public override decimal Invert(decimal x) => 1 / x;
             public override bool isNegative(decimal x) => x < 0;
             public override decimal log(decimal a) => (decimal)Math.Log((double) a);
+            public override decimal log(decimal a, decimal b) => (decimal)Math.Log((double)a, (double)b);
             public override decimal multiply(decimal a, decimal b) => a * b;
             public override decimal Negate(decimal x) => -x;
             public override decimal subtract(decimal a, decimal b) => a - b;

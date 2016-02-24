@@ -12,49 +12,11 @@ namespace Edge.WordsPlay
 {
     public static class WordPlay
     {
-        public static string RegexDoubleNoSign = @"((\d+(\.\d+)?)((e|E)(\+|-)?\d+)?))";
-        public static string RegexDouble = $@"((\+|-)?{RegexDoubleNoSign}";
+        public const string RegexDoubleNoSign = @"((\d+(\.\d+)?)((e|E)(\+|-)?\d+)?))";
+        public const string RegexDouble = @"((\+|-)?"+RegexDoubleNoSign;
         public static string ToString(this IFormattable @this, string format)
         {
             return @this.ToString(format, CultureInfo.CurrentCulture);
-        }
-        public static string Removespecific(this string x, string toremove)
-        {
-            int i = x.IndexOf(toremove, StringComparison.Ordinal);
-            return i == -1 ? x : x.Remove(i, toremove.Length);
-        }
-        public static string Substringbetween(this string x, int start, int end)
-        {
-            if (start > end)
-                throw new Exception("start must be before or at end");
-            return x.Substring(start, end - start);
-        }
-        public static string Substringbetween(this string x, string start, string end, bool includestart = false)
-        {
-            int si = x.IndexOf(start, StringComparison.Ordinal);
-            int ei = x.IndexOf(end, si, StringComparison.Ordinal);
-            if (si == -1 || ei == -1)
-                throw new Exception("both start and end must be in x");
-            if (!includestart)
-                si += start.Length;
-            if (si > ei)
-                throw new Exception("start must be before or at end");
-            return x.Substringbetween(si, ei);
-        }
-        public static string Substringbetween(this string x, string start, bool includestart = false)
-        {
-            int si = x.IndexOf(start, StringComparison.Ordinal);
-            if (si == -1)
-                throw new Exception("start must be in x");
-            if (!includestart)
-                si += start.Length;
-            return x.Substring(si);
-        }
-        public static string RemovefromEnd(this string x, int count)
-        {
-            if (count > x.Length)
-                throw new Exception("count must be lower than string length");
-            return count == 0 ? x : x.Remove(x.Length - count);
         }
         public static string convertToString(this IEnumerable<byte> x)
         {

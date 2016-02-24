@@ -18,7 +18,13 @@ namespace Edge.Streams
 		}
 		public bool RemoveWriter(TextWriter w,bool disposeIfManaged = true)
 		{
-			return _subscribers.Remove(w);
+		    if (!_subscribers.ContainsKey(w))
+		        return false;
+		    bool dispose = disposeIfManaged && _subscribers[w];
+		    var ret= _subscribers.Remove(w);
+            if (dispose)
+                w.Dispose();
+		    return ret;
 		}
 		public void Write(object x)
 		{

@@ -1598,8 +1598,8 @@ namespace Edge.Formulas
         public MemoryFormula(Formula<T> i)
         {
             this._int = i;
-            _memory = new Dictionary<T[], T>(new EnumerableCompararer<T>(getField<T>().ToEqualityComparer()));
-            _hasvalue = new Dictionary<T[], bool>(new EnumerableCompararer<T>(getField<T>().ToEqualityComparer()));
+            _memory = new Dictionary<T[], T>(new EnumerableEqualityCompararer<T>(getField<T>().ToEqualityComparer()));
+            _hasvalue = new Dictionary<T[], bool>(new EnumerableEqualityCompararer<T>(getField<T>().ToEqualityComparer()));
         }
         public override T this[params T[] x0]
         {

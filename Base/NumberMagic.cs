@@ -1920,7 +1920,7 @@ namespace Edge.NumbersMagic
                     return val[t];
                 if (@this < 0)
                     return 0;
-                var partindices = NumberMagic.Pentagonals(1).Select(a => @this - a).TakeWhile(a => a >= 0);
+                var partindices = Pentagonals(1).Select(a => @this - a).TakeWhile(a => a >= 0);
                 var parts = partindices.Select(a => cache[a]);
                 var sums = parts.Group2().Select(a => a.Item1 + a.Item2);
                 return sums.Group2().Sum(a => a.Item1 - a.Item2);

@@ -120,7 +120,7 @@
     <Compile Include="ToArrayTests.cs" />
     <Compile Include="SortTests.cs" />
     <Compile Include="Arr2dTests.cs" />
-    <Compile Include="UnitBetaTests.cs" />
+    <Compile Include="UnitTests.cs" />
     <Compile Include="VoidFunnelTests.cs" />
   </ItemGroup>
   <ItemGroup>

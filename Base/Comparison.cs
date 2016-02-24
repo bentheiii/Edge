@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using Edge.Fielding;
 
 namespace Edge.Comparison
 {
@@ -223,11 +224,11 @@ namespace Edge.Comparison
             }
         }
     }
-    public class EnumerableCompararer<T> : IEqualityComparer<IEnumerable<T>>
+    public class EnumerableEqualityCompararer<T> : IEqualityComparer<IEnumerable<T>>
     {
         private readonly IEqualityComparer<T> _int;
-        public EnumerableCompararer() : this(EqualityComparer<T>.Default) { }
-        public EnumerableCompararer(IEqualityComparer<T> i)
+        public EnumerableEqualityCompararer() : this(EqualityComparer<T>.Default) { }
+        public EnumerableEqualityCompararer(IEqualityComparer<T> i)
         {
             this._int = i;
         }
@@ -247,10 +248,10 @@ namespace Edge.Comparison
             return ret;
         }
     }
-    public class ConstantCompararer<T> : IEqualityComparer<T>
+    public class ConstantEqualityCompararer<T> : IEqualityComparer<T>
     {
         private int _hash = 0;
-        public ConstantCompararer(bool value)
+        public ConstantEqualityCompararer(bool value)
         {
             this.value = value;
         }
@@ -264,6 +265,22 @@ namespace Edge.Comparison
             if (!value)
                 _hash++;
             return _hash;
+        }
+    }
+    public class DeltaEqualityComparer<T> : IEqualityComparer<T>
+    {
+        private readonly FieldWrapper<T> _delta;
+        public DeltaEqualityComparer(T delta)
+        {
+            _delta = delta;
+        }
+        public bool Equals(T x, T y)
+        {
+            return (x.ToFieldWrapper() - y).abs() < _delta;
+        }
+        public int GetHashCode(T obj)
+        {
+            return (obj - (obj.ToFieldWrapper().TrueMod(_delta))).GetHashCode();
         }
     }
 }

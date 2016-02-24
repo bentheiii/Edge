@@ -52,6 +52,7 @@ namespace Edge.Statistics
         {}
         public DiscreteStatistic(Func<T,ulong> generator, params T[] keys)
         {
+            _occurances = new Dictionary<T, ulong>();
             foreach (T key in keys)
             {
                 this[key] = generator(key);
@@ -59,18 +60,21 @@ namespace Edge.Statistics
         }
         public DiscreteStatistic(ulong sampleSize, Func<T> generator)
         {
+            _occurances = new Dictionary<T, ulong>();
             foreach (int i in Loops.Range(sampleSize))
             {
                 Add(generator());
             }
         }
-        public DiscreteStatistic(bool generatefieldmembers = true)
+        public DiscreteStatistic(bool generatefieldmembers = true, IEqualityComparer<T> comp = null)
         {
+            comp = comp ?? EqualityComparer<T>.Default;
+            _occurances = new Dictionary<T, ulong>(comp);
             if (!generatefieldmembers)
-                _expected = null;
+                _expectedsum = null;
         } 
-        private readonly IDictionary<T, ulong> _occurances = new Dictionary<T, ulong>();
-        [CanBeNull] private FieldWrapper<T> _expected = new FieldWrapper<T>(0);
+        private readonly IDictionary<T, ulong> _occurances;
+        [CanBeNull] private FieldWrapper<T> _expectedsum = new FieldWrapper<T>(0);
         public bool TryGetValue(T key, out ulong value)
         {
             return _occurances.TryGetValue(key, out value);
@@ -83,8 +87,8 @@ namespace Edge.Statistics
             }
             set
             {
-                if (_expected != null)
-                    _expected -= x.ToFieldWrapper() * _occurances[x];
+                if (_expectedsum != null)
+                    _expectedsum -= x.ToFieldWrapper() * _occurances[x];
                 this.SampleSize -= _occurances[x];
                 if (value == 0)
                     _occurances.Remove(x);
@@ -92,8 +96,8 @@ namespace Edge.Statistics
                 {
                     _occurances[x] = value;
                     this.SampleSize += _occurances[x];
-                    if (_expected != null)
-                        _expected += x.ToFieldWrapper() * _occurances[x];
+                    if (_expectedsum != null)
+                        _expectedsum += x.ToFieldWrapper() * _occurances[x];
                 }
             }
         }
@@ -118,8 +122,8 @@ namespace Edge.Statistics
         public void Add(T x, ulong val)
         {
             _occurances.AggregateDefinition(x, val, (i, i1) => i + i1);
-            if (_expected != null)
-                _expected += x.ToFieldWrapper() * val;
+            if (_expectedsum != null)
+                _expectedsum += x.ToFieldWrapper() * val;
             this.SampleSize += val;
         }
         public bool Remove(T item, ulong value)
@@ -128,15 +132,15 @@ namespace Edge.Statistics
                 return false;
             if (this[item] == value)
             {
-                if (_expected != null)
-                    _expected -= item.ToFieldWrapper() * _occurances[item];
+                if (_expectedsum != null)
+                    _expectedsum -= item.ToFieldWrapper() * _occurances[item];
                 this.SampleSize -= _occurances[item];
                 _occurances.Remove(item);
             }
             else
             {
-                if (_expected != null)
-                    _expected += item.ToFieldWrapper() * value;
+                if (_expectedsum != null)
+                    _expectedsum += item.ToFieldWrapper() * value;
                 this.SampleSize -= value;
                 _occurances[item] -= value;
             }
@@ -155,8 +159,8 @@ namespace Edge.Statistics
         }
         public override T expectedValue()
         {
-            if (_expected != null)
-                return _expected /SampleSize;
+            if (_expectedsum != null)
+                return _expectedsum /SampleSize;
             return base.expectedValue();
         }
         public ulong SampleSize { get; private set; } = 0;
@@ -200,8 +204,8 @@ namespace Edge.Statistics
         public void Clear()
         {
             _occurances.Clear();
-            if (_expected != null)
-                _expected = new FieldWrapper<T>(0);
+            if (_expectedsum != null)
+                _expectedsum = new FieldWrapper<T>(0);
             SampleSize = 0;
         }
         public bool Contains(KeyValuePair<T, ulong> item)
@@ -256,13 +260,17 @@ namespace Edge.Statistics
             {
                 this[key] = (ulong)(this[key] / factor);
             }
-            if (_expected != null)
-                _expected = this.expectedValue(a => a);
+            if (_expectedsum != null)
+                _expectedsum = this.expectedValue(a => a);
             SampleSize = _occurances.Values.getSum();
         }
         public override IEnumerable<T> PossibleOutcomes()
         {
             return Keys;
+        }
+        public double Entropy()
+        {
+            return _occurances.Select(a => a.Value / (double)SampleSize).Select(a => -a * Math.Log(a, 2)).Sum();
         }
     }
     public class SmartDiscreteStatistic<T> : IStatistic<T>, ICollection<T>, IDictionary<T,ulong>

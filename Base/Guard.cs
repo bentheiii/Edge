@@ -23,7 +23,7 @@ namespace Edge.Guard
         {
             return @this != null ? @this.value : defval;
         }
-        public static bool ContMutate<T>(this IGuard<T> @this, Func<T,T> val)
+        public static bool CondMutate<T>(this IGuard<T> @this, Func<T,T> val)
         {
             if (@this != null)
             {

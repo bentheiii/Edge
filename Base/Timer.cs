@@ -135,11 +135,19 @@ namespace Edge.Timer
 			_timerThread.Interrupt();
 		}
 		public TimeSpan timeSinceStart => this._idle.timeSinceStart;
-        public void Dispose(bool disposed) => this._timerThread.Abort();
+	    private bool _disposed = false;
+        public void Dispose(bool disposed)
+        {
+            if (disposed && !this._disposed)
+            {
+                this._disposed = true;
+                this._timerThread.Abort();
+            }
+        }
 	    public void Dispose()
 	    {
-	        Dispose(true);
-            GC.SuppressFinalize(this);
+            if (_disposed)
+	            Dispose(true);
 	    }
 	}
 	public class ReaderTimer : TextReader, ITimer

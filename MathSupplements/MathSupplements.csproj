@@ -49,6 +49,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="DeltaNumber.cs" />
     <Compile Include="Modulary.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Series.cs" />
@@ -58,6 +59,10 @@
     <ProjectReference Include="..\Base\Core.csproj">
       <Project>{d40df14a-d7be-40c6-90fa-4158dc99f0e1}</Project>
       <Name>Core</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Statistics\Statistics.csproj">
+      <Project>{e8f54242-308c-40de-872a-2e0e7fbb3820}</Project>
+      <Name>Statistics</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

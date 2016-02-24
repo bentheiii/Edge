@@ -930,7 +930,7 @@ namespace Edge.Units
             {
                 Kelvin = new ScaleUnit<Temperature>(1);
                 Celsius = new ScaleUnit<Temperature>(1, -273.15);
-                Fahrenheit = new ScaleUnit<Temperature>(5.0/9, -459.67);
+                Fahrenheit = new ScaleUnit<Temperature>(9/5.0, -459.67);
                 DefaultParsers = new Lazy<Funnel<string, Temperature>>(() => new Funnel<string, Temperature>(
                     new Parser<Temperature>($@"^({WordPlay.RegexDouble}) ?(k|kelvin)$", m => new Temperature(double.Parse(m.Groups[1].Value), Kelvin)),
                     new Parser<Temperature>($@"^({WordPlay.RegexDouble}) ?(f|fahrenheit)$", m => new Temperature(double.Parse(m.Groups[1].Value), Fahrenheit)),
@@ -997,11 +997,11 @@ namespace Edge.Units
             }
             public double FromArbitrary(double arb)
             {
-                return arb / Arbitrary;
+                return arb * Arbitrary;
             }
             public double ToArbitrary(double val)
             {
-                return val * Arbitrary;
+                return val / Arbitrary;
             }
 
             private static readonly Lazy<Funnel<string, TemperatureDelta>> DefaultParsers;
@@ -1015,7 +1015,7 @@ namespace Edge.Units
             {
                 Kelvin = new TemperatureDelta(1);
                 Celsius = Kelvin;
-                Fahrenheit = new TemperatureDelta(5.0/9);
+                Fahrenheit = new TemperatureDelta(9/5.0);
                 DefaultParsers = new Lazy<Funnel<string, TemperatureDelta>>(() => new Funnel<string, TemperatureDelta>(
                     new Parser<TemperatureDelta>($@"^({WordPlay.RegexDouble}) ?(k|kelvin)$", m => new TemperatureDelta(double.Parse(m.Groups[1].Value), Kelvin)),
                     new Parser<TemperatureDelta>($@"^({WordPlay.RegexDouble}) ?(f|fahrenheit)$", m => new TemperatureDelta(double.Parse(m.Groups[1].Value), Fahrenheit)),

@@ -222,6 +222,14 @@ namespace Edge.Arrays
             }
             return true;
         }
+        public static bool isSymmetrical<T>(this IEnumerable<T> @this, IEqualityComparer<T> c)
+        {
+            return @this.Zip(@this.Reverse()).All(a => c.Equals(a.Item1, a.Item2));
+        }
+        public static bool isSymmetrical<T>(this IEnumerable<T> @this)
+        {
+            return isSymmetrical(@this, EqualityComparer<T>.Default);
+        }
         public static IDictionary<T, ulong> ToOccurances<T>(this IEnumerable<T> arr)
         {
             return ToOccurances(arr, EqualityComparer<T>.Default);
@@ -742,7 +750,7 @@ namespace Edge.Arrays
         {
             get
             {
-                return _items.Count();
+                return _items.Length;
             }
         }
         public bool IsReadOnly
@@ -994,9 +1002,9 @@ namespace Edge.Arrays
             _tor = tor.GetEnumerator();
             _cache = new List<T>();
         }
-        private bool InflateToIndex(int index)
+        private bool InflateToIndex(int? index)
         {
-            while (_cache.Count <= index)
+            while (!index.HasValue || _cache.Count <= index)
             {
                 if (_formed || !_tor.MoveNext())
                 {
@@ -1035,7 +1043,9 @@ namespace Edge.Arrays
         {
             get
             {
-                return _formed ? _cache.Count : this.Count();
+                if (!_formed)
+                    InflateToIndex(null);
+                return _cache.Count;
             }
         }
     }
@@ -1225,7 +1235,8 @@ namespace Edge.Arrays
                 return Loops.Range(@this.GetLength(1)).Select(a => Loops.Range(@this.GetLength(0)).Select(x => @this[x, a]));
             }
             public static string ToTablePrintable<T>(this T[,] arr, string openerfirst = "/", string openermid = "|", string openerlast = @"\",
-                                                    string closerfirst = @"\", string closermid = "|", string closerlast = "/", string divider = " ", string linediv=null)
+                                                     string closerfirst = @"\", string closermid = "|", string closerlast = "/", string divider = " ",
+                                                     string linediv = null)
             {
                 linediv = linediv ?? Environment.NewLine;
                 var cols = arr.Cols();

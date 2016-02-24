@@ -8,7 +8,6 @@ using Edge.Guard;
 using Edge.NumbersMagic;
 using Edge.SystemExtensions;
 using Edge.Arrays.Arr2D;
-using Edge.Comparison;
 using Edge.Tuples;
 
 namespace Edge.Looping
@@ -45,7 +44,7 @@ namespace Edge.Looping
         public static IEnumerable<T> Range<T>(T start, T max, T step)
         {
             var field = Fields.getField<T>();
-            if (field.Equals(field.zero, step))
+            if (field.Equals(field.zero, step) && !field.Equals(start,max))
             {
                 throw new ArgumentException("cannot be zero",nameof(step));
             }
@@ -63,19 +62,20 @@ namespace Edge.Looping
         }
         public static IEnumerable<T> Range<T>(T start, T max)
         {
-            return Range(start, max, Fields.getField<T>().one);
+            var f = Fields.getField<T>();
+            return Range(start, max, f.Compare(start, max) < 0 ? f.one : f.zero);
         }
         public static IEnumerable<T> Range<T>(T max)
         {
             return Range(Fields.getField<T>().zero, max);
         }
-        public static IEnumerable<double> Range(double start, double max, double step = 1)
+        public static IEnumerable<double> Range(double start, double max, double step)
         {
             if (step == 0)
             {
                 throw new ArgumentException("cannot be zero", nameof(step));
             }
-            if (max-start < 0 != step < 0)
+            if (max != start && (max - start < 0 != step < 0))
             {
                 throw new ArgumentException($"{nameof(max)} must be higher than {nameof(start)} or the {nameof(step)} must be negative");
             }
@@ -85,11 +85,15 @@ namespace Edge.Looping
                 yield return i;
             }
         }
+        public static IEnumerable<double> Range(double start, double max)
+        {
+            return Range(start, max, start < max ? 1 : -1);
+        }
         public static IEnumerable<double> Range(double max)
         {
             return Range(0.0, max);
         }
-        public static IEnumerable<ulong> Range(ulong start, ulong max, ulong step = 1)
+        public static IEnumerable<ulong> Range(ulong start, ulong max, long step)
         {
             if (step == 0)
             {
@@ -99,22 +103,26 @@ namespace Edge.Looping
             {
                 throw new ArgumentException($"{nameof(max)} must be higher than {nameof(start)}");
             }
-            for (var i = start; i < max; i += step)
+            for (var i = start; i < max; i = (ulong)((long)i+step))
             {
                 yield return i;
             }
+        }
+        public static IEnumerable<ulong> Range(ulong start, ulong max)
+        {
+            return Range(start, max, start < max ? 1 : -1);
         }
         public static IEnumerable<ulong> Range(ulong max)
         {
             return Range(0, max);
         }
-        public static IEnumerable<int> Range(int start, int max,int step = 1)
+        public static IEnumerable<int> Range(int start, int max, int step)
         {
             if (step == 0)
             {
                 throw new ArgumentException("cannot be zero", nameof(step));
             }
-            if (max - start < 0 != step < 0)
+            if (max != start && (max - start < 0 != step < 0))
             {
                 throw new ArgumentException($"{nameof(max)} must be higher than {nameof(start)} or the {nameof(step)} must be negative");
             }
@@ -124,6 +132,10 @@ namespace Edge.Looping
                 yield return i;
             }
         }
+        public static IEnumerable<int> Range(int start, int max)
+        {
+            return Range(start, max, start < max ? 1 : -1);
+        }
         public static IEnumerable<int> Range(int max)
         {
             return Range(0, max);
@@ -131,7 +143,7 @@ namespace Edge.Looping
         public static IEnumerable<T> IRange<T>(T start, T max, T step)
         {
             var field = Fields.getField<T>();
-            if (field.Equals(field.zero, step))
+            if (field.Equals(field.zero, step) && !field.Equals(start,max))
             {
                 throw new ArgumentException("cannot be zero", nameof(step));
             }
@@ -149,13 +161,14 @@ namespace Edge.Looping
         }
         public static IEnumerable<T> IRange<T>(T start, T max)
         {
-            return IRange(start, max, Fields.getField<T>().one);
+            var f = Fields.getField<T>();
+            return IRange(start, max, f.Compare(start, max) < 0 ? f.one : f.zero);
         }
         public static IEnumerable<T> IRange<T>(T max)
         {
             return IRange(Fields.getField<T>().zero, max);
         }
-        public static IEnumerable<double> IRange(double start, double max, double step = 1)
+        public static IEnumerable<double> IRange(double start, double max, double step)
         {
             if (step == 0)
             {
@@ -171,11 +184,15 @@ namespace Edge.Looping
                 yield return i;
             }
         }
+        public static IEnumerable<double> IRange(double start, double max)
+        {
+            return IRange(start, max, start < max ? 1 : -1);
+        }
         public static IEnumerable<double> IRange(double max)
         {
             return IRange(0, max);
         }
-        public static IEnumerable<ulong> IRange(ulong start, ulong max, ulong step = 1)
+        public static IEnumerable<ulong> IRange(ulong start, ulong max, long step)
         {
             if (step == 0)
             {
@@ -185,16 +202,20 @@ namespace Edge.Looping
             {
                 throw new ArgumentException($"{nameof(max)} must be higher than {nameof(start)}");
             }
-            for (var i = start; i <= max; i += step)
+            for (var i = start; i <= max; i = (ulong)((long)i+ step))
             {
                 yield return i;
             }
+        }
+        public static IEnumerable<ulong> IRange(ulong start, ulong max)
+        {
+            return IRange(start, max, start < max ? 1 : -1);
         }
         public static IEnumerable<ulong> IRange(ulong max)
         {
             return IRange(0, max);
         }
-        public static IEnumerable<int> IRange(int start, int max,int step = 1)
+        public static IEnumerable<int> IRange(int start, int max,int step)
         {
             if (step == 0)
             {
@@ -209,6 +230,10 @@ namespace Edge.Looping
             {
                 yield return i;
             }
+        }
+        public static IEnumerable<int> IRange(int start, int max)
+        {
+            return IRange(start, max, start < max ? 1 : -1);
         }
         public static IEnumerable<int> IRange(int max)
         {
@@ -1073,28 +1098,22 @@ namespace Edge.Looping
     }
     public static class Hooking
     {
-        public static IEnumerable<T> HookMin<T>(this IEnumerable<T> @this, IGuard<T> output)
+        public static IEnumerable<T> HookComp<T>(this IEnumerable<T> @this, IGuard<T> min = null, IGuard<T> max = null)
         {
-            return HookMin(@this, output, Comparer<T>.Default);
+            return HookComp(@this, Comparer<T>.Default, min, max);
         }
-        public static IEnumerable<T> HookMin<T>(this IEnumerable<T> @this, IGuard<T> output, IComparer<T> comp)
+        public static IEnumerable<T> HookComp<T>(this IEnumerable<T> @this, IComparer<T> comp, IGuard<T> min=null, IGuard<T> max=null)
         {
             bool any = false;
             foreach (T t in @this)
             {
-                if (!any || comp.Compare(output.value, t) > 0)
-                    output.value = t;
+                if (min!=null && (!any || comp.Compare(min.value, t) > 0))
+                    min.value = t;
+                if (max != null && (!any || comp.Compare(max.value, t) < 0))
+                    max.value = t;
                 yield return t;
                 any = true;
             }
-        }
-        public static IEnumerable<T> HookMax<T>(this IEnumerable<T> @this, IGuard<T> output)
-        {
-            return HookMax(@this, output, Comparer<T>.Default);
-        }
-        public static IEnumerable<T> HookMax<T>(this IEnumerable<T> @this, IGuard<T> output, IComparer<T> comp)
-        {
-            return HookMin(@this, output, comp.Reverse());
         }
         public static IEnumerable<T> HookCond<T>(this IEnumerable<T> @this, Func<T,bool> cond = null , IGuard<bool> any = null, IGuard<bool> all = null,IGuard<int> count = null)
         {
@@ -1107,36 +1126,61 @@ namespace Edge.Looping
                 if (c)
                 {
                     any.CondSet(true);
-                    count.ContMutate(a=>a+1);
+                    count.CondMutate(a=>a+1);
                 }
                 else
                     all.CondSet(false);
                 yield return t;
             }
         }
-        public static IEnumerable<T> HookAggregate<T>(this IEnumerable<T> @this, IGuard<T> sum = null, IGuard<T> product = null, IGuard<T> max = null, IGuard<T> min = null, IGuard<T> last = null, IGuard<T> first = null)
+        public static IEnumerable<T> HookSelect<T>(this IEnumerable<T> @this, IGuard<T> sum = null, IGuard<T> product = null, IGuard<T> max = null, IGuard<T> min = null, IGuard<T> last = null, IGuard<T> first = null)
         {
-            return HookAggregate(@this, a=>a, sum, product, max, min, last, first);
+            return HookSelect(@this, a=>a, sum, product, max, min, last, first);
         }
-        public static IEnumerable<T> HookAggregate<T, G>(this IEnumerable<T> @this, Func<T, G> map, IGuard<G> sum = null, IGuard<G> product = null, IGuard<G> max = null, IGuard<G> min = null, IGuard<G> last = null, IGuard<G> first = null)
+        public static IEnumerable<T> HookSelect<T, G>(this IEnumerable<T> @this, Func<T, G> map, IGuard<G> sum = null, IGuard<G> product = null, IGuard<G> max = null, IGuard<G> min = null, IGuard<G> last = null, IGuard<G> first = null)
         {
-            var f = Fields.getField<G>();
+            Field<G> f;
+            if (sum == null && product == null && min == null && max == null)
+                f = null;
+            else
+                f = Fields.getField<G>();
             sum.CondSet(f.zero);
             product.CondSet(f.one);
             bool any = false;
             foreach (T t in @this)
             {
                 var v = map(t);
-                sum.ContMutate(a=>f.add(a, v));
-                product.ContMutate(a=>f.multiply(a, v));
                 if (first != null && !any)
                     first.value = v;
                 if (min != null && (!any || f.Compare(v, min.value) < 0))
                     min.value = v;
                 if (max != null && (!any || f.Compare(v, max.value) > 0))
                     max.value = v;
+                sum.CondMutate(a=>f.add(a, v));
+                product.CondMutate(a=>f.multiply(a, v));
                 last.CondSet(v);
                 any = true;
+                yield return t;
+            }
+        }
+        public static IEnumerable<T> HookAggregate<T>(this IEnumerable<T> @this, Func<T, T, T> func, IGuard<T> aggregate)
+        {
+            return @this.HookAggregate<T, T>(func, aggregate);
+        }
+        public static IEnumerable<T> HookAggregate<T>(this IEnumerable<T> @this, Func<T, T, T> func, T seed, IGuard<T> aggregate)
+        {
+            return @this.HookAggregate<T, T>(func, seed, aggregate);
+        }
+        public static IEnumerable<T> HookAggregate<T, G>(this IEnumerable<T> @this, Func<T, G, G> func, G seed, IGuard<G> aggregate)
+        {
+            aggregate.value = seed;
+            return @this.HookAggregate(func, aggregate);
+        }
+        public static IEnumerable<T> HookAggregate<T, G>(this IEnumerable<T> @this, Func<T, G, G> func, IGuard<G> aggregate)
+        {
+            foreach (var t in @this)
+            {
+                aggregate.value = func(t, aggregate.value);
                 yield return t;
             }
         }
