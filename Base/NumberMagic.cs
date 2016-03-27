@@ -10,6 +10,7 @@ using Edge.Matrix;
 using Edge.Random;
 using Edge.RecursiveQuerier;
 using Edge.SystemExtensions;
+using Edge.Tuples;
 using Numerics;
 
 namespace Edge.NumbersMagic
@@ -87,7 +88,7 @@ namespace Edge.NumbersMagic
         }
 	    public static BigInteger ApproximateRoot(BigInteger a, BigInteger invPow)
 	    {
-	        BigInteger x0 = BigInteger.MinusOne * a;
+	        BigInteger x0 = -a;
 	        BigInteger x1 = a / 2;
 	        while (BigInteger.Abs(x0 - x1) >= BigInteger.One)
 	        {
@@ -160,7 +161,7 @@ namespace Edge.NumbersMagic
 	    }
 	    public static double abundancy(this int a)
 		{
-			return sumoffactors(a,includex:true) / (double)a;
+			return sumoffactors(a) / (double)a;
 		}
 		public static int totient(this int a)
 		{
@@ -510,63 +511,25 @@ namespace Edge.NumbersMagic
 			}
 			return ret;
 		}
-		public static int[] digits(this int x, int digitbase = 10)
-		{
-			while (true)
-			{
-				if (x == 0)
-				{
-					return new int[] {0};
-				}
-				if (x < 0)
-				{
-					x = -x;
-					continue;
-				}
-				int c = x;
-				List<int> ret = new List<int>();
-				while (c > 0)
-				{
-					ret.Add(c % digitbase);
-					c /= digitbase;
-				}
-				return ret.ToArray();
-			}
-		}
-		public static IEnumerable<int> factors(this int x, bool includeone = false, bool includex = false)
+		public static IEnumerable<int> factors(this int x)
 		{
 			if (x <= 0)
 				throw new ArithmeticException("cannot find factorization of a non-positive number");
-			List<int> ret = new List<int>();
-            List<int> revret = new List<int>();
-			int rem = x;
-			int root = (int)Math.Sqrt(x) + 1;
-			if (includeone)
-				ret.Add(1);
-			for (int i = 2; i < root; i++)
-			{
-				if (rem % i == 0)
-				{
-					ret.Add(i);
-                    if (i*i != x)
-                        revret.Add(x/i);
-				}
-			}
-			if (includex)
-				revret.Add(x);
-            return ret.Concat(revret.AsEnumerable().Reverse());
-		}
-		public static IEnumerable<int> primefactors(this int x)
-		{
-            if (x == 1)
-                yield break;
-		    var f = x.SmallestFactor();
-            yield return f;
-		    foreach (var n in (x/f).primefactors())
+		    var primes = x.primefactors().ToLookup(a=>a).Select(a=>Tuple.Create(a.Key,a.Count())).ToArray();
+		    foreach (var primesubsets in primes.Select(a => Loops.IRange(a.Item2).Select(z => a.Item1.pow(z)).ToArray()).ToArray().Join())
 		    {
-		        yield return n;
+		        yield return primesubsets.getProduct((a, b) => a*b);
 		    }
 		}
+	    public static IEnumerable<int> primefactors(this int x)
+	    {
+	        while (x!=1)
+	        {
+	            var f = x.SmallestFactor();
+	            yield return f;
+	            x = x / f;
+	        }
+	    }
 	    public static int divisibility(this int n, int b)
 	    {
             if (n == 1 || b > n || n % b != 0)
@@ -837,8 +800,8 @@ namespace Edge.NumbersMagic
                     case 1:
                         return val[0];
                     case 2:
-                        BigInteger a = val[0];
-                        BigInteger b = val[1];
+                        var a = val[0];
+                        var b = val[1];
                         if (a < 0)
                         {
                             a *= -1;
@@ -856,7 +819,7 @@ namespace Edge.NumbersMagic
                         }
                         return a;
                 }
-                val = new BigInteger[] { greatestcommondivisor(val.Take(val.Length / 2).ToArray()), greatestcommondivisor(val.Skip(val.Length / 2).ToArray()) };
+                val = val.SplitAt(val.Length / 2).ToEnumerable().SelectToArray(greatestcommondivisor);
             }
         }
         public static long greatestcommondivisor(params long[] val)
@@ -870,8 +833,8 @@ namespace Edge.NumbersMagic
 					case 1:
 						return val[0];
 					case 2:
-						long a = val[0];
-						long b = val[1];
+						var a = val[0];
+						var b = val[1];
 						if (a < 0)
 						{
 							a *= -1;
@@ -889,7 +852,7 @@ namespace Edge.NumbersMagic
 						}
 						return a;
 				}
-				val = new long[] { greatestcommondivisor(val.Take(val.Length / 2).ToArray()), greatestcommondivisor(val.Skip(val.Length / 2).ToArray()) };
+				val = val.SplitAt(val.Length/2).ToEnumerable().SelectToArray(greatestcommondivisor);
             }
 		}
 	    public static int greatestcommondivisor(params int[] val)
@@ -926,8 +889,8 @@ namespace Edge.NumbersMagic
 			};
 			if (x > val.Last())
 			{
-				IEnumerable<int> f = x.factors(true);
-				int s = f.getSum();
+				IEnumerable<int> f = x.factors();
+				int s = f.getSum()-x;
 				return s == x;
 			}
 			return val.binSearch(x) >= 0;
@@ -1090,52 +1053,42 @@ namespace Edge.NumbersMagic
 			var l = x.isprimebylist();
 			if (l.HasValue)
 				return l.Value;
-			return isProbablyPrime(x,1.0/8) && primality(x) == 1;
+			return isProbablyPrime(x,3) && primality(x) == 1;
 		}
-	    public static bool isProbablyPrime(this int x, double mincertinty)
+	    public static bool isProbablyPrime(this int x, int iterations)
 	    {
-	        return isProbablyPrime(x, mincertinty, new GlobalRandomGenerator());
+	        return isProbablyPrime(x, iterations, new GlobalRandomGenerator());
 	    }
-	    public static bool isProbablyPrime(this int x, double mincertinty, RandomGenerator generator)
+	    public static bool isProbablyPrime(this int x, int iterations, RandomGenerator generator)
 	    {
-	        return isProbablyPrime((long)x, mincertinty, generator);
+	        return isProbablyPrime((long)x, iterations, generator);
 	    }
-	    public static bool isProbablyPrime(this long x, double mincertinty)
+	    public static bool isProbablyPrime(this long x, int iterations)
 	    {
-	        return isProbablyPrime(x, mincertinty, new GlobalRandomGenerator());
+	        return isProbablyPrime(x, iterations, new GlobalRandomGenerator());
 	    }
-	    public static bool isProbablyPrime(this long x, double mincertinty, RandomGenerator generator)
+	    public static bool isProbablyPrime(this long x, int iterations, RandomGenerator generator)
         {
             if (x <= 0)
                 throw new Exception("can't check a negative number");
-            if (!mincertinty.iswithinexclusive(0, 1))
-                throw new Exception("certainty must be between 1 and 0");
-            double anticertinty = 1;
-            double maxanticertinty = 1 - mincertinty;
-            while (anticertinty > maxanticertinty)
+	        foreach (int i in Loops.Range(iterations))
             {
-                anticertinty /= 2;
                 int a = generator.Int(1, (int)Math.Min(int.MaxValue, x));
                 if (greatestcommondivisor(a, x) != 1 || ((long)a).powmod(x - 1, x) != 1)
                     return false;
             }
             return true;
         }
-	    public static bool isProbablyPrime(this BigInteger x, double mincertinty)
+	    public static bool isProbablyPrime(this BigInteger x, int iterations)
 	    {
-	        return isProbablyPrime(x, mincertinty, new GlobalRandomGenerator());
+	        return isProbablyPrime(x, iterations, new GlobalRandomGenerator());
 	    }
-	    public static bool isProbablyPrime(this BigInteger x, double mincertinty, RandomGenerator generator)
+	    public static bool isProbablyPrime(this BigInteger x, int iterations, RandomGenerator generator)
         {
             if (x <= 0)
                 throw new Exception("can't check a negative number");
-            if (!mincertinty.iswithinexclusive(0, 1))
-                throw new Exception("certainty must be between 1 and 0");
-            double anticertinty = 1;
-            double maxanticertinty = 1 - mincertinty;
-            while (anticertinty > maxanticertinty)
+            foreach (int i in Loops.Range(iterations))
             {
-                anticertinty /= 2;
                 int a = generator.Int(1, (int)BigInteger.Min(new BigInteger(int.MaxValue), x));
                 if (greatestcommondivisor(a, x) != 1 || BigInteger.ModPow(a,x-1,x) != 1)
                     return false;
@@ -1391,13 +1344,26 @@ namespace Edge.NumbersMagic
 			{
 			    i++;
 				int i1 = i;
-			    if (i.isProbablyPrime(1.0/8) && ret.All(a => (i1 % a) != 0))
+			    if (i.isProbablyPrime(3) && ret.All(a => (i1 % a) != 0))
 			    {
 					ret.Add(i);
 			        yield return i;
 			    }
 			}
 		}
+	    public static IEnumerable<int> listprimes(int max)
+	    {
+	        var ret = new SortedSet<int>(Loops.Range(2,max));
+	        while (ret.Count > 0)
+	        {
+	            var y = ret.Min;
+	            foreach (int i in Loops.Range(y,max,y))
+	            {
+	                ret.Remove(i);
+	            }
+	        }
+	        return ret;
+	    }
 		public static double logStar(this double x, double @base = Math.E, int iteration = 1)
 		{
 			if (iteration == 0)
@@ -1571,7 +1537,7 @@ namespace Edge.NumbersMagic
 		}
 	    public static int primorial(int x)
 	    {
-	        return listprimes().TakeWhile(a=>a<=x).getProduct((a,b)=>a*b);
+	        return listprimes(x+1).getProduct((a,b)=>a*b);
 	    }
         public static int partitionbound(int x, int partcount, IEnumerable<int> lowerbounds, IEnumerable<int> upperbounds)
         {
@@ -1724,9 +1690,9 @@ namespace Edge.NumbersMagic
 			double ret = rounded / Math.Pow(10, decimaldigits);
 			return ret;
 		}
-		public static int sumoffactors(this int x, bool includeon = true, bool includex = false)
+		public static int sumoffactors(this int x)
 		{
-			return factors(x, includeon, includex).Sum();
+			return factors(x).Sum();
 		}
 		public static bool whole(this double x)
 		{
@@ -1864,8 +1830,7 @@ namespace Edge.NumbersMagic
             {
                 return value;
             }
-            var primes = listprimes();
-            foreach (int prime in primes)
+            foreach (int prime in listprimes(value.sqrt().floor()+1))
             {
                 while (value % prime == 0)
                 {

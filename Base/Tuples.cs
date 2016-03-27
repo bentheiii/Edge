@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections;
+using System.Collections.Generic;
 using Edge.Arrays;
 
 namespace Edge.Tuples
@@ -93,6 +94,56 @@ namespace Edge.Tuples
         public static Tuple<T, T, T, T, T> ToTuple5<T>(this T[] @this)
         {
             return Tuple.Create(@this[0], @this[1], @this[2], @this[3], @this[4]);
+        }
+        public static T[] ToArray<T>(this Tuple<T> @this)
+        {
+            return new[] {@this.Item1};
+        }
+        public static T[] ToArray<T>(this Tuple<T,T> @this)
+        {
+            return new[] { @this.Item1, @this.Item2 };
+        }
+        public static T[] ToArray<T>(this Tuple<T, T, T> @this)
+        {
+            return new[] { @this.Item1, @this.Item2, @this.Item3 };
+        }
+        public static T[] ToArray<T>(this Tuple<T, T, T, T> @this)
+        {
+            return new[] { @this.Item1, @this.Item2, @this.Item3, @this.Item4 };
+        }
+        public static T[] ToArray<T>(this Tuple<T, T, T, T, T> @this)
+        {
+            return new[] { @this.Item1, @this.Item2, @this.Item3, @this.Item4, @this.Item5};
+        }
+        public static IEnumerable<T> ToEnumerable<T>(this Tuple<T> @this)
+        {
+            yield return @this.Item1;
+        }
+        public static IEnumerable<T> ToEnumerable<T>(this Tuple<T,T> @this)
+        {
+            yield return @this.Item1;
+            yield return @this.Item2;
+        }
+        public static IEnumerable<T> ToEnumerable<T>(this Tuple<T, T, T> @this)
+        {
+            yield return @this.Item1;
+            yield return @this.Item2;
+            yield return @this.Item3;
+        }
+        public static IEnumerable<T> ToEnumerable<T>(this Tuple<T, T, T, T> @this)
+        {
+            yield return @this.Item1;
+            yield return @this.Item2;
+            yield return @this.Item3;
+            yield return @this.Item4;
+        }
+        public static IEnumerable<T> ToEnumerable<T>(this Tuple<T, T, T, T, T> @this)
+        {
+            yield return @this.Item1;
+            yield return @this.Item2;
+            yield return @this.Item3;
+            yield return @this.Item4;
+            yield return @this.Item5;
         }
         public static Tuple<T1> ToTuple<T1>(this IEnumerable @this)
         {

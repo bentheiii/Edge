@@ -114,7 +114,7 @@ namespace CoreTest
     {
         [TestMethod] public void Simple()
         {
-            var g = new VirtualGraph<int, bool>(a => a.factors(true).Attach(k => true).Select(n => n.FlipTuple()), Loops.Range(8).ToArray());
+            var g = new VirtualGraph<int, bool>(a => a.factors().Except(a).Attach(k => true).Select(n => n.FlipTuple()), Loops.Range(8).ToArray());
             IsTrue(g.getVertexes().OrderBy().SequenceEqual(Loops.Range(8)));
             IsTrue(g.existsEdge(8, 4));
             IsFalse(g.existsEdge(3, 5));

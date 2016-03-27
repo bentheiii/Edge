@@ -186,7 +186,7 @@ namespace Edge.Matrix
         }
         public virtual bool invertible()
         {
-            return this.isSquare && !this.determinant().Equals(Field.zero) && Field.Invertible;
+            return this.isSquare && Field.Invertible && !this.determinant().Equals(Field.zero);
         }
         public virtual Matrix<T> inverse()
         {

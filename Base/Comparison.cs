@@ -2,7 +2,9 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using Edge.Arrays;
 using Edge.Fielding;
+using Edge.Looping;
 
 namespace Edge.Comparison
 {
@@ -32,6 +34,8 @@ namespace Edge.Comparison
         }
         public FunctionComparer(Func<T, IComparable> c)
         {
+            if(c == null)
+                throw new ArgumentNullException();
             this._c = (a, b) => c(a).CompareTo(c(b));
         }
         public FunctionComparer(Func<T, object> f, IComparer c)
@@ -106,6 +110,26 @@ namespace Edge.Comparison
         public int GetHashCode(T obj)
         {
             return _hash(obj);
+        }
+    }
+    public class EnumerableCompararer<T> : IComparer<IEnumerable<T>>
+    {
+        private readonly IComparer<T> _int;
+        public EnumerableCompararer() : this(Comparer<T>.Default) { }
+        public EnumerableCompararer(IComparer<T> i)
+        {
+            this._int = i;
+        }
+        public int Compare(IEnumerable<T> x, IEnumerable<T> y)
+        {
+            int ret = 0;
+            foreach (var z in x.Zip(y))
+            {
+                if (ret != 0)
+                    break;
+                ret = _int.Compare(z.Item1, z.Item2);
+            }
+            return ret;
         }
     }
     public class PriorityComparer<T> : IComparer<T>

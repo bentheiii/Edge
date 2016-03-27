@@ -254,4 +254,41 @@ namespace Edge.Timer
 			base.Dispose(disposing);
 		}
 	}
+    public class WriterTimer : ITimer
+    {
+        private readonly ActiveTimer _inner;
+        private readonly Action<string> _writeAction;
+        public WriterTimer(Func<string> towrite, TimeSpan span, TextWriter writer = null, bool insertnewline = true)
+        {
+            writer = writer ?? Console.Out;
+            _inner = new ActiveTimer(span);
+            if (insertnewline)
+                _writeAction = x => writer.WriteLine(x);
+            else
+                _writeAction = x => writer.Write(x);
+            _inner.onTick += (sender, args) => _writeAction(towrite());
+        }
+        public bool paused
+        {
+            get
+            {
+                return _inner.paused;
+            }
+        }
+        public void Pause()
+        {
+            _inner.Pause();
+        }
+        public void Resume()
+        {
+            _inner.Resume();
+        }
+        public TimeSpan timeSinceStart
+        {
+            get
+            {
+                return _inner.timeSinceStart;
+            }
+        }
+    }
 }

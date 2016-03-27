@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using Edge.WordsPlay;
-using Edge.Arrays;
 using Edge.Fielding;
 using Edge.Funnels;
 using Edge.Looping;
@@ -420,9 +419,9 @@ namespace Edge.Complex
         {
             return ImaginaryUnit * (this / ImaginaryUnit).Tan();
         }
-        public ComplexNumber[] roots(int power)
+        public IEnumerable<ComplexNumber> roots(int power)
         {
-            return Loops.Range(power).SelectToArray(a => getnumberedroot(power, a));
+            return Loops.Range(power).Select(a => getnumberedroot(power, a));
         }
         private ComplexNumber getnumberedroot(int power, int number)
         {

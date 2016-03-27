@@ -176,6 +176,13 @@ namespace Edge.Fielding {
                 return _field;
             }
         }
+        public bool IsNegative
+        {
+            get
+            {
+                return _field.isNegative(val);
+            }
+        }
     }
     public interface Field
     {

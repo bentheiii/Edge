@@ -12,6 +12,7 @@ using Edge.NumbersMagic;
 using Edge.SpecialNumerics;
 using Edge.Random;
 using Edge.SystemExtensions;
+using Edge.Tuples;
 
 namespace Edge.Arrays
 {
@@ -180,7 +181,7 @@ namespace Edge.Arrays
         }
         public static T[] ToArray<T>(this IEnumerable<T> @this, Action<int> reporter)
         {
-            return ToArray(@this, @this.RecommendSize() ?? 0, (arg1, i) => reporter(i));
+            return ToArray(@this, @this.RecommendSize() ?? 0, (arg1, i) => reporter?.Invoke(i));
         }
         public static T[] ToArray<T>(this IEnumerable<T> @this, Action<T, int> reporter)
         {
@@ -192,7 +193,7 @@ namespace Edge.Arrays
         }
         public static T[] ToArray<T>(this IEnumerable<T> @this, int capacity, Action<int> reporter)
         {
-            return ToArray(@this, capacity, (arg1, i) => reporter(i));
+            return ToArray(@this, capacity, (arg1, i) => reporter?.Invoke(i));
         }
         public static T[] ToArray<T>(this IEnumerable<T> @this, int capacity, Action<T, int> reporter)
         {
@@ -279,9 +280,11 @@ namespace Edge.Arrays
         }
         public static string ToPrintable<T>(this IEnumerable<T> a, string seperator = ", ", string opening = "[", string closing = "]")
         {
-            StringWriter w = new StringWriter();
-            a.WriteTo(w, seperator, opening, closing);
-            return w.ToString();
+            using (StringWriter w = new StringWriter())
+            {
+                a.WriteTo(w, seperator, opening, closing);
+                return w.ToString();
+            }
         }
         public static string ToPrintable<K,V>(this IDictionary<K,V> a, string definitionSeperator = ":", string seperator = ", ", string opening = "{", string closing = "}")
         {
@@ -289,7 +292,7 @@ namespace Edge.Arrays
         }
         public static string ToPrintable<K,V>(this IDictionary<K,V> a,Func<K,string> kPrinter, Func<V,string> vPrinter, string definitionSeperator = ":", string seperator = ", ", string opening = "{", string closing = "}")
         {
-            return a.Select(x => kPrinter(x.Key) + definitionSeperator + vPrinter(x.Value)).ToPrintable(seperator,opening, closing);
+            return a.Select(x => kPrinter?.Invoke(x.Key) + definitionSeperator + vPrinter?.Invoke(x.Value)).ToPrintable(seperator,opening, closing);
         }
         public static void Swap<T>(this IList<T> toswap, int index1, int index2)
         {
@@ -629,6 +632,43 @@ namespace Edge.Arrays
                 }
             }
             return layers.Count == 0;
+        }
+        public static T FirstOrDefault<T>(this IEnumerable<T> @this, T def)
+        {
+            return !@this.Any() ? def : @this.First();
+        }
+        public static T LastOrDefault<T>(this IEnumerable<T> @this, T def)
+        {
+            return !@this.Any() ? def : @this.Last();
+        }
+        public static bool AnyAndAll<T>(this IEnumerable<T> @this, Func<T, bool> cond)
+        {
+            bool any = false;
+            foreach (T t in @this)
+            {
+                var v = cond(t);
+                if (v == false)
+                    return false;
+                any = true;
+            }
+            return any;
+        }
+        public static T Bracket<T>(this IEnumerable<T> contentants, IComparer<T> comp = null)
+        {
+            comp = comp ?? Comparer<T>.Default;
+            var len = contentants.Count();
+            if (len == 1)
+                return contentants.First();
+            var splits = contentants.SplitAt(len / 2).ToArray();
+            return splits.SelectToArray(a => a.Bracket(comp)).getMin(comp);
+        }
+        public static IList<T> Splice<T>(this IList<T> @this, int start, int length)
+        {
+            return new ListSlice<T>(@this,start,length);
+        }
+        public static IList<T> Splice<T>(this IList<T> @this, int start)
+        {
+            return Splice(@this, start, @this.Count - start);
         }
     }
     public static class DictionaryExtensions
@@ -1184,6 +1224,113 @@ namespace Edge.Arrays
             return @this.arr;
         }
     }
+    public class ListSlice<T> : IList<T>
+    {
+        private readonly IList<T> _inner;
+        private readonly int _start;
+        public ListSlice(IList<T> inner, int start, int length)
+        {
+            _inner = inner;
+            _start = start;
+            Count = length;
+        }
+        private IEnumerable<int> IndexRange()
+        {
+            return Loops.Range(Count).Select(a => a + _start);
+        }
+        public IEnumerator<T> GetEnumerator()
+        {
+            foreach (int i in IndexRange())
+            {
+                yield return _inner[i];
+            }
+        }
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return GetEnumerator();
+        }
+        public void Add(T item)
+        {
+            _inner.Insert(_start+Count,item);
+            Count++;
+        }
+        public void Clear()
+        {
+            while (Count > 0)
+            {
+                Count--;
+                _inner.RemoveAt(_start);
+            }
+        }
+        public bool Contains(T item)
+        {
+            return this.Any(a => a.Equals(item));
+        }
+        public void CopyTo(T[] array, int arrayIndex)
+        {
+            foreach (var t in this.CountBind(arrayIndex))
+            {
+                array[t.Item2] = t.Item1;
+            }
+        }
+        public bool Remove(T item)
+        {
+            foreach (var t in this.CountBind(_start))
+            {
+                if (item.Equals(t.Item1))
+                {
+                    Count--;
+                    _inner.RemoveAt(t.Item2);
+                    return true;
+                }
+            }
+            return false;
+        }
+        public int Count { get; private set; }
+        public bool IsReadOnly
+        {
+            get
+            {
+                return _inner.IsReadOnly;
+            }
+        }
+        public int IndexOf(T item)
+        {
+            foreach (var t in this.CountBind())
+            {
+                if (item.Equals(t.Item1))
+                {
+                    return t.Item2;
+                }
+            }
+            return -1;
+        }
+        public void Insert(int index, T item)
+        {
+            _inner.Insert(_start + index, item);
+            Count++;
+        }
+        public void RemoveAt(int index)
+        {
+            _inner.RemoveAt(_start + index);
+            Count--;
+        }
+        public T this[int index]
+        {
+            get
+            {
+                if (index > Count || index < 0)
+                    throw new ArgumentOutOfRangeException();
+                return _inner[index+_start];
+            }
+            set
+            {
+                if (index > Count || index < 0)
+                    throw new ArgumentOutOfRangeException();
+                _inner[index + _start] = value;
+            }
+        }
+    }
     namespace Arr2D
     {
         public static class Array2D
@@ -1264,6 +1411,13 @@ namespace Edge.Arrays
                     ret.Append(closer + linediv);
                 }
                 return ret.ToString();
+            }
+            public static string ToTablePrintable<T>(this IEnumerable<IEnumerable<T>> @this, string opener = "{", string closer = "}",
+                                                     string instanceopener = "[", string instancecloser = "]", string instancediv = ", ",
+                                                     string linediv = null)
+            {
+                linediv = linediv ?? Environment.NewLine;
+                return @this.Select(a => a.ToPrintable(instancediv, instanceopener, instancecloser)).ToPrintable(linediv, opener, closer);
             }
             public static T[,] Concat<T>(int dimen, params T[][,] a)
             {
@@ -1381,4 +1535,4 @@ namespace Edge.Arrays
             }
         }
     }
-}
+} 

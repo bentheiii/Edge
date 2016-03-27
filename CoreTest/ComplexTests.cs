@@ -730,7 +730,7 @@ namespace CoreTest
         [TestMethod] public void SimpleRoots()
         {
             const int mag = 5;
-            var val = FromRectangular(2, 5).roots(mag);
+            var val = FromRectangular(2, 5).roots(mag).ToArray();
             var primary = FromRectangular(1.36087, 0.33023);
             AreEqual(val.Length, mag);
             foreach (int i in Loops.Range(val.Length))

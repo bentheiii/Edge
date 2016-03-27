@@ -288,7 +288,7 @@ namespace Edge.Looping
         {
             foreach (int i in Range(repeatcount))
             {
-                action();
+                action?.Invoke();
             }
         }
         public static IEnumerable<T> Repeat<T>(this IEnumerable<T> @this, int count)
@@ -365,6 +365,10 @@ namespace Edge.Looping
         }
         public static IEnumerable<Tuple<T1, T2>> AttachEnumerable<T1, T2>(this IEnumerable<T1> @this, Func<IEnumerable<T1>, IEnumerable<T2>> selector)
         {
+            if (selector == null)
+            {
+                throw new ArgumentException();
+            }
             return @this.Zip(selector(@this));
         }
         public static IEnumerable<Tuple<T1, T2>> Attach<T1, T2>(this IEnumerable<T1> @this, Func<T1, T2> selector)
@@ -386,6 +390,14 @@ namespace Edge.Looping
         public static IEnumerable<Tuple<T1, T2, T3, T4, T5>> Attach<T1, T2, T3, T4, T5>(this IEnumerable<Tuple<T1, T2, T3, T4>> @this, Func<T1, T2, T3, T4, T5> selector)
         {
             return @this.Select(a => Tuple.Create(a.Item1, a.Item2, a.Item3, a.Item4, selector(a.Item1, a.Item2, a.Item3, a.Item4)));
+        }
+        public static IEnumerable<IEnumerable<T>> Zip<T>(IEnumerable<IEnumerable<T>> @this)
+        {
+            var tor = @this.SelectToArray(a => a.GetEnumerator());
+            while (tor.All(a => a.MoveNext()))
+            {
+                yield return tor.Select(a => a.Current);
+            }
         }
         public static IEnumerable<IEnumerable> Zip(IEnumerable<IEnumerable> @this)
         {
@@ -433,6 +445,26 @@ namespace Edge.Looping
                 if (!cont)
                     yield break;
                 yield return tor.CountBind().Select(a => a.Item1 == null? (defvals.Length > a.Item2 ? defvals[a.Item2] : null) : a.Item1.Current);
+            }
+        }
+        public static IEnumerable<IEnumerable<T>> ZipUnbound<T>(IEnumerable<IEnumerable<T>> @this, params T[] defvals)
+        {
+            IEnumerator<T>[] tor = @this.SelectToArray(a => a.GetEnumerator());
+            while (true)
+            {
+                bool cont = false;
+                for (int i = 0; i < tor.Length; i++)
+                {
+                    if (tor[i] == null)
+                        continue;
+                    if (tor[i].MoveNext())
+                        cont = true;
+                    else
+                        tor[i] = null;
+                }
+                if (!cont)
+                    yield break;
+                yield return tor.CountBind().Select(a => a.Item1 == null ? (defvals.Length > a.Item2 ? defvals[a.Item2] : default(T)) : a.Item1.Current);
             }
         }
         public static IEnumerable<Tuple<T1>> ZipUnbound<T1>(this IEnumerable<T1> a, T1 defa = default(T1))
@@ -714,6 +746,24 @@ namespace Edge.Looping
         {
             return Count().Select(@this.SubSets).TakeWhile(a=>a.Any()).Concat();
         }
+        public static IEnumerable<IEnumerable<int>> MultiSubSets(this IEnumerable<int> @this, bool inclusive = true)
+        {
+            return @this.SelectToArray(a=>(inclusive ? IRange(a) : Range(a)).ToArray()).Join();
+        }
+        public static IEnumerable<IEnumerable<T>> MultiSubSets<T>(this IEnumerable<T> @this, bool inclusive = true)
+        {
+            return @this.SelectToArray(a => (inclusive ? IRange(a) : Range(a)).ToArray()).Join();
+        }
+        public static IEnumerable<IEnumerable<Tuple<T,int>>> MultiSubSets<T>(this IEnumerable<Tuple<T,int>> @this, bool inclusive = true)
+        {
+            var items = @this.SelectToArray(a => a.Item1);
+            return @this.Select(a=>a.Item2).MultiSubSets(inclusive).Select(x=>items.Zip(x));
+        }
+        public static IEnumerable<IEnumerable<Tuple<T, G>>> MultiSubSets<T,G>(this IEnumerable<Tuple<T, G>> @this, bool inclusive = true)
+        {
+            var items = @this.SelectToArray(a => a.Item1);
+            return @this.Select(a => a.Item2).MultiSubSets(inclusive).Select(x => items.Zip(x));
+        }
         public static IEnumerable<IEnumerable<T>> SubSets<T>(this IEnumerable<T> @this, int setSize)
         {
             return @this.Join(setSize, CartesianType.NoReflexive | CartesianType.NoSymmatry);
@@ -779,6 +829,10 @@ namespace Edge.Looping
         public static IEnumerable<Tuple<object, int[]>> CoordinateBind(this Array @this)
         {
             return @this.getSize().SelectToArray(Range).Join().Select(a => Tuple.Create(@this.GetValue(a),a));
+        }
+        public static IEnumerable<Tuple<T, int[]>> CoordinateBind<T>(this Array @this)
+        {
+            return @this.getSize().SelectToArray(Range).Join().Select(a => Tuple.Create((T)@this.GetValue(a), a));
         }
         public static IEnumerable<Tuple<T, int, int>> CoordinateBind<T>(this IEnumerable<IEnumerable<T>> @this)
         {
@@ -1000,6 +1054,11 @@ namespace Edge.Looping
             }
             return System.Enum.GetValues(typeof(T)).Cast<int>().Where(a=>a.CountSetBits() == 1).Cast<T>();
         }
+        public static IEnumerable<T> EnumFlags<T>(this T filter) where T : struct, IConvertible
+        {
+            var f = (Enum)(dynamic)filter;
+            return EnumFlags<T>().Cast<Enum>().Where(a => (f.HasFlag(a))).Cast<T>();
+        }
         public static IEnumerable<R> YieldAggregate<T, R>(this IEnumerable<T> @this, Func<T, R, R> aggregator,R seed = default(R))
         {
             foreach (T t in @this)
@@ -1029,7 +1088,7 @@ namespace Edge.Looping
             bool skipfrombefore = false;
             while (true)
             {
-                var val = gen();
+                var val = gen?.Invoke();
                 if (val.Item2 == LoopControl.Skip || skipfrombefore)
                 {
                     skipfrombefore = false;
@@ -1094,6 +1153,21 @@ namespace Edge.Looping
         {
             var f = Fields.getField<T>();
             return @this.YieldAggregate(f.multiply, f.one);
+        }
+        public static IEnumerable<T> SortedUnique<T>(this IEnumerable<T> @this, IEqualityComparer<T> comp = null)
+        {
+            comp = comp ?? EqualityComparer<T>.Default;
+            T last = default(T);
+            bool any = false;
+            foreach (T t in @this)
+            {
+                if (!any || !comp.Equals(last,t))
+                {
+                    yield return t;
+                    last = t;
+                    any = true;
+                }
+            }
         }
     }
     public static class Hooking

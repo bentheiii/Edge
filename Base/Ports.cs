@@ -6,12 +6,14 @@ using System.Net.Sockets;
 using System.Threading;
 using CCDefault.Annotations;
 using Edge.Arrays;
+using Edge.Comparison;
 using Edge.Credentials;
 using Edge.Factory;
 using Edge.Funnels;
 using Edge.Looping;
 using Edge.Ports.AutoCommands;
 using Edge.Processes;
+using Edge.Random;
 using Edge.Serializations;
 
 namespace Edge.Ports
@@ -932,6 +934,93 @@ namespace Edge.Ports
                 });
                 // ReSharper restore ImplicitlyCapturedClosure
                 handler.Process(messageRecieveEventArgs.message);
+            }
+        }
+    }
+    namespace PeerTcp
+    {
+        [Serializable]
+        public class PeerTcpGeneratorConnectionMessage
+        {
+            public const int SEED_LENGTH = 16;
+            public ulong[] seeds { get; }
+            public EndPoint ConnEndPoint { get; }
+            public PeerTcpGeneratorConnectionMessage(ulong[] seeds, EndPoint connEndPoint)
+            {
+                this.seeds = seeds;
+                ConnEndPoint = connEndPoint;
+            }
+        }
+        public class PeerTcpGenerator : IPortBound, ICreator<EndPoint, RandomGenerator,IConnection>, ICreator<EndPoint, IConnection>
+        {
+            private readonly IConnection _int;
+            public PeerTcpGenerator()
+            {
+                _int = new UdpConnection();
+            }
+            public void Dispose()
+            {
+                _int.Dispose();
+            }
+            public EndPoint Source
+            {
+                get
+                {
+                    return _int.Source;
+                }
+                set
+                {
+                    _int.Source = value;
+                }
+            }
+            public enum ConnectionOutcome { Fail = 0, Server = -1, Client = 1}
+            public IConnection Create(EndPoint target)
+            {
+                ConnectionOutcome outcome;
+                return Create(target, out outcome);
+            }
+            public IConnection Create(EndPoint target, out ConnectionOutcome outcome)
+            {
+                _int.EnsureSource();
+                return Create(target, new LocalRandomGenerator(_int.Source.GetHashCode()), out outcome);
+            }
+            public IConnection Create(EndPoint target, RandomGenerator gen)
+            {
+                ConnectionOutcome outcome;
+                return Create(target, gen, out outcome);
+            }
+            public IConnection Create(EndPoint target, RandomGenerator gen, out ConnectionOutcome outcome)
+            {
+                outcome = ConnectionOutcome.Fail;
+                _int.Target = target;
+                IConnection placeholder = new UdpConnection();
+                placeholder.EnsureSource();
+                PeerTcpGeneratorConnectionMessage mes =
+                    new PeerTcpGeneratorConnectionMessage(
+                        Loops.Generate(() => gen.ULong(0, ulong.MaxValue)).Take(PeerTcpGeneratorConnectionMessage.SEED_LENGTH).ToArray(), placeholder.Source);
+                _int.Send(mes);
+                EndPoint from;
+                var peermes = _int.recieve<PeerTcpGeneratorConnectionMessage>(out from);
+                if (!from.Equals(target))
+                    throw new Exception("peer target mismatch");
+                var comp = new EnumerableCompararer<ulong>().Compare(mes.seeds, peermes.seeds);
+                if (comp == 0)
+                    throw new Exception($"seed perfect match, 2^-{64*PeerTcpGeneratorConnectionMessage.SEED_LENGTH} chance!");
+                if (comp < 0)
+                {
+                    placeholder.Dispose();
+                    //we are server
+                    outcome = ConnectionOutcome.Server;
+                    return new TcpServer() {Source = mes.ConnEndPoint}.Create();
+                }
+                else
+                {
+                    Thread.Sleep(TimeSpan.FromSeconds(0.1));
+                    placeholder.Dispose();
+                    //we are client
+                    outcome = ConnectionOutcome.Client;
+                    return new TcpClient() {Target = peermes.ConnEndPoint};
+                }
             }
         }
     }
