@@ -530,7 +530,16 @@ namespace Edge.NumbersMagic
 	            x = x / f;
 	        }
 	    }
-	    public static int divisibility(this int n, int b)
+        public static IEnumerable<long> primefactors(this long x)
+        {
+            while (x != 1)
+            {
+                var f = x.SmallestFactor();
+                yield return f;
+                x = x / f;
+            }
+        }
+        public static int divisibility(this int n, int b)
 	    {
             if (n == 1 || b > n || n % b != 0)
                 return 0;
@@ -1048,12 +1057,22 @@ namespace Edge.NumbersMagic
 				return null;
 			return val.binSearch(x) >= 0;
 		}
-		public static bool isPrime(this int x)
+        public static bool isPrime(this int x)
+        {
+            var l = x.isprimebylist();
+            if (l.HasValue)
+                return l.Value;
+            return isProbablyPrime(x, 3) && (x.primefactors().First() != x);
+        }
+        public static bool isPrime(this long x)
 		{
-			var l = x.isprimebylist();
-			if (l.HasValue)
-				return l.Value;
-			return isProbablyPrime(x,3) && primality(x) == 1;
+            if (x < int.MaxValue)
+            {
+                var l = ((int)x).isprimebylist();
+                if (l.HasValue)
+                    return l.Value;
+            }
+            return isProbablyPrime(x,3) && (x.primefactors().First()!=x);
 		}
 	    public static bool isProbablyPrime(this int x, int iterations)
 	    {
@@ -1353,16 +1372,16 @@ namespace Edge.NumbersMagic
 		}
 	    public static IEnumerable<int> listprimes(int max)
 	    {
-	        var ret = new SortedSet<int>(Loops.Range(2,max));
-	        while (ret.Count > 0)
+	        var nums = new SortedSet<int>(Loops.Range(2,max));
+	        while (nums.Count > 0)
 	        {
-	            var y = ret.Min;
+	            var y = nums.Min;
+	            yield return y;
 	            foreach (int i in Loops.Range(y,max,y))
 	            {
-	                ret.Remove(i);
+	                nums.Remove(i);
 	            }
 	        }
-	        return ret;
 	    }
 		public static double logStar(this double x, double @base = Math.E, int iteration = 1)
 		{
@@ -1500,17 +1519,6 @@ namespace Edge.NumbersMagic
 		{
 			return name((long)x, scaletouse);
 		}
-		public static int nextprime(int x)
-		{
-			for (int i = x + 1; i < int.MaxValue; i++)
-			{
-				if (i.isPrime())
-				{
-					return i;
-				}
-			}
-			return -1;
-		}
 		public static string ordinal(this int x)
 		{
 			string ret = x.ToString();
@@ -1578,17 +1586,6 @@ namespace Edge.NumbersMagic
                 ret = ret % b;
             return ret;
         }
-        public static int prevprime(int x)
-		{
-			for (int i = x - 1; i > 1; i--)
-			{
-				if (i.isPrime())
-				{
-					return i;
-				}
-			}
-			return -1;
-		}
 		public enum RoundType { Floor, Natural, Ceil, None };
 		public static double round(this double x, int decimaldigits = 0, int digitbase = 10, RoundType type = RoundType.Floor)
 		{
@@ -1839,7 +1836,22 @@ namespace Edge.NumbersMagic
             }
 	        return value;
 	    }
-	    public static double Entropy(this IEnumerable<double> @this)
+        public static long SmallestFactor(this long value)
+        {
+            if (value <= 1)
+                throw new ArithmeticException("cannot find prime factorization of a non-positive number");
+            if (value < int.MaxValue)
+                return SmallestFactor((int)value);
+            foreach (int prime in listprimes(Math.Sqrt(value).floor() + 1))
+            {
+                while (value % prime == 0)
+                {
+                    return prime;
+                }
+            }
+            return value;
+        }
+        public static double Entropy(this IEnumerable<double> @this)
 	    {
 	        var sum = @this.EnumerationHook(preYield: d =>
             {

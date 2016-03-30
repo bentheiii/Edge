@@ -160,12 +160,12 @@ namespace CoreTest
     {
         [TestMethod] public void Simple()
         {
-            var val = new PrefixFunnel();
+            var val = new PrefixFunnel<char>();
             var t = "";
-            val.Add("U", a => t = a.ToUpper());
-            val.Add("L", a => t = a.ToLower());
+            val.Add("U", a => t = a.convertToString().ToUpper());
+            val.Add("L", a => t = a.convertToString().ToLower());
             val.Add("R", a => t = a.Reverse().convertToString());
-            val.Add(a => t = a);
+            val.Add(a => t = a.convertToString());
             val.Process("LA");
             AreEqual(t, "a");
             val.Process("Ub");

@@ -1169,6 +1169,11 @@ namespace Edge.Looping
                 }
             }
         }
+        public static IEnumerable<Tuple<T,T>> SharedPrefix<T>(this IEnumerable<T> @this, IEnumerable<T> other, IEqualityComparer<T> comp = null)
+        {
+            comp = comp ?? EqualityComparer<T>.Default;
+            return @this.Zip(other).TakeWhile(a=>comp.Equals(a.Item1,a.Item2));
+        }
     }
     public static class Hooking
     {

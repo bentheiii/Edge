@@ -103,6 +103,7 @@
     <Compile Include="Shapes.cs" />
     <Compile Include="SpecialNumerics.cs" />
     <Compile Include="Streams.cs" />
+    <Compile Include="Structures.cs" />
     <Compile Include="System.cs" />
     <Compile Include="Timer.cs" />
     <Compile Include="Tuples.cs" />

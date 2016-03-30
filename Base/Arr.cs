@@ -7,6 +7,7 @@ using System.Text;
 using Edge.Arrays.Arr2D;
 using Edge.Comparison;
 using Edge.Fielding;
+using Edge.Guard;
 using Edge.Looping;
 using Edge.NumbersMagic;
 using Edge.SpecialNumerics;
@@ -637,9 +638,44 @@ namespace Edge.Arrays
         {
             return !@this.Any() ? def : @this.First();
         }
+        public static T FirstOrDefault<T>(this IEnumerable<T> @this, Func<T,bool> cond, T def)
+        {
+            return @this.Any(cond) ? @this.First(cond) : def;
+        }
+        public static T First<T>(this IEnumerable<T> @this, Func<T, bool> cond, out bool any)
+        {
+            foreach (T t in @this)
+            {
+                if (cond(t))
+                {
+                    any = true;
+                    return t;
+                }
+            }
+            any = false;
+            return default(T);
+        }
+        public static T Last<T>(this IEnumerable<T> @this, Func<T, bool> cond, out bool any)
+        {
+            T ret = default(T);
+            any = false;
+            foreach (T t in @this)
+            {
+                if (cond(t))
+                {
+                    any = true;
+                    ret = t;
+                }
+            }
+            return ret;
+        }
         public static T LastOrDefault<T>(this IEnumerable<T> @this, T def)
         {
             return !@this.Any() ? def : @this.Last();
+        }
+        public static T LastOrDefault<T>(this IEnumerable<T> @this, Func<T, bool> cond, T def)
+        {
+            return @this.Any(cond) ? @this.Last(cond) : def;
         }
         public static bool AnyAndAll<T>(this IEnumerable<T> @this, Func<T, bool> cond)
         {
@@ -669,6 +705,20 @@ namespace Edge.Arrays
         public static IList<T> Splice<T>(this IList<T> @this, int start)
         {
             return Splice(@this, start, @this.Count - start);
+        }
+        public static bool StartsWith<T>(this IEnumerable<T> @this, IEnumerable<T> prefix, IEqualityComparer<T> comp = null)
+        {
+            comp = comp ?? EqualityComparer<T>.Default;
+            return @this.CompareCount(prefix) >= 0 && @this.Zip(prefix, comp.Equals).All();
+        }
+        public static bool All(this IEnumerable<bool> @this)
+        {
+            foreach (var t in @this)
+            {
+                if (!t)
+                    return false;
+            }
+            return true;
         }
     }
     public static class DictionaryExtensions

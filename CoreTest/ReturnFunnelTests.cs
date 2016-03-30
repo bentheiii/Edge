@@ -111,11 +111,11 @@ namespace CoreTest
         [TestMethod]
         public void Simple()
         {
-            var val = new PrefixFunnel<string>();
-            val.Add("U", a=>a.ToUpper());
-            val.Add("L",a=>a.ToLower());
+            var val = new PrefixFunnel<char,string>();
+            val.Add("U", a=>a.convertToString().ToUpper());
+            val.Add("L",a=>a.convertToString().ToLower());
             val.Add("R",a=>a.Reverse().convertToString());
-            val.Add(a=>a);
+            val.Add(a=>a.convertToString());
             AreEqual(val.Process("LA"), "a");
             AreEqual(val.Process("Ub"), "B");
             AreEqual(val.Process("Rab"), "ba");
