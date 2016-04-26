@@ -8,6 +8,7 @@ using Edge.Guard;
 using Edge.NumbersMagic;
 using Edge.SystemExtensions;
 using Edge.Arrays.Arr2D;
+using Edge.Structures.LockedStructures;
 using Edge.Tuples;
 
 namespace Edge.Looping
@@ -40,6 +41,49 @@ namespace Edge.Looping
         public static IEnumerable<T> Uniques<T>(this IEnumerable<T> arr, IEqualityComparer<T> comp, ulong maxoccurances = 1)
         {
             return arr.ToOccurances(comp).Where(a => a.Value <= maxoccurances).Select(a => a.Key);
+        }
+        public class RangeList<T> : LockedList<T>
+        {
+            private readonly T _start;
+            private readonly T _end;
+            private readonly T _step;
+            public RangeList(T start, T end, T step)
+            {
+                _start = start;
+                _end = end;
+                _step = step;
+                var gap = end - _start.ToFieldWrapper();
+                Count = ((int)(gap / _step)) + ((gap%_step).isZero ? 0 : 1);
+            }
+            public override IEnumerator<T> GetEnumerator()
+            {
+                var ret = _start.ToFieldWrapper();
+                for (int i = 0; i < Count ; i++)
+                {
+                    yield return ret;
+                    ret += _step;
+                }
+            }
+            public override bool Contains(T item)
+            {
+                return item.iswithinPartialExclusive(_start,_end) && ((_end - item.ToFieldWrapper())%_step).isZero;
+            }
+            public override int Count { get; }
+            public override int IndexOf(T item)
+            {
+                if (!Contains(item))
+                    return -1;
+                return (int)((_end - item.ToFieldWrapper()) / _step);
+            }
+            public override T this[int index]
+            {
+                get
+                {
+                    if (index < 0 || index >= Count)
+                        throw new IndexOutOfRangeException();
+                    return this._start + this._step.ToFieldWrapper()*index;
+                }
+            }
         }
         public static IEnumerable<T> Range<T>(T start, T max, T step)
         {
@@ -311,11 +355,11 @@ namespace Edge.Looping
                 }
             }
         }
-        public static IEnumerable<T1> Detach<T1, T2>(this IEnumerable<Tuple<T1, T2>> @this, Guard<T2> informer1)
+        public static IEnumerable<T1> Detach<T1, T2>(this IEnumerable<Tuple<T1, T2>> @this, Guard<T2> informer1 = null)
         {
             foreach (var t in @this)
             {
-                informer1.value = t.Item2;
+                informer1.CondSet(t.Item2);
                 yield return t.Item1;
             }
         }
@@ -328,11 +372,11 @@ namespace Edge.Looping
                 yield return t.Item1;
             }
         }
-        public static IEnumerable<Tuple<T1,T2>> Detach<T1, T2, T3>(this IEnumerable<Tuple<T1, T2, T3>> @this, Guard<T3> informer1)
+        public static IEnumerable<Tuple<T1,T2>> Detach<T1, T2, T3>(this IEnumerable<Tuple<T1, T2, T3>> @this, Guard<T3> informer1 = null)
         {
             foreach (var t in @this)
             {
-                informer1.value = t.Item3;
+                informer1.CondSet(t.Item3);
                 yield return Tuple.Create(t.Item1,t.Item2);
             }
         }
@@ -355,11 +399,11 @@ namespace Edge.Looping
                 yield return Tuple.Create(t.Item1, t.Item2);
             }
         }
-        public static IEnumerable<Tuple<T1, T2, T3>> Detach<T1, T2, T3, T4>(this IEnumerable<Tuple<T1, T2, T3, T4>> @this, Guard<T4> informer3)
+        public static IEnumerable<Tuple<T1, T2, T3>> Detach<T1, T2, T3, T4>(this IEnumerable<Tuple<T1, T2, T3, T4>> @this, Guard<T4> informer3 = null)
         {
             foreach (var t in @this)
             {
-                informer3.value = t.Item4;
+                informer3.CondSet(t.Item4);
                 yield return Tuple.Create(t.Item1, t.Item2, t.Item3);
             }
         }
@@ -583,19 +627,19 @@ namespace Edge.Looping
 		{
 			return @this.Where(a=>!toexclude.Contains(a));
 		}
-        public static IEnumerable<T> OrderBy<T>(this IEnumerable<T> @this)
+        public static IOrderedEnumerable<T> OrderBy<T>(this IEnumerable<T> @this)
         {
             return OrderBy(@this, Comparer<T>.Default);
         }
-        public static IEnumerable<T> OrderBy<T>(this IEnumerable<T> @this, IComparer<T> comp)
+        public static IOrderedEnumerable<T> OrderBy<T>(this IEnumerable<T> @this, IComparer<T> comp)
         {
             return @this.OrderBy(a => a, comp);
         }
-        public static IEnumerable<T> OrderByDescending<T>(this IEnumerable<T> @this)
+        public static IOrderedEnumerable<T> OrderByDescending<T>(this IEnumerable<T> @this)
         {
             return OrderByDescending(@this, Comparer<T>.Default);
         }
-        public static IEnumerable<T> OrderByDescending<T>(this IEnumerable<T> @this, IComparer<T> comp)
+        public static IOrderedEnumerable<T> OrderByDescending<T>(this IEnumerable<T> @this, IComparer<T> comp)
         {
             return @this.OrderByDescending(a => a, comp);
         }
@@ -876,13 +920,39 @@ namespace Edge.Looping
 				}
 			    if (end)
 			        break;
-				yield return ret;
+				yield return ret.ToArray();
                 ret.Fill(defval);
 			    empty = true;
 			}
             if (!empty)
-                yield return ret;
+                yield return ret.ToArray();
 	    }
+        public static IEnumerable<T[]> GroupUnbound<T>(this IEnumerable<T> @this, int grouplength)
+        {
+            var en = @this.GetEnumerator();
+            var ret = new List<T>();
+            bool end = false, empty = true;
+            while (true)
+            {
+                foreach (int i in Range(grouplength))
+                {
+                    if (!en.MoveNext())
+                    {
+                        end = true;
+                        break;
+                    }
+                    ret.Add(en.Current);
+                    empty = false;
+                }
+                if (end)
+                    break;
+                yield return ret.ToArray();
+                ret.Clear();
+                empty = true;
+            }
+            if (!empty)
+                yield return ret.ToArray();
+        }
         public static IEnumerable<Tuple<T>> Group1<T>(this IEnumerable<T> a, T defval = default(T))
         {
             return a.Group(1, defval).Select(x => x.ToTuple1());
@@ -1154,7 +1224,7 @@ namespace Edge.Looping
             var f = Fields.getField<T>();
             return @this.YieldAggregate(f.multiply, f.one);
         }
-        public static IEnumerable<T> SortedUnique<T>(this IEnumerable<T> @this, IEqualityComparer<T> comp = null)
+        public static IEnumerable<T> SortedDistinct<T>(this IEnumerable<T> @this, IEqualityComparer<T> comp = null)
         {
             comp = comp ?? EqualityComparer<T>.Default;
             T last = default(T);

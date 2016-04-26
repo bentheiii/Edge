@@ -103,7 +103,7 @@ namespace Edge.Ports
     {
         private const int DEFAULTBUFFERSIZE = 1024;
         [CanBeNull]
-        public static object recieve(this IConnection c, out EndPoint from, int buffersize)
+        public static object recieve(this IConnection c, out EndPoint from, int buffersize = DEFAULTBUFFERSIZE)
         {
             object r = c.silentrecieve(out from, buffersize);
             IConnectionAutoCommand a = r as IConnectionAutoCommand;
@@ -113,11 +113,6 @@ namespace Edge.Ports
                 return r;
             }
             return r;
-        }
-        [CanBeNull]
-        public static object recieve(this IConnection c, out EndPoint p)
-        {
-            return c.recieve(out p, DEFAULTBUFFERSIZE);
         }
         [CanBeNull]
         public static object recieve(this IConnection c)
@@ -1010,16 +1005,18 @@ namespace Edge.Ports
                 {
                     placeholder.Dispose();
                     //we are server
+                    var ret = new TcpServer() {Source = mes.ConnEndPoint}.Create();
                     outcome = ConnectionOutcome.Server;
-                    return new TcpServer() {Source = mes.ConnEndPoint}.Create();
+                    return ret;
                 }
                 else
                 {
                     Thread.Sleep(TimeSpan.FromSeconds(0.1));
                     placeholder.Dispose();
                     //we are client
+                    var ret = new TcpClient() {Target = peermes.ConnEndPoint};
                     outcome = ConnectionOutcome.Client;
-                    return new TcpClient() {Target = peermes.ConnEndPoint};
+                    return ret;
                 }
             }
         }

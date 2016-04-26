@@ -12,15 +12,15 @@ namespace Edge.Credentials
         private RSACredential(byte[] sign) : base(sign) { }
         public static RSACredential Create(byte[] message, RSAParameters privateKey)
         {
-            //// The array to store the signed message in bytes
+            // The array to store the signed message in bytes
             using (var rsa = new RSACryptoServiceProvider())
             {
                 try
                 {
-                    //// Import the private key used for signing the message
+                    // Import the private key used for signing the message
                     rsa.ImportParameters(privateKey);
 
-                    //// Sign the data, using SHA512 as the hashing algorithm 
+                    // Sign the data, using SHA512 as the hashing algorithm 
                     var signedBytes = rsa.SignData(message, CryptoConfig.MapNameToOID("SHA512"));
                     return new RSACredential(signedBytes);
                 }
@@ -31,11 +31,11 @@ namespace Edge.Credentials
                 }
                 finally
                 {
-                    //// Set the keycontainer to be cleared when rsa is garbage collected.
+                    // Set the keycontainer to be cleared when rsa is garbage collected.
                     rsa.PersistKeyInCsp = false;
                 }
             }
-            //// Convert the a base64 string before returning
+            // Convert the a base64 string before returning
         }
         public static void GetKey(out RSAParameters @private, out RSAParameters @public, int size = 1024)
         {

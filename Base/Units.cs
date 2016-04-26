@@ -792,8 +792,6 @@ namespace Edge.Units
                 Directory.CreateDirectory(System.IO.Path.GetDirectoryName(_ExchangeRatesPermaPath));
                 _ExchangeRatePerma = new SyncPermaObject<string>(Encoding.ASCII.GetString, Encoding.ASCII.GetBytes, _ExchangeRatesPermaPath, false, FileAccess.ReadWrite, FileShare.ReadWrite, valueIfCreated: "");
 
-                updateRates();
-
                 DefaultParsers = new Lazy<Funnel<string, Money>>(() => new Funnel<string, Money>(
                     new Parser<Money>($@"^({WordPlay.RegexDouble}) ?(\$|dollars?)$", m => new Money(double.Parse(m.Groups[1].Value), DollarUS)),
                     new Parser<Money>($@"^\$({WordPlay.RegexDouble})$", m => new Money(double.Parse(m.Groups[1].Value), DollarUS)),

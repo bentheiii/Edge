@@ -2,7 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using Edge.Structures;
+using Edge.Structures.Tries;
 
 // ReSharper disable UnusedMemberInSuper.Global
 
@@ -526,7 +526,7 @@ namespace Edge.Funnels
         public bool RemovePrefix { get; }
         public RT Process(IEnumerable<T> val)
         {
-            var validproc = _processors.ReversePrefixQuery(val).OrderBy(a=>a.Value.Item1).Select(a=>a.Value.Item2);
+            var validproc = _processors.PrefixesQuery(val).OrderBy(a=>a.Value.Item1).Select(a=>a.Value.Item2);
             foreach (var p in validproc)
             {
                 RT ret;
@@ -581,7 +581,7 @@ namespace Edge.Funnels
         public bool RemovePrefix { get; }
         public void Process(IEnumerable<T> val)
         {
-            var validproc = _processors.ReversePrefixQuery(val).OrderBy(a => a.Value.Item1).Select(a => a.Value.Item2);
+            var validproc = _processors.PrefixesQuery(val).OrderBy(a => a.Value.Item1).Select(a => a.Value.Item2);
             foreach (var p in validproc)
             {
                 if (p(val))

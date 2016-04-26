@@ -6,7 +6,7 @@ using Edge.Arrays;
 using Edge.Comparison;
 using Edge.Looping;
 
-namespace Edge.Structures
+namespace Edge.Structures.Tries
 {
     internal interface ITrieNode<T, V> : IEnumerable<KeyValuePair<IEnumerable<T>,V>> {}
     internal interface ITrieNode<out T> : IEnumerable<IEnumerable<T>> { }
@@ -219,7 +219,7 @@ namespace Edge.Structures
                 return false;
             }
         }
-        public IEnumerable<KeyValuePair<IEnumerable<T>, V>> PrefixQuery(IEnumerable<T> prefix)
+        public IEnumerable<KeyValuePair<IEnumerable<T>, V>> CompletionsQuery(IEnumerable<T> prefix)
         {
             if (!prefix.Any())
                 return this;
@@ -228,14 +228,14 @@ namespace Edge.Structures
             if (!any)
                 return new KeyValuePair<IEnumerable<T>, V>[0];
             var vs = match.Value as Trie<T, V>;
-            return vs != null ? vs.PrefixQuery(prefix.Skip(match.Key.Count).ToArray()) : match.Value;
+            return vs != null ? vs.CompletionsQuery(prefix.Skip(match.Key.Count).ToArray()) : match.Value;
         }
-        public IEnumerable<KeyValuePair<IEnumerable<T>, V>> ReversePrefixQuery(IEnumerable<T> prefix)
+        public IEnumerable<KeyValuePair<IEnumerable<T>, V>> PrefixesQuery(IEnumerable<T> complete)
         {
-            return this._children.Where(a => prefix.StartsWith(a.Key)).Select(a =>
+            return this._children.Where(a => complete.StartsWith(a.Key)).Select(a =>
             {
                 var vs = a.Value as Trie<T, V>;
-                return vs != null ? vs.ReversePrefixQuery(prefix.Skip(a.Key.Count)) : a.Value;
+                return vs != null ? vs.PrefixesQuery(complete.Skip(a.Key.Count)) : a.Value;
             }).Concat();
         }
     }
@@ -387,7 +387,7 @@ namespace Edge.Structures
                 return false;
             }
         }
-        public IEnumerable<IEnumerable<T>> PrefixQuery(IEnumerable<T> prefix)
+        public IEnumerable<IEnumerable<T>> CompletionsQuery(IEnumerable<T> prefix)
         {
             if (!prefix.Any())
                 return this;
@@ -396,15 +396,78 @@ namespace Edge.Structures
             if (!any)
                 return new IEnumerable<T>[0];
             var vs = match.Value as Trie<T>;
-            return vs != null ? vs.PrefixQuery(prefix.Skip(match.Key.Count).ToArray()) : match.Value;
+            return vs != null ? vs.CompletionsQuery(prefix.Skip(match.Key.Count).ToArray()) : match.Value;
         }
-        public IEnumerable<IEnumerable<T>> ReversePrefixQuery(IEnumerable<T> prefix)
+        public IEnumerable<IEnumerable<T>> PrefixesQuery(IEnumerable<T> complete)
         {
-            return this._children.Where(a => prefix.StartsWith(a.Key)).Select(a =>
+            return this._children.Where(a => complete.StartsWith(a.Key)).Select(a =>
             {
                 var vs = a.Value as Trie<T>;
-                return vs != null ? vs.ReversePrefixQuery(prefix.Skip(a.Key.Count)) : a.Value;
+                return vs != null ? vs.PrefixesQuery(complete.Skip(a.Key.Count)) : a.Value;
             }).Concat();
+        }
+    }
+}
+namespace Edge.Structures.LockedStructures
+{
+    public abstract class LockedCollection<T> : ICollection<T>
+    {
+        public abstract IEnumerator<T> GetEnumerator();
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return GetEnumerator();
+        }
+        public void Add(T item)
+        {
+            throw new System.NotSupportedException();
+        }
+        public void Clear()
+        {
+            throw new System.NotSupportedException();
+        }
+        public abstract bool Contains(T item);
+        public void CopyTo(T[] array, int arrayIndex)
+        {
+            foreach (var t in this.CountBind(arrayIndex))
+            {
+                array[t.Item2] = t.Item1;
+            }
+        }
+        public bool Remove(T item)
+        {
+            throw new System.NotSupportedException();
+        }
+        public abstract int Count { get; }
+        public bool IsReadOnly
+        {
+            get
+            {
+                return true;
+            }
+        }
+    }
+    public abstract class LockedList<T> : LockedCollection<T>, IList<T>
+    {
+        public abstract int IndexOf(T item);
+        public void Insert(int index, T item)
+        {
+            throw new System.NotSupportedException();
+        }
+        public void RemoveAt(int index)
+        {
+            throw new System.NotSupportedException();
+        }
+        public abstract T this[int index] { get; }
+        T IList<T>.this[int index]
+        {
+            get
+            {
+                return this[index];
+            }
+            set
+            {
+                throw new System.NotSupportedException();
+            }
         }
     }
 }

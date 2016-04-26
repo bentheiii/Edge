@@ -4,6 +4,7 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using Edge.Arrays;
 using Microsoft.WindowsAPICodePack.Shell;
 
 namespace Edge.Path
@@ -13,7 +14,7 @@ namespace Edge.Path
         public static byte[] loadAsBytes(FileStream stream, int bufferSize = 4096)
         {
             stream.Seek(0, SeekOrigin.Begin);
-            List<byte> b = new List<byte>(bufferSize);
+            var b = new ResizingArray<byte>();
             byte[] buffer = new byte[bufferSize];
             while (true)
             {

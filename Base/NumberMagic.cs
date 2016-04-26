@@ -98,7 +98,11 @@ namespace Edge.NumbersMagic
 	        return x1;
 	    }
         public static bool arecoprime(int a, int b)
-		{
+        {
+            if (a == b)
+                return false;
+            if (a.isprimebylist() == true || b.isprimebylist() == true)
+                return true;
 			return greatestcommondivisor(a, b) == 1;
 		}
 	    public static IEnumerable<int> Collatz(int @base)
@@ -835,34 +839,29 @@ namespace Edge.NumbersMagic
 		{
 			while (true)
 			{
-				switch (val.Length)
-				{
-					case 0:
-						return 1;
-					case 1:
-						return val[0];
-					case 2:
-						var a = val[0];
-						var b = val[1];
-						if (a < 0)
-						{
-							a *= -1;
-						}
-						if (b < 0)
-						{
-							b *= -1;
-						}
-						minmax(ref b, ref a);
-						while (b != 0)
-						{
-							long temp = a % b;
-							a = b;
-							b = temp;
-						}
-						return a;
-				}
-				val = val.SplitAt(val.Length/2).ToEnumerable().SelectToArray(greatestcommondivisor);
-            }
+			    if (val.Length == 0)
+			        return 1;
+			    if (val.Length == 1)
+			        return val[0];
+			    if (val.Length == 2)
+			    {
+			        var a = val[0];
+			        var b = val[1];
+			        if (a < 0)
+			            a *= -1;
+			        if (b < 0)
+			            b *= -1;
+			        minmax(ref b, ref a);
+			        while (b != 0)
+			        {
+			            long temp = a % b;
+			            a = b;
+			            b = temp;
+			        }
+			        return a;
+			    }
+			    val = val.SplitAt(val.Length/2).ToEnumerable().SelectToArray(greatestcommondivisor);
+			}
 		}
 	    public static int greatestcommondivisor(params int[] val)
 	    {
@@ -1178,12 +1177,8 @@ namespace Edge.NumbersMagic
         public static bool iswithinexclusive<T>(this T x, T border1, T border2)
         {
             minmax(ref border1, ref border2);
-            return x.ToFieldWrapper() >  border1 && x.ToFieldWrapper() > border2;
+            return x.ToFieldWrapper() >  border1 && x.ToFieldWrapper() < border2;
         }
-        public static bool isInfinity(this double x)
-		{
-			return double.IsInfinity(x);
-		}
 		public static int leastcommonmultiple(params int[] vals)
 		{
 			return (vals.getProduct((a,b)=>a*b)) / greatestcommondivisor(vals);
@@ -1208,7 +1203,7 @@ namespace Edge.NumbersMagic
 		{
 			return a.ToString(new string('0', charcount));
 		}
-        public static IEnumerable<int> listprimes()
+        public static IEnumerable<int> primes()
 		{
 			int[] val =
 			{
@@ -1370,7 +1365,7 @@ namespace Edge.NumbersMagic
 			    }
 			}
 		}
-	    public static IEnumerable<int> listprimes(int max)
+	    public static IEnumerable<int> primes(int max)
 	    {
 	        var nums = new SortedSet<int>(Loops.Range(2,max));
 	        while (nums.Count > 0)
@@ -1545,7 +1540,7 @@ namespace Edge.NumbersMagic
 		}
 	    public static int primorial(int x)
 	    {
-	        return listprimes(x+1).getProduct((a,b)=>a*b);
+	        return primes(x+1).getProduct((a,b)=>a*b);
 	    }
         public static int partitionbound(int x, int partcount, IEnumerable<int> lowerbounds, IEnumerable<int> upperbounds)
         {
@@ -1827,7 +1822,7 @@ namespace Edge.NumbersMagic
             {
                 return value;
             }
-            foreach (int prime in listprimes(value.sqrt().floor()+1))
+            foreach (int prime in primes(value.sqrt().floor()+1))
             {
                 while (value % prime == 0)
                 {
@@ -1842,7 +1837,7 @@ namespace Edge.NumbersMagic
                 throw new ArithmeticException("cannot find prime factorization of a non-positive number");
             if (value < int.MaxValue)
                 return SmallestFactor((int)value);
-            foreach (int prime in listprimes(Math.Sqrt(value).floor() + 1))
+            foreach (int prime in primes(Math.Sqrt(value).floor() + 1))
             {
                 while (value % prime == 0)
                 {

@@ -151,7 +151,7 @@ namespace CoreTest
         private const int ARRSIZE = 20;
         [ClassInitialize] public static void ClassInit(TestContext context)
         {
-            _primes = NumberMagic.listprimes().Take(ARRSIZE).ToArray();
+            _primes = NumberMagic.primes().Take(ARRSIZE).ToArray();
         }
         [TestMethod] public void Simple()
         {
@@ -173,7 +173,7 @@ namespace CoreTest
         private const int ARRSIZE = 20;
         [ClassInitialize] public static void ClassInit(TestContext context)
         {
-            _primes = NumberMagic.listprimes().Take(ARRSIZE).ToArray(ARRSIZE);
+            _primes = NumberMagic.primes().Take(ARRSIZE).ToArray(ARRSIZE);
         }
         [TestMethod] public void Simple()
         {
@@ -199,7 +199,7 @@ namespace CoreTest
         private const int ARRSIZE = 100;
         [ClassInitialize] public static void ClassInit(TestContext context)
         {
-            _primes = NumberMagic.listprimes().Take(ARRSIZE).ToArray();
+            _primes = NumberMagic.primes().Take(ARRSIZE).ToArray();
         }
         [TestMethod] public void Simple()
         {

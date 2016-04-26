@@ -14,7 +14,7 @@ using Microsoft.CSharp.RuntimeBinder;
 using Numerics;
 
 namespace Edge.Fielding {
-    public class FieldWrapper<T> : IComparable<T>, IComparable<FieldWrapper<T>>
+    public class FieldWrapper<T> : IComparable<T>, IComparable<FieldWrapper<T>>, IEquatable<T>, IEquatable<FieldWrapper<T>>
     {
         private static readonly Field<T> _field;
         public FieldWrapper(T val)
@@ -157,6 +157,14 @@ namespace Edge.Fielding {
         {
             return val.GetHashCode();
         }
+        public bool Equals(T other)
+        {
+            return Field.Equals(this,other);
+        }
+        public bool Equals(FieldWrapper<T> other)
+        {
+            return Equals(other.val);
+        }
         public override string ToString()
         {
             return Field.String(val);
@@ -181,6 +189,13 @@ namespace Edge.Fielding {
             get
             {
                 return _field.isNegative(val);
+            }
+        }
+        public bool isZero
+        {
+            get
+            {
+                return Field.Equals(Field.zero, this);
             }
         }
     }

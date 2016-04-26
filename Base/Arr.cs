@@ -7,13 +7,11 @@ using System.Text;
 using Edge.Arrays.Arr2D;
 using Edge.Comparison;
 using Edge.Fielding;
-using Edge.Guard;
 using Edge.Looping;
 using Edge.NumbersMagic;
 using Edge.SpecialNumerics;
 using Edge.Random;
 using Edge.SystemExtensions;
-using Edge.Tuples;
 
 namespace Edge.Arrays
 {
@@ -689,14 +687,40 @@ namespace Edge.Arrays
             }
             return any;
         }
-        public static T Bracket<T>(this IEnumerable<T> contentants, IComparer<T> comp = null)
+        public static T Bracket<T>(this IEnumerable<T> contestants, int matchsize = 2, IComparer<T> comp = null)
         {
             comp = comp ?? Comparer<T>.Default;
-            var len = contentants.Count();
-            if (len == 1)
-                return contentants.First();
-            var splits = contentants.SplitAt(len / 2).ToArray();
-            return splits.SelectToArray(a => a.Bracket(comp)).getMin(comp);
+            while (true)
+            {
+                var len = contestants.Count();
+                if (len == 1)
+                    return contestants.First();
+                contestants = contestants.GroupUnbound(matchsize).SelectToArray(a => a.getMin(comp));
+            }
+        }
+        public static IEnumerable<IEnumerable<T>> BracketRank<T>(this IEnumerable<T> contestants, int matchsize = 2, IComparer<T> comp = null)
+        {
+            comp = comp ?? Comparer<T>.Default;
+            while (true)
+            {
+                var len = contestants.Count();
+                if (len == 1)
+                {
+                    yield return contestants.First().Enumerate();
+                    yield break;
+                }
+                List<T> winners = new List<T>();
+                List<T> losers = new List<T>();
+                foreach (var match in contestants.GroupUnbound(matchsize))
+                {
+                    int winindex;
+                    var winner = match.getMin(comp, out winindex);
+                    winners.Add(winner);
+                    losers.AddRange(match.CountBind().Where(a => a.Item2 != winindex).Select(a => a.Item1));
+                }
+                yield return losers;
+                contestants = winners;
+            }
         }
         public static IList<T> Splice<T>(this IList<T> @this, int start, int length)
         {
@@ -1234,11 +1258,30 @@ namespace Edge.Arrays
         {
             Array.Resize(ref _arr,Count);
         }
+        public void ResizeTo(int lastindex)
+        {
+            if (lastindex == 0)
+            {
+                _arr = Array.Empty<T>();
+                return;
+            }
+            while (!_arr.isWithinBounds(lastindex))
+                Array.Resize(ref _arr, arr.Length == 0 ? lastindex+1 : Math.Max(arr.Length * 2, lastindex+1));
+        }
         public void Add(T x)
         {
-            while (!_arr.isWithinBounds(Count))
-                Array.Resize(ref _arr,arr.Length==0 ? 1 : arr.Length*2);
+            ResizeTo(Count);
             _arr[Count++] = x;
+        }
+        public void AddRange(IEnumerable<T> x)
+        {
+            int c = x.Count();
+            ResizeTo(Count+c - 1);
+            foreach (var i in Loops.Count(Count).Zip(x))
+            {
+                _arr[i.Item1] = i.Item2;
+            }
+            Count += c;
         }
         public void Clear()
         {
@@ -1271,6 +1314,7 @@ namespace Edge.Arrays
         }
         public static implicit operator T[](ResizingArray<T> @this)
         {
+            Array.Resize(ref @this._arr,@this.Count);
             return @this.arr;
         }
     }
