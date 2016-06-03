@@ -135,21 +135,22 @@ namespace CoreTest
     {
         [TestMethod] public void Simple()
         {
-            var val = new Dictionary<int, ulong>() { { 0, 1 }, { 1, 4 }, { 2, 3 }, { 3, 3 }, { 5, 2 }, { 8, 1 } };
+            var val = new Dictionary<int, int>() { { 0, 1 }, { 1, 4 }, { 2, 3 }, { 3, 3 }, { 5, 2 }, { 8, 1 } };
             var expected = new int[] {0, 1, 1, 1, 1, 2, 2, 2, 3, 3, 3, 5, 5, 8};
             IsTrue(val.FromOccurances().OrderBy().SequenceEqual(expected.OrderBy()));
         }
         [TestMethod]
         public void ZeroArg()
         {
-            var val = new Dictionary<int, ulong>() { { 0, 1 }, { 1, 4 }, { 2, 3 }, { 3, 3 }, { 5, 2 }, { 8, 1 }, {9,0} };
+            var val = new Dictionary<int, int> { { 0, 1 }, { 1, 4 }, { 2, 3 }, { 3, 3 }, { 5, 2 }, { 8, 1 }, {9,0} };
             var expected = new int[] { 0, 1, 1, 1, 1, 2, 2, 2, 3, 3, 3, 5, 5, 8 };
-            IsTrue(val.FromOccurances().OrderBy().SequenceEqual(expected.OrderBy()));
+            var actual = val.FromOccurances();
+            IsTrue(actual.OrderBy().SequenceEqual(expected.OrderBy()));
         }
         [TestMethod]
         public void Empty()
         {
-            var val = new Dictionary<int, ulong>();
+            var val = new Dictionary<int, int>();
             var expected = new int[] {  };
             IsTrue(val.FromOccurances().OrderBy().SequenceEqual(expected.OrderBy()));
         }

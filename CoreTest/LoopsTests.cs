@@ -22,11 +22,6 @@ namespace CoreTest
         {
             IsTrue(Loops.Range((short)5).SequenceEqual(new short[] {0, 1, 2, 3, 4}));
         }
-        [TestMethod, ExpectedException(typeof(ArgumentException))] public void NegMax()
-        {
-            IsTrue(Loops.Range((short)-1).SequenceEqual(new short[] {0, 1, 2, 3, 4}));
-            Fail();
-        }
         [TestMethod] public void SimpleStart()
         {
             IsTrue(Loops.Range((short)1, (short)5).SequenceEqual(new short[] {1, 2, 3, 4}));
@@ -39,11 +34,6 @@ namespace CoreTest
         {
             IsTrue(Loops.Range((short)-5, (short)-1).SequenceEqual(new short[] {-5, -4, -3, -2}));
         }
-        [TestMethod, ExpectedException(typeof(ArgumentException))] public void RevStart()
-        {
-            IsTrue(Loops.Range((short)3, (short)-1).SequenceEqual(new short[] {0, 1, 2, 3, 4}));
-            Fail();
-        }
         [TestMethod] public void SimpleStep()
         {
             IsTrue(Loops.Range((short)1, (short)10, (short)2).SequenceEqual(new short[] {1, 3, 5, 7, 9}));
@@ -51,18 +41,6 @@ namespace CoreTest
         [TestMethod] public void NegStep()
         {
             IsTrue(Loops.Range((short)8, (short)1, (short)-1).SequenceEqual(new short[] {8, 7, 6, 5, 4, 3, 2}));
-        }
-        [TestMethod, ExpectedException(typeof(ArgumentException))] public void BadNegStep()
-        {
-            IsTrue(Loops.Range((short)0, (short)10, (short)-1).SequenceEqual(new short[] {8, 7, 6, 5, 4, 3, 2}));
-        }
-        [TestMethod, ExpectedException(typeof(ArgumentException))] public void BadPosStep()
-        {
-            IsTrue(Loops.Range((short)0, (short)-8, (short)1).SequenceEqual(new short[] {8, 7, 6, 5, 4, 3, 2}));
-        }
-        [TestMethod, ExpectedException(typeof(ArgumentException))] public void ZeroStep()
-        {
-            IsTrue(Loops.Range((short)0, (short)10, (short)0).SequenceEqual(new short[] {8, 7, 6, 5, 4, 3, 2}));
         }
     }
     [TestClass]
@@ -100,18 +78,6 @@ namespace CoreTest
         {
             IsTrue(Loops.Range(8, 1, (double)-1).SequenceEqual(new double[] {8, 7, 6, 5, 4, 3, 2}));
         }
-        [TestMethod, ExpectedException(typeof(ArgumentException))] public void BadNegStep()
-        {
-            IsTrue(Loops.Range(0, 10, (double)-1).SequenceEqual(new double[] {8, 7, 6, 5, 4, 3, 2}));
-        }
-        [TestMethod, ExpectedException(typeof(ArgumentException))] public void BadPosStep()
-        {
-            IsTrue(Loops.Range(0, -8, (double)1).SequenceEqual(new double[] {8, 7, 6, 5, 4, 3, 2}));
-        }
-        [TestMethod, ExpectedException(typeof(ArgumentException))] public void ZeroStep()
-        {
-            IsTrue(Loops.Range(0, 10, (double)0).SequenceEqual(new double[] {8, 7, 6, 5, 4, 3, 2}));
-        }
     }
     [TestClass]
     public class UlongRangeTest
@@ -122,24 +88,11 @@ namespace CoreTest
         }
         [TestMethod] public void SimpleStart()
         {
-            IsTrue(Loops.Range(1, (ulong)5).SequenceEqual(new ulong[] {1, 2, 3, 4}));
-        }
-        [TestMethod, ExpectedException(typeof(ArgumentException))] public void RevStart()
-        {
-            IsTrue(Loops.Range(3, (ulong)1).SequenceEqual(new ulong[] {0, 1, 2, 3, 4}));
-            Fail();
+            IsTrue(Loops.Range((ulong)1, (ulong)5).SequenceEqual(new ulong[] {1, 2, 3, 4}));
         }
         [TestMethod] public void SimpleStep()
         {
-            IsTrue(Loops.Range(1UL, 10, 2).SequenceEqual(new ulong[] {1, 3, 5, 7, 9}));
-        }
-        [TestMethod, ExpectedException(typeof(ArgumentException))] public void BadPosStep()
-        {
-            IsTrue(Loops.Range(8UL, 0, (long)1).SequenceEqual(new ulong[] {8, 7, 6, 5, 4, 3, 2}));
-        }
-        [TestMethod, ExpectedException(typeof(ArgumentException))] public void ZeroStep()
-        {
-            IsTrue(Loops.Range(0UL, 10, (long)0).SequenceEqual(new ulong[] {8, 7, 6, 5, 4, 3, 2}));
+            IsTrue(Loops.Range(1UL, 10UL, 2UL).SequenceEqual(new ulong[] {1, 3, 5, 7, 9}));
         }
     }
     [TestClass]
@@ -161,23 +114,10 @@ namespace CoreTest
         {
             IsTrue(Loops.Range(1, 10, 2).SequenceEqual(new int[] {1, 3, 5, 7, 9}));
         }
-        [TestMethod, ExpectedException(typeof(ArgumentException))] public void BadPosStep()
-        {
-            IsTrue(Loops.Range(8, 0, 1).SequenceEqual(new int[] {8, 7, 6, 5, 4, 3, 2}));
-        }
-        [TestMethod, ExpectedException(typeof(ArgumentException))] public void ZeroStep()
-        {
-            IsTrue(Loops.Range(0, 10, 0).SequenceEqual(new int[] {8, 7, 6, 5, 4, 3, 2}));
-        }
         [TestMethod]
         public void NegStep()
         {
             IsTrue(Loops.Range(8, 1, -1).SequenceEqual(new int[] { 8, 7, 6, 5, 4, 3, 2 }));
-        }
-        [TestMethod, ExpectedException(typeof(ArgumentException))]
-        public void BadNegStep()
-        {
-            IsTrue(Loops.Range(0, 10, -1).SequenceEqual(new int[] { 8, 7, 6, 5, 4, 3, 2 }));
         }
     }
     [TestClass]
@@ -186,11 +126,6 @@ namespace CoreTest
         [TestMethod] public void SimpleMax()
         {
             IsTrue(Loops.IRange((short)5).SequenceEqual(new short[] {0, 1, 2, 3, 4, 5}));
-        }
-        [TestMethod, ExpectedException(typeof(ArgumentException))] public void NegMax()
-        {
-            IsTrue(Loops.Range((short)-1).SequenceEqual(new short[] {0, 1, 2, 3, 4}));
-            Fail();
         }
         [TestMethod] public void SimpleStart()
         {
@@ -204,30 +139,15 @@ namespace CoreTest
         {
             IsTrue(Loops.IRange((short)-5, (short)-1).SequenceEqual(new short[] {-5, -4, -3, -2, -1}));
         }
-        [TestMethod, ExpectedException(typeof(ArgumentException))] public void RevStart()
-        {
-            IsTrue(Loops.IRange((short)3, (short)-1).SequenceEqual(new short[] {0, 1, 2, 3, 4}));
-            Fail();
-        }
         [TestMethod] public void SimpleStep()
         {
             IsTrue(Loops.IRange((short)1, (short)11, (short)2).SequenceEqual(new short[] {1, 3, 5, 7, 9, 11}));
         }
         [TestMethod] public void NegStep()
         {
-            IsTrue(Loops.IRange((short)8, (short)1, (short)-1).SequenceEqual(new short[] {8, 7, 6, 5, 4, 3, 2, 1}));
-        }
-        [TestMethod, ExpectedException(typeof(ArgumentException))] public void BadNegStep()
-        {
-            IsTrue(Loops.IRange((short)0, (short)10, (short)-1).SequenceEqual(new short[] {8, 7, 6, 5, 4, 3, 2, 1}));
-        }
-        [TestMethod, ExpectedException(typeof(ArgumentException))] public void BadPosStep()
-        {
-            IsTrue(Loops.IRange((short)0, (short)-8, (short)1).SequenceEqual(new short[] {8, 7, 6, 5, 4, 3, 2}));
-        }
-        [TestMethod, ExpectedException(typeof(ArgumentException))] public void ZeroStep()
-        {
-            IsTrue(Loops.IRange((short)0, (short)10, (short)0).SequenceEqual(new short[] {8, 7, 6, 5, 4, 3, 2}));
+            var val = Loops.IRange((short)8, (short)1, (short)-1);
+            var k = val.ToArray();
+            IsTrue(val.SequenceEqual(new short[] {8, 7, 6, 5, 4, 3, 2, 1}));
         }
     }
     [TestClass]
@@ -239,7 +159,9 @@ namespace CoreTest
         }
         [TestMethod] public void NegMax()
         {
-            IsTrue(Loops.IRange((double)-1).SequenceEqual(new double[] {0,-1}));
+            var val = Loops.IRange((double)-1);
+            //var k = val.ToArray();
+            IsTrue(val.SequenceEqual(new double[] {0,-1}));
         }
         [TestMethod] public void SimpleStart()
         {
@@ -265,18 +187,6 @@ namespace CoreTest
         {
             IsTrue(Loops.IRange(8, 1, (double)-1).SequenceEqual(new double[] {8, 7, 6, 5, 4, 3, 2, 1}));
         }
-        [TestMethod, ExpectedException(typeof(ArgumentException))] public void BadNegStep()
-        {
-            IsTrue(Loops.IRange(0, 10, (double)-1).SequenceEqual(new double[] {8, 7, 6, 5, 4, 3, 2}));
-        }
-        [TestMethod, ExpectedException(typeof(ArgumentException))] public void BadPosStep()
-        {
-            IsTrue(Loops.IRange(0, -8, (double)1).SequenceEqual(new double[] {8, 7, 6, 5, 4, 3, 2}));
-        }
-        [TestMethod, ExpectedException(typeof(ArgumentException))] public void ZeroStep()
-        {
-            IsTrue(Loops.IRange(0, 10, (double)0).SequenceEqual(new double[] {8, 7, 6, 5, 4, 3, 2}));
-        }
     }
     [TestClass]
     public class UlongXRangeTest
@@ -287,24 +197,11 @@ namespace CoreTest
         }
         [TestMethod] public void SimpleStart()
         {
-            IsTrue(Loops.IRange(1, (ulong)5).SequenceEqual(new ulong[] {1, 2, 3, 4, 5}));
-        }
-        [TestMethod, ExpectedException(typeof(ArgumentException))] public void RevStart()
-        {
-            IsTrue(Loops.IRange(3UL, (long)1).SequenceEqual(new ulong[] {0, 1, 2, 3, 4}));
-            Fail();
+            IsTrue(Loops.IRange((ulong)1, (ulong)5).SequenceEqual(new ulong[] {1, 2, 3, 4, 5}));
         }
         [TestMethod] public void SimpleStep()
         {
-            IsTrue(Loops.IRange(1UL, 11, (long)2).SequenceEqual(new ulong[] {1, 3, 5, 7, 9, 11}));
-        }
-        [TestMethod, ExpectedException(typeof(ArgumentException))] public void BadPosStep()
-        {
-            IsTrue(Loops.IRange(8UL, 0, (long)1).SequenceEqual(new ulong[] {8, 7, 6, 5, 4, 3, 2}));
-        }
-        [TestMethod, ExpectedException(typeof(ArgumentException))] public void ZeroStep()
-        {
-            IsTrue(Loops.IRange(0UL, 10, (long)0).SequenceEqual(new ulong[] {8, 7, 6, 5, 4, 3, 2}));
+            IsTrue(Loops.IRange(1UL, (ulong)11, (ulong)2).SequenceEqual(new ulong[] {1, 3, 5, 7, 9, 11}));
         }
     }
     [TestClass]
@@ -326,24 +223,11 @@ namespace CoreTest
         {
             IsTrue(Loops.IRange(1, 11, 2).SequenceEqual(new int[] {1, 3, 5, 7, 9, 11}));
         }
-        [TestMethod, ExpectedException(typeof(ArgumentException))] public void BadPosStep()
-        {
-            IsTrue(Loops.IRange(8, 0, 1).SequenceEqual(new int[] {8, 7, 6, 5, 4, 3, 2}));
-        }
-        [TestMethod, ExpectedException(typeof(ArgumentException))] public void ZeroStep()
-        {
-            IsTrue(Loops.IRange(0, 10, 0).SequenceEqual(new int[] {8, 7, 6, 5, 4, 3, 2}));
-        }
         [TestMethod]
         public void NegStep()
         {
             var val = Loops.IRange(8, 1, -1);
             IsTrue(val.SequenceEqual(new int[] { 8, 7, 6, 5, 4, 3, 2, 1 }));
-        }
-        [TestMethod, ExpectedException(typeof(ArgumentException))]
-        public void BadNegStep()
-        {
-            IsTrue(Loops.IRange(0, 10, -1).SequenceEqual(new int[] { 8, 7, 6, 5, 4, 3, 2, 0 }));
         }
     }
     [TestClass]

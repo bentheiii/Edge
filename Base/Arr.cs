@@ -7,16 +7,18 @@ using System.Text;
 using Edge.Arrays.Arr2D;
 using Edge.Comparison;
 using Edge.Fielding;
+using Edge.Guard;
 using Edge.Looping;
 using Edge.NumbersMagic;
 using Edge.SpecialNumerics;
 using Edge.Random;
+using Edge.Structures.LockedStructures;
 using Edge.SystemExtensions;
 
 namespace Edge.Arrays
 {
     // ReSharper disable once InconsistentNaming
-    public static class arrayExtensions
+    public static class ArrayExtensions
     {
         //maximum is exclusive
         public static int binSearch(Func<int, int> searcher, int min, int max, int failvalue = -1)
@@ -30,9 +32,7 @@ namespace Edge.Arrays
                 if (res == 0)
                     return i;
                 if (i == min)
-                {
                     break;
-                }
                 if (res > 0)
                     min = i;
                 else
@@ -224,7 +224,9 @@ namespace Edge.Arrays
         }
         public static bool isSymmetrical<T>(this IEnumerable<T> @this, IEqualityComparer<T> c)
         {
-            return @this.Zip(@this.Reverse()).All(a => c.Equals(a.Item1, a.Item2));
+            int? count = @this.RecommendSize();
+            int len = count / 2 ?? int.MaxValue;
+            return @this.Zip(@this.Reverse()).Take(len).All(a => c.Equals(a.Item1, a.Item2));
         }
         public static bool isSymmetrical<T>(this IEnumerable<T> @this)
         {
@@ -252,7 +254,7 @@ namespace Edge.Arrays
         /// <typeparam name="T"></typeparam>
         /// <param name="d">the dictionary</param>
         /// <returns>an array formed from the dictionary</returns>
-        public static IEnumerable<T> FromOccurances<T>(this IEnumerable<KeyValuePair<T, ulong>> d)
+        public static IEnumerable<T> FromOccurances<T>(this IEnumerable<KeyValuePair<T, int>> d)
         {
             return d.Select(a => a.Key.Enumerate().Repeat(a.Value)).Concat();
         }
@@ -302,24 +304,16 @@ namespace Edge.Arrays
                 toswap[index2] = temp;
             }
         }
-        public static T[] Sort<T>(this T[] tosort)
-        {
-            return Sort(tosort, Comparer<T>.Default);
-        }
-        public static T[] Sort<T>(this T[] tosort, int startindex, int length)
-        {
-            return Sort(tosort, startindex, length, Comparer<T>.Default);
-        }
-        public static T[] Sort<T>(this T[] tosort, IComparer<T> comparer)
+        public static T[] Sort<T>(this T[] tosort, IComparer<T> comparer = null)
         {
             T[] ret = tosort.Copy();
-            Array.Sort(ret, comparer);
+            Array.Sort(ret, comparer ?? Comparer<T>.Default);
             return ret;
         }
-        public static T[] Sort<T>(this T[] tosort,int startindex, int length, IComparer<T> comparer)
+        public static T[] Sort<T>(this T[] tosort,int startindex, int length, IComparer<T> comparer = null)
         {
             T[] ret = tosort.Copy();
-            Array.Sort(ret, startindex, length, comparer);
+            Array.Sort(ret, startindex, length, comparer ?? Comparer<T>.Default);
             return ret;
         }
         public static T getMedianNoAlloc<T>(this IEnumerable<T> @this, IComparer<T> comparer, out int index)
@@ -327,7 +321,7 @@ namespace Edge.Arrays
             if (!@this.Any())
                 throw new ArgumentException("cannot be empty", nameof(@this));
             int c = @this.Count();
-            var res = @this.CountBind().OrderBy(new FunctionComparer<Tuple<T,int>>((a,b)=>comparer.Compare(a.Item1,b.Item1))).Skip(c / 2).First();
+            var res = @this.CountBind().OrderBy(Comparer<Tuple<T,int>>.Create((a,b)=>comparer.Compare(a.Item1,b.Item1))).Skip(c / 2).First();
             index = res.Item2;
             return res.Item1;
         }
@@ -336,7 +330,7 @@ namespace Edge.Arrays
             if (!tosearch.Any())
                 throw new ArgumentException("cannot be empty", nameof(tosearch));
             Tuple<T, int>[] arr = tosearch.CountBind().ToArray();
-            Array.Sort(arr, new FunctionComparer<Tuple<T, int>>((a, b) => comparer.Compare(a.Item1, b.Item1)));
+            Array.Sort(arr, Comparer<Tuple<T, int>>.Create((a, b) => comparer.Compare(a.Item1, b.Item1)));
             var ret = arr[arr.Length / 2];
             index = ret.Item2;
             return ret.Item1;
@@ -594,12 +588,16 @@ namespace Edge.Arrays
                 int c = @this.Count(opener);
                 return c % 2 == 0 && (!maxdepth.HasValue || (c == 0 || maxdepth >= 1));
             }
+            var count = @this.RecommendSize();
             int ret = 0;
-            foreach (var t in @this)
+            Guard<int> index = new Guard<int>();
+            foreach (var t in @this.CountBind().Detach(index))
             {
                 if (t.Equals(opener))
                 {
                     ret++;
+                    if (count.HasValue && count.Value - index < ret)
+                        return false;
                     if (maxdepth.HasValue && maxdepth.Value < ret)
                         return false;
                 }
@@ -722,13 +720,16 @@ namespace Edge.Arrays
                 contestants = winners;
             }
         }
-        public static IList<T> Splice<T>(this IList<T> @this, int start, int length)
+        public static ListSlice<T> Slice<T>(this IList<T> @this, int start, int length)
         {
+            var s = @this as ListSlice<T>;
+            if (s != null)
+                return s.ReSlice(start, length);
             return new ListSlice<T>(@this,start,length);
         }
-        public static IList<T> Splice<T>(this IList<T> @this, int start)
+        public static IList<T> Slice<T>(this IList<T> @this, int start)
         {
-            return Splice(@this, start, @this.Count - start);
+            return Slice(@this, start, @this.Count - start);
         }
         public static bool StartsWith<T>(this IEnumerable<T> @this, IEnumerable<T> prefix, IEqualityComparer<T> comp = null)
         {
@@ -743,6 +744,29 @@ namespace Edge.Arrays
                     return false;
             }
             return true;
+        }
+        public static IList<T> AsList<T>(this IEnumerable<T> @this)
+        {
+            var l = @this as IList<T>;
+            if (l != null)
+                return l;
+            var r = @this as IReadOnlyList<T>;
+            if (r != null)
+                return r.ToLockedList();
+            var s = @this as string;
+            if (s != null)
+                return (IList<T>)new LockedListStringAdaptor(s);
+            return @this.ToArray();
+        }
+        public static ICollection<T> AsCollection<T>(this IEnumerable<T> @this)
+        {
+            var l = @this as ICollection<T>;
+            if (l != null)
+                return l;
+            var r = @this as IReadOnlyCollection<T>;
+            if (r != null)
+                return r.ToLockedCollection();
+            return @this.ToArray();
         }
     }
     public static class DictionaryExtensions
@@ -767,6 +791,11 @@ namespace Edge.Arrays
                 return true;
             @this[key] = defaultval;
             return false;
+        }
+        public static G DefinitionOrDefault<T, G>(this IDictionary<T, G> @this, T key, G defaultval = default(G))
+        {
+            G val;
+            return @this.TryGetValue(key, out val) ? val : defaultval;
         }
     }
     public sealed class RotatorArray<T> : IList<T>
@@ -1067,11 +1096,11 @@ namespace Edge.Arrays
     public class BoundLazyDictionary<K, V> : IReadOnlyDictionary<K,V>
     {
         private readonly LazyDictionary<K, V> _dic;
-        private readonly ISet<K> _keys;
+        private readonly ICollection<K> _keys;
         public BoundLazyDictionary(Func<K, V> gen, IEnumerable<K> keys)
         {
             _dic = new LazyDictionary<K, V>(gen,keys.Count());
-            _keys = new HashSet<K>(keys);
+            _keys = keys.ToLockedCollection();
         }
         public bool TryGetValue(K key, out V value)
         {
@@ -1270,7 +1299,7 @@ namespace Edge.Arrays
         }
         public void Add(T x)
         {
-            ResizeTo(Count);
+            ResizeTo(Count+1);
             _arr[Count++] = x;
         }
         public void AddRange(IEnumerable<T> x)
@@ -1424,6 +1453,10 @@ namespace Edge.Arrays
                 _inner[index + _start] = value;
             }
         }
+        public ListSlice<T> ReSlice(int start, int length)
+        {
+            return new ListSlice<T>(this._inner,this._start+start, length);
+        } 
     }
     namespace Arr2D
     {

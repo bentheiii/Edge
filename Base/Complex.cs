@@ -16,7 +16,6 @@ namespace Edge.Complex
 {
     public static partial class Mathextensions
     {
-
         public static ComplexNumber pow(this double powbase, ComplexNumber powpower)
         {
             if (powpower.Equals(0))

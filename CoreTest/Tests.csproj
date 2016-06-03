@@ -95,6 +95,7 @@
     <Compile Include="ComplexTests.cs" />
     <Compile Include="ControlTests.cs" />
     <Compile Include="CredentialsTest.cs" />
+    <Compile Include="DivisibilityQuerierTests.cs" />
     <Compile Include="EncryptionTests.cs" />
     <Compile Include="EntityManagerTests.cs" />
     <Compile Include="ExpandingArrayTests.cs" />

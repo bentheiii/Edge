@@ -15,6 +15,236 @@ namespace Edge.Looping
 {
     public static class Loops
     {
+        private class CountList<T> : LockedList<T>
+        {
+            private readonly T _start;
+            private readonly T _step;
+            public CountList(T start, T step)
+            {
+                _start = start;
+                _step = step;
+            }
+            public override IEnumerator<T> GetEnumerator()
+            {
+                var ret = _start.ToFieldWrapper();
+                for (int i = 0; i < Count; i++)
+                {
+                    yield return ret;
+                    ret += _step;
+                }
+            }
+            public override bool Contains(T item)
+            {
+                return ((item.ToFieldWrapper() - _start) % _step).isZero;
+            }
+            public override int Count { get; } = int.MaxValue;
+            public override int IndexOf(T item)
+            {
+                if (!Contains(item))
+                    return -1;
+                return (int)((item.ToFieldWrapper() - _start) / _step);
+            }
+            public override T this[int index]
+            {
+                get
+                {
+                    return this._start + this._step.ToFieldWrapper() * index;
+                }
+            }
+        }
+        private class CountList : LockedList<int>
+        {
+            private readonly int _start;
+            private readonly int _step;
+            public CountList(int start, int step)
+            {
+                _start = start;
+                _step = step;
+            }
+            public override IEnumerator<int> GetEnumerator()
+            {
+                var ret = _start;
+                for (int i = 0; i < Count; i++)
+                {
+                    yield return ret;
+                    ret += _step;
+                }
+            }
+            public override bool Contains(int item)
+            {
+                return (item - _start) % _step == 0;
+            }
+            public override int Count { get; } = int.MaxValue;
+            public override int IndexOf(int item)
+            {
+                if (!Contains(item))
+                    return -1;
+                return (item - _start) / _step;
+            }
+            public override int this[int index]
+            {
+                get
+                {
+                    return this._start + this._step * index;
+                }
+            }
+        }
+        private class RangeList<T> : LockedList<T>
+        {
+            private readonly T _start;
+            private readonly T _end;
+            private readonly T _step;
+            private readonly bool _pos;
+            public RangeList(T start, T end, T step, bool inclusive = false, bool pos = true)
+            {
+                _start = start;
+                _end = end;
+                _step = step;
+                this._pos = pos;
+                var gap = end - _start.ToFieldWrapper();
+                Count = pos.Indicator(1,-1)*(int)(gap / _step) + ((gap%_step).isZero ? 0 : 1) + (inclusive ? 1 : 0);
+            }
+            public override IEnumerator<T> GetEnumerator()
+            {
+                var ret = _start.ToFieldWrapper();
+                for (int i = 0; i < Count ; i++)
+                {
+                    yield return ret;
+                    if (_pos)
+                        ret += _step;
+                    else
+                        ret -= _step;
+                }
+            }
+            public override bool Contains(T item)
+            {
+                return item.iswithinPartialExclusive(_start,_end) && ((item.ToFieldWrapper() - _start)%_step).isZero;
+            }
+            public override int Count { get; }
+            public override int IndexOf(T item)
+            {
+                if (!Contains(item))
+                    return -1;
+                return _pos.Indicator(1, -1) * (int)((item.ToFieldWrapper() - _start) / _step);
+            }
+            public override T this[int index]
+            {
+                get
+                {
+                    if (index < 0 || index >= Count)
+                        throw new IndexOutOfRangeException();
+                    if (_pos)
+                        return this._start + this._step.ToFieldWrapper()*index;
+                    return this._start - this._step.ToFieldWrapper() * index;
+                }
+            }
+        }
+        private class RangeList : LockedList<int>
+        {
+            private readonly int _start;
+            private readonly int _end;
+            private readonly int _step;
+            public RangeList(int start, int end, int step, bool inclusive = false)
+            {
+                _start = start;
+                _end = end;
+                _step = step;
+                var gap = end - _start;
+                Count = (gap / _step) + (gap % _step==0 ? 0 : 1) + (inclusive ? 1 : 0);
+            }
+            public override IEnumerator<int> GetEnumerator()
+            {
+                var ret = _start;
+                for (int i = 0; i < Count; i++)
+                {
+                    yield return ret;
+                    ret += _step;
+                }
+            }
+            public override bool Contains(int item)
+            {
+                return item.iswithinPartialExclusive(_start, _end) && ((item - _start) % _step)==0;
+            }
+            public override int Count { get; }
+            public override int IndexOf(int item)
+            {
+                if (!Contains(item))
+                    return -1;
+                return (item - _start) / _step;
+            }
+            public override int this[int index]
+            {
+                get
+                {
+                    if (index < 0 || index >= Count)
+                        throw new IndexOutOfRangeException();
+                    return this._start + this._step * index;
+                }
+            }
+        }
+        private class SelectList<T,R> : LockedList<R>
+        {
+            private readonly Func<T, R> _mapper;
+            private readonly IList<T> _source;
+            public SelectList(IList<T> source, Func<T, R> mapper)
+            {
+                _source = source;
+                _mapper = mapper;
+            }
+            public override IEnumerator<R> GetEnumerator()
+            {
+                foreach (var v in _source)
+                {
+                    yield return _mapper(v);
+                }
+            }
+            public override int Count
+            {
+                get
+                {
+                    return _source.Count;
+                }
+            }
+            public override R this[int index]
+            {
+                get
+                {
+                    return _mapper(_source[index]);
+                }
+            }
+        }
+        private class SelectCollection<T,R> : LockedCollection<R>
+        {
+            private readonly Func<T, R> _mapper;
+            private readonly ICollection<T> _source;
+            public SelectCollection(ICollection<T> source, Func<T, R> mapper)
+            {
+                _source = source;
+                _mapper = mapper;
+            }
+            public override IEnumerator<R> GetEnumerator()
+            {
+                foreach (var v in _source)
+                {
+                    yield return _mapper(v);
+                }
+            }
+            public override int Count
+            {
+                get
+                {
+                    return _source.Count;
+                }
+            }
+        }
+        public static LockedList<R> Select<T, R>(this IList<T> @this, Func<T, R> selector)
+        {
+            return new SelectList<T,R>(@this,selector);
+        }
+        public static LockedCollection<R> Select<T, R>(this ICollection<T> @this, Func<T, R> selector)
+        {
+            return new SelectCollection<T,R>(@this, selector);
+        }
         public static IEnumerable<T> Duplicates<T>(this IEnumerable<T> arr, ulong minoccurances = 2)
         {
             return Duplicates(arr, EqualityComparer<T>.Default, minoccurances);
@@ -42,281 +272,99 @@ namespace Edge.Looping
         {
             return arr.ToOccurances(comp).Where(a => a.Value <= maxoccurances).Select(a => a.Key);
         }
-        public class RangeList<T> : LockedList<T>
-        {
-            private readonly T _start;
-            private readonly T _end;
-            private readonly T _step;
-            public RangeList(T start, T end, T step)
-            {
-                _start = start;
-                _end = end;
-                _step = step;
-                var gap = end - _start.ToFieldWrapper();
-                Count = ((int)(gap / _step)) + ((gap%_step).isZero ? 0 : 1);
-            }
-            public override IEnumerator<T> GetEnumerator()
-            {
-                var ret = _start.ToFieldWrapper();
-                for (int i = 0; i < Count ; i++)
-                {
-                    yield return ret;
-                    ret += _step;
-                }
-            }
-            public override bool Contains(T item)
-            {
-                return item.iswithinPartialExclusive(_start,_end) && ((_end - item.ToFieldWrapper())%_step).isZero;
-            }
-            public override int Count { get; }
-            public override int IndexOf(T item)
-            {
-                if (!Contains(item))
-                    return -1;
-                return (int)((_end - item.ToFieldWrapper()) / _step);
-            }
-            public override T this[int index]
-            {
-                get
-                {
-                    if (index < 0 || index >= Count)
-                        throw new IndexOutOfRangeException();
-                    return this._start + this._step.ToFieldWrapper()*index;
-                }
-            }
-        }
-        public static IEnumerable<T> Range<T>(T start, T max, T step)
+        public static LockedList<T> Range<T>(T start, T max, T step)
         {
             var field = Fields.getField<T>();
-            if (field.Equals(field.zero, step) && !field.Equals(start,max))
+            //try rewrite
+            if (!field.Negatable || field.isPositive(step, true))
             {
-                throw new ArgumentException("cannot be zero",nameof(step));
+                return new RangeList<T>(start,max,step);
             }
-            if ((field.Negatable && (field.isNegative(max.ToFieldWrapper() - start) != field.isNegative(step))) ||
-                (!field.Negatable && (max.ToFieldWrapper() < start)))
-            {
-                throw new ArgumentException($"{nameof(max)} must be higher than {nameof(start)} or the {nameof(step)} must be negative");
-            }
-            var negstep = field.isNegative(step);
-            for (var i = start; (field.Compare(i, max) < 0) || (negstep && field.Compare(i, max) > 0 && field.Negatable);
-                 i = field.add(i, step))
-            {
-                yield return i;
-            }
+            return Range(field.Negate(start), field.Negate(max), field.Negate(step)).Select(a => field.Negate(a));
         }
-        public static IEnumerable<T> Range<T>(T start, T max)
+        public static LockedList<T> Range<T>(T start, T max)
         {
             var f = Fields.getField<T>();
-            return Range(start, max, f.Compare(start, max) < 0 ? f.one : f.zero);
+            if (f.Compare(start, max) < 0)
+                return Range(start, max, f.one);
+            if (f.Negatable)
+                return Range(start, max, f.negativeone);
+            return new RangeList<T>(start,max,f.one,pos: false);
         }
-        public static IEnumerable<T> Range<T>(T max)
+        public static LockedList<T> Range<T>(T max)
         {
             return Range(Fields.getField<T>().zero, max);
         }
-        public static IEnumerable<double> Range(double start, double max, double step)
+        public static LockedList<int> Range(int start, int max, int step)
         {
-            if (step == 0)
+            //try rewrite
+            if (step >= 0)
             {
-                throw new ArgumentException("cannot be zero", nameof(step));
+                return new RangeList(start, max, step);
             }
-            if (max != start && (max - start < 0 != step < 0))
-            {
-                throw new ArgumentException($"{nameof(max)} must be higher than {nameof(start)} or the {nameof(step)} must be negative");
-            }
-            var negstep = step < 0;
-            for (var i = start; i < max || (negstep && i > max); i += step)
-            {
-                yield return i;
-            }
+            return Range(-start, -max, -step).Select(a => -a);
         }
-        public static IEnumerable<double> Range(double start, double max)
+        public static LockedList<int> Range(int start, int max)
         {
             return Range(start, max, start < max ? 1 : -1);
         }
-        public static IEnumerable<double> Range(double max)
-        {
-            return Range(0.0, max);
-        }
-        public static IEnumerable<ulong> Range(ulong start, ulong max, long step)
-        {
-            if (step == 0)
-            {
-                throw new ArgumentException("cannot be zero", nameof(step));
-            }
-            if (max < start)
-            {
-                throw new ArgumentException($"{nameof(max)} must be higher than {nameof(start)}");
-            }
-            for (var i = start; i < max; i = (ulong)((long)i+step))
-            {
-                yield return i;
-            }
-        }
-        public static IEnumerable<ulong> Range(ulong start, ulong max)
-        {
-            return Range(start, max, start < max ? 1 : -1);
-        }
-        public static IEnumerable<ulong> Range(ulong max)
+        public static LockedList<int> Range(int max)
         {
             return Range(0, max);
         }
-        public static IEnumerable<int> Range(int start, int max, int step)
-        {
-            if (step == 0)
-            {
-                throw new ArgumentException("cannot be zero", nameof(step));
-            }
-            if (max != start && (max - start < 0 != step < 0))
-            {
-                throw new ArgumentException($"{nameof(max)} must be higher than {nameof(start)} or the {nameof(step)} must be negative");
-            }
-            var negstep = step < 0;
-            for (var i = start; i < max || (negstep && i > max); i += step)
-            {
-                yield return i;
-            }
-        }
-        public static IEnumerable<int> Range(int start, int max)
-        {
-            return Range(start, max, start < max ? 1 : -1);
-        }
-        public static IEnumerable<int> Range(int max)
-        {
-            return Range(0, max);
-        }
-        public static IEnumerable<T> IRange<T>(T start, T max, T step)
+        public static LockedList<T> IRange<T>(T start, T max, T step)
         {
             var field = Fields.getField<T>();
-            if (field.Equals(field.zero, step) && !field.Equals(start,max))
+            //try rewrite
+            if (!field.Negatable || field.isPositive(step, true))
             {
-                throw new ArgumentException("cannot be zero", nameof(step));
+                return new RangeList<T>(start, max, step, true);
             }
-            if (!field.Equals(max,start) && (field.Negatable && (field.isNegative(max.ToFieldWrapper() - start) != field.isNegative(step))) ||
-                (!field.Negatable && (max.ToFieldWrapper() < start)))
-            {
-                throw new ArgumentException($"{nameof(max)} must be higher than {nameof(start)} or the {nameof(step)} must be negative");
-            }
-            var negstep = field.isNegative(step);
-            for (var i = start; (!negstep && field.Compare(i, max) <= 0) || (negstep && field.Compare(i, max) >= 0);
-                 i = field.add(i, step))
-            {
-                yield return i;
-            }
+            return IRange(field.Negate(start), field.Negate(max), field.Negate(step)).Select(a => field.Negate(a));
         }
-        public static IEnumerable<T> IRange<T>(T start, T max)
+        public static LockedList<T> IRange<T>(T start, T max)
         {
             var f = Fields.getField<T>();
-            return IRange(start, max, f.Compare(start, max) < 0 ? f.one : f.zero);
+            if (f.Compare(start, max) < 0)
+                return IRange(start, max, f.one);
+            if (f.Negatable)
+                return IRange(start, max, f.negativeone);
+            return new RangeList<T>(start, max, f.one, true, pos: false);
         }
-        public static IEnumerable<T> IRange<T>(T max)
+        public static LockedList<T> IRange<T>(T max)
         {
             return IRange(Fields.getField<T>().zero, max);
         }
-        public static IEnumerable<double> IRange(double start, double max, double step)
+        public static LockedList<int> IRange(int start, int max,int step)
         {
-            if (step == 0)
+            //try rewrite
+            if (step >= 0)
             {
-                throw new ArgumentException("cannot be zero", nameof(step));
+                return new RangeList(start, max, step, true);
             }
-            if (max != start && max - start < 0 != step < 0)
-            {
-                throw new ArgumentException($"{nameof(max)} must be higher than {nameof(start)} or the {nameof(step)} must be negative");
-            }
-            var negstep = step < 0;
-            for (var i = start; (!negstep && i <= max) || (negstep && i >= max); i += step)
-            {
-                yield return i;
-            }
+            return IRange(-start, -max, -step).Select(a => -a);
         }
-        public static IEnumerable<double> IRange(double start, double max)
+        public static LockedList<int> IRange(int start, int max)
         {
             return IRange(start, max, start < max ? 1 : -1);
         }
-        public static IEnumerable<double> IRange(double max)
+        public static LockedList<int> IRange(int max)
         {
             return IRange(0, max);
         }
-        public static IEnumerable<ulong> IRange(ulong start, ulong max, long step)
+        public static LockedList<int> Count(int start = 0, int step = 1)
         {
-            if (step == 0)
-            {
-                throw new ArgumentException("cannot be zero", nameof(step));
-            }
-            if (max < start)
-            {
-                throw new ArgumentException($"{nameof(max)} must be higher than {nameof(start)}");
-            }
-            for (var i = start; i <= max; i = (ulong)((long)i+ step))
-            {
-                yield return i;
-            }
+            return new CountList(start,step);
         }
-        public static IEnumerable<ulong> IRange(ulong start, ulong max)
+        public static LockedList<T> Count<T>(T start, T step)
         {
-            return IRange(start, max, start < max ? 1 : -1);
+            return new CountList<T>(start, step);
         }
-        public static IEnumerable<ulong> IRange(ulong max)
-        {
-            return IRange(0, max);
-        }
-        public static IEnumerable<int> IRange(int start, int max,int step)
-        {
-            if (step == 0)
-            {
-                throw new ArgumentException("cannot be zero", nameof(step));
-            }
-            if (max != start && max - start < 0 != step < 0)
-            {
-                throw new ArgumentException($"{nameof(max)} must be higher than {nameof(start)} or the {nameof(step)} must be negative");
-            }
-            var negstep = step < 0;
-            for (var i = start; (!negstep && i <= max) || (negstep && i >= max); i += step)
-            {
-                yield return i;
-            }
-        }
-        public static IEnumerable<int> IRange(int start, int max)
-        {
-            return IRange(start, max, start < max ? 1 : -1);
-        }
-        public static IEnumerable<int> IRange(int max)
-        {
-            return IRange(0, max);
-        }
-        public static IEnumerable<double> Count(double start, double step = 1)
-        {
-			for (var i = start; ; i += step)
-			{
-				yield return i;
-			}
-		}
-        public static IEnumerable<ulong> Count(ulong start, ulong step = 1)
-        {
-            for (var i = start; ; i += step)
-            {
-                yield return i;
-            }
-        }
-        public static IEnumerable<int> Count(int start = 0, int step = 1)
-        {
-            for (var i = start; ; i += step)
-            {
-                yield return i;
-            }
-        }
-        public static IEnumerable<T> Count<T>(T start, T step)
-        {
-            var field = Fields.getField<T>();
-            for (T i = start; ; i = field.add(i,step))
-            {
-                yield return i;
-            }
-        }
-        public static IEnumerable<T> Count<T>(T start)
+        public static LockedList<T> Count<T>(T start)
         {
             return Count(start, Fields.getField<T>().one);
         }
-        public static IEnumerable<T> Count<T>()
+        public static LockedList<T> Count<T>()
         {
             return Count(Fields.getField<T>().zero);
         }
@@ -335,6 +383,93 @@ namespace Edge.Looping
                 action?.Invoke();
             }
         }
+        private class RepeatList<T> : LockedList<T>
+        {
+            private readonly IList<T> _source;
+            private readonly int _count;
+            public RepeatList(IList<T> source, int count)
+            {
+                _source = source;
+                _count = count;
+            }
+            public override IEnumerator<T> GetEnumerator()
+            {
+                var f = _count;
+                while (f != 0)
+                {
+                    foreach (T t in _source)
+                    {
+                        yield return t;
+                    }
+                    f--;
+                }
+            }
+            public override int Count
+            {
+                get
+                {
+                    return _count * _source.Count;
+                }
+            }
+            public override T this[int index]
+            {
+                get
+                {
+                    if (index >= Count)
+                        throw new IndexOutOfRangeException();
+                    return _source[index%_source.Count];
+                }
+            }
+            public override bool Contains(T item)
+            {
+                return _source.Contains(item);
+            }
+            public override int IndexOf(T item)
+            {
+                return _source.IndexOf(item);
+            }
+        }
+        private class RepeatCollection<T> : LockedCollection<T>
+        {
+            private readonly ICollection<T> _source;
+            private readonly int _count;
+            public RepeatCollection(ICollection<T> source, int count)
+            {
+                _source = source;
+                _count = count;
+            }
+            public override IEnumerator<T> GetEnumerator()
+            {
+                var f = _count;
+                while (f != 0)
+                {
+                    foreach (T t in _source)
+                    {
+                        yield return t;
+                    }
+                    f--;
+                }
+            }
+            public override int Count
+            {
+                get
+                {
+                    return _count * _source.Count;
+                }
+            }
+            public override bool Contains(T item)
+            {
+                return _source.Contains(item);
+            }
+        }
+        public static LockedList<T> Repeat<T>(this IList<T> @this, int count)
+        {
+            return new RepeatList<T>(@this,count);
+        }
+        public static LockedCollection<T> Repeat<T>(this ICollection<T> @this, int count)
+        {
+            return new RepeatCollection<T>(@this, count);
+        }
         public static IEnumerable<T> Repeat<T>(this IEnumerable<T> @this, int count)
         {
             foreach (int i in Range(count))
@@ -345,17 +480,7 @@ namespace Edge.Looping
                 }
             }
         }
-        public static IEnumerable<T> Repeat<T>(this IEnumerable<T> @this, ulong count)
-        {
-            foreach (int i in Range(count))
-            {
-                foreach (var t in @this)
-                {
-                    yield return t;
-                }
-            }
-        }
-        public static IEnumerable<T1> Detach<T1, T2>(this IEnumerable<Tuple<T1, T2>> @this, Guard<T2> informer1 = null)
+        public static IEnumerable<T1> Detach<T1, T2>(this IEnumerable<Tuple<T1, T2>> @this, IGuard<T2> informer1 = null)
         {
             foreach (var t in @this)
             {
@@ -363,7 +488,7 @@ namespace Edge.Looping
                 yield return t.Item1;
             }
         }
-        public static IEnumerable<T1> Detach<T1, T2, T3>(this IEnumerable<Tuple<T1, T2, T3>> @this, Guard<T2> informer1, Guard<T3> informer2)
+        public static IEnumerable<T1> Detach<T1, T2, T3>(this IEnumerable<Tuple<T1, T2, T3>> @this, IGuard<T2> informer1, IGuard<T3> informer2)
         {
             foreach (var t in @this)
             {
@@ -372,7 +497,7 @@ namespace Edge.Looping
                 yield return t.Item1;
             }
         }
-        public static IEnumerable<Tuple<T1,T2>> Detach<T1, T2, T3>(this IEnumerable<Tuple<T1, T2, T3>> @this, Guard<T3> informer1 = null)
+        public static IEnumerable<Tuple<T1,T2>> Detach<T1, T2, T3>(this IEnumerable<Tuple<T1, T2, T3>> @this, IGuard<T3> informer1 = null)
         {
             foreach (var t in @this)
             {
@@ -380,7 +505,7 @@ namespace Edge.Looping
                 yield return Tuple.Create(t.Item1,t.Item2);
             }
         }
-        public static IEnumerable<T1> Detach<T1, T2, T3, T4>(this IEnumerable<Tuple<T1, T2, T3, T4>> @this, Guard<T2> informer1, Guard<T3> informer2, Guard<T4> informer3)
+        public static IEnumerable<T1> Detach<T1, T2, T3, T4>(this IEnumerable<Tuple<T1, T2, T3, T4>> @this, IGuard<T2> informer1, IGuard<T3> informer2, IGuard<T4> informer3)
         {
             foreach (var t in @this)
             {
@@ -390,7 +515,7 @@ namespace Edge.Looping
                 yield return t.Item1;
             }
         }
-        public static IEnumerable<Tuple<T1,T2>> Detach<T1, T2, T3, T4>(this IEnumerable<Tuple<T1, T2, T3, T4>> @this, Guard<T3> informer2, Guard<T4> informer3)
+        public static IEnumerable<Tuple<T1,T2>> Detach<T1, T2, T3, T4>(this IEnumerable<Tuple<T1, T2, T3, T4>> @this, IGuard<T3> informer2, IGuard<T4> informer3)
         {
             foreach (var t in @this)
             {
@@ -399,7 +524,7 @@ namespace Edge.Looping
                 yield return Tuple.Create(t.Item1, t.Item2);
             }
         }
-        public static IEnumerable<Tuple<T1, T2, T3>> Detach<T1, T2, T3, T4>(this IEnumerable<Tuple<T1, T2, T3, T4>> @this, Guard<T4> informer3 = null)
+        public static IEnumerable<Tuple<T1, T2, T3>> Detach<T1, T2, T3, T4>(this IEnumerable<Tuple<T1, T2, T3, T4>> @this, IGuard<T4> informer3 = null)
         {
             foreach (var t in @this)
             {

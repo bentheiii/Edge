@@ -3,7 +3,7 @@ using Edge.Looping;
 using Edge.NumbersMagic;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using static Microsoft.VisualStudio.TestTools.UnitTesting.Assert;
-using static Edge.Arrays.arrayExtensions;
+using static Edge.Arrays.ArrayExtensions;
 
 namespace CoreTest
 {

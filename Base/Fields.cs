@@ -321,6 +321,10 @@ namespace Edge.Fielding {
         {
             return this.Compare(zero, x) > 0;
         }
+        public virtual bool isPositive(T x, bool includezero = false)
+        {
+            return (includezero || !Equals(x, zero)) && !isNegative(x);
+        }
         public virtual OrderType Order => OrderType.TotalOrder;
         public virtual GenerationType GenType => GenerationType.None;
         public virtual T Generate(IEnumerable<byte> bytes, Tuple<T, T> bounds = null, object special = null)

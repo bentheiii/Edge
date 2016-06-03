@@ -24,18 +24,12 @@ namespace Edge.Credentials
                     var signedBytes = rsa.SignData(message, CryptoConfig.MapNameToOID("SHA512"));
                     return new RSACredential(signedBytes);
                 }
-                catch (CryptographicException e)
-                {
-                    Console.WriteLine(e.Message);
-                    return null;
-                }
                 finally
                 {
                     // Set the keycontainer to be cleared when rsa is garbage collected.
                     rsa.PersistKeyInCsp = false;
                 }
             }
-            // Convert the a base64 string before returning
         }
         public static void GetKey(out RSAParameters @private, out RSAParameters @public, int size = 1024)
         {

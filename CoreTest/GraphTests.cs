@@ -225,7 +225,8 @@ namespace CoreTest
         {
             var g = new SparceDirectedGraph<int, bool>(Loops.Range(1,8).ToArray());
             g.FillEdges(true, 3, 7, 5, 7,6,7);
-            g.Add(new GraphNode<int,bool>(0, (new int[] {1,2,3}.Attach(a=>true).Select(a=>a.FlipTuple()))));
+            var links = new int[] {1, 2, 3}.Attach(a => true).Select(a => a.FlipTuple()).ToArray();
+            g.Add(new GraphNode<int,bool>(0, links));
             var t = g.TopologicalSort();
             IsTrue(t.SequenceEqual(new int[] { 0,6, 5, 4,3, 7, 2, 1 }));
         }

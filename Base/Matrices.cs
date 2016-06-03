@@ -957,7 +957,7 @@ namespace Edge.Matrix
         {
             if (rows < 1 || collumns < 1)
                 throw new Exception("invalid matrix size");
-            _rows = arrayExtensions.Fill(rows, () => arrayExtensions.Fill(collumns, defVal));
+            _rows = ArrayExtensions.Fill(rows, () => ArrayExtensions.Fill(collumns, defVal));
         }
         public MatrixBuilder(Matrix<T> source) : this(source.rows,source.collumns)
         {

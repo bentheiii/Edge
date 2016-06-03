@@ -61,43 +61,43 @@ namespace CoreTest
     {
         [TestMethod] public void Simple()
         {
-            AreEqual(arrayExtensions.binSearch(a => 12.CompareTo(a), 10, 19), 12);
+            AreEqual(ArrayExtensions.binSearch(a => 12.CompareTo(a), 10, 19), 12);
         }
         [TestMethod] public void AtMin()
         {
-            AreEqual(arrayExtensions.binSearch(a => 12.CompareTo(a), 12, 19), 12);
+            AreEqual(ArrayExtensions.binSearch(a => 12.CompareTo(a), 12, 19), 12);
         }
         [TestMethod] public void AtMax()
         {
-            AreEqual(arrayExtensions.binSearch(a => 12.CompareTo(a), 10, 13), 12);
+            AreEqual(ArrayExtensions.binSearch(a => 12.CompareTo(a), 10, 13), 12);
         }
         [TestMethod] public void MinAndMax()
         {
-            AreEqual(arrayExtensions.binSearch(a => 12.CompareTo(a), 12, 13), 12);
+            AreEqual(ArrayExtensions.binSearch(a => 12.CompareTo(a), 12, 13), 12);
         }
         [TestMethod] public void BelowTarget()
         {
-            AreEqual(arrayExtensions.binSearch(a => 12.CompareTo(a), 10, 12), -1);
+            AreEqual(ArrayExtensions.binSearch(a => 12.CompareTo(a), 10, 12), -1);
         }
         [TestMethod] public void OnTarget()
         {
-            AreEqual(arrayExtensions.binSearch(a => 12.CompareTo(a), 12, 12), -1);
+            AreEqual(ArrayExtensions.binSearch(a => 12.CompareTo(a), 12, 12), -1);
         }
         [TestMethod] public void AboveTarget()
         {
-            AreEqual(arrayExtensions.binSearch(a => 12.CompareTo(a), 15, 19), -1);
+            AreEqual(ArrayExtensions.binSearch(a => 12.CompareTo(a), 15, 19), -1);
         }
         [TestMethod] public void BelowNear()
         {
-            AreEqual(arrayExtensions.binSearch(a => 12.CompareTo(a), 10, 11), -1);
+            AreEqual(ArrayExtensions.binSearch(a => 12.CompareTo(a), 10, 11), -1);
         }
         [TestMethod] public void AlwaysUp()
         {
-            AreEqual(arrayExtensions.binSearch(a => 1, 10, 20), -1);
+            AreEqual(ArrayExtensions.binSearch(a => 1, 10, 20), -1);
         }
         [TestMethod] public void AlwaysDown()
         {
-            AreEqual(arrayExtensions.binSearch(a => -1, 10, 20), -1);
+            AreEqual(ArrayExtensions.binSearch(a => -1, 10, 20), -1);
         }
     }
     [TestClass]
@@ -105,43 +105,43 @@ namespace CoreTest
     {
         [TestMethod] public void Simple()
         {
-            AreEqual(arrayExtensions.binSearch(a => a <= 12, 10, 19), 12);
+            AreEqual(ArrayExtensions.binSearch(a => a <= 12, 10, 19), 12);
         }
         [TestMethod] public void AtMin()
         {
-            AreEqual(arrayExtensions.binSearch(a => a <= 12, 12, 19), 12);
+            AreEqual(ArrayExtensions.binSearch(a => a <= 12, 12, 19), 12);
         }
         [TestMethod] public void AtMax()
         {
-            AreEqual(arrayExtensions.binSearch(a => a <= 12, 10, 13), 12);
+            AreEqual(ArrayExtensions.binSearch(a => a <= 12, 10, 13), 12);
         }
         [TestMethod] public void MinAndMax()
         {
-            AreEqual(arrayExtensions.binSearch(a => a <= 12, 12, 13), 12);
+            AreEqual(ArrayExtensions.binSearch(a => a <= 12, 12, 13), 12);
         }
         [TestMethod] public void BelowTarget()
         {
-            AreEqual(arrayExtensions.binSearch(a => a <= 12, 10, 12), 11);
+            AreEqual(ArrayExtensions.binSearch(a => a <= 12, 10, 12), 11);
         }
         [TestMethod] public void OnTarget()
         {
-            AreEqual(arrayExtensions.binSearch(a => a <= 12, 12, 12), -1);
+            AreEqual(ArrayExtensions.binSearch(a => a <= 12, 12, 12), -1);
         }
         [TestMethod] public void AboveTarget()
         {
-            AreEqual(arrayExtensions.binSearch(a => a <= 12, 15, 19), -1);
+            AreEqual(ArrayExtensions.binSearch(a => a <= 12, 15, 19), -1);
         }
         [TestMethod] public void BelowNear()
         {
-            AreEqual(arrayExtensions.binSearch(a => a <= 12, 10, 11), 10);
+            AreEqual(ArrayExtensions.binSearch(a => a <= 12, 10, 11), 10);
         }
         [TestMethod] public void ConstFalse()
         {
-            AreEqual(arrayExtensions.binSearch(a => false, 10, 20), -1);
+            AreEqual(ArrayExtensions.binSearch(a => false, 10, 20), -1);
         }
         [TestMethod] public void ConstTrue()
         {
-            AreEqual(arrayExtensions.binSearch(a => true, 18, 20), 19);
+            AreEqual(ArrayExtensions.binSearch(a => true, 18, 20), 19);
         }
     }
     [TestClass]

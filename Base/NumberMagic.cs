@@ -5,6 +5,7 @@ using System.Numerics;
 using Edge.Arrays;
 using Edge.Arrays.Arr2D;
 using Edge.Fielding;
+using Edge.Guard;
 using Edge.Looping;
 using Edge.Matrix;
 using Edge.Random;
@@ -99,12 +100,15 @@ namespace Edge.NumbersMagic
 	    }
         public static bool arecoprime(int a, int b)
         {
+            if (a == 1 || b == 1)
+                return true;
             if (a == b)
                 return false;
             if (a.isprimebylist() == true || b.isprimebylist() == true)
                 return true;
-			return greatestcommondivisor(a, b) == 1;
-		}
+            minmax(ref a, ref b);
+            return a.primefactors().All(x => b % x != 0);
+        }
 	    public static IEnumerable<int> Collatz(int @base)
 	    {
             if (@base <= 0)
@@ -125,47 +129,43 @@ namespace Edge.NumbersMagic
 	    /// </summary>
 	    public static int primality(this int a)
 	    {
+	        if (a == 0)
+	            throw new ArgumentException("cannot be zero", nameof(a));
 	        sbyte[] val =
-	            {
-	                -1, 0, 1, 1, 2, 1, 2, 1, 3, 2, 2, 1, 3, 1, 2, 2, 4, 1, 3, 1, 3, 2, 2, 1, 4, 2, 2, 3, 3, 1, 3, 1, 5, 2, 2, 2, 4, 1, 2, 2, 4, 1, 3, 1,
-	                3, 3, 2, 1, 5, 2, 3, 2, 3, 1, 4, 2, 4, 2, 2, 1, 4, 1, 2, 3, 6, 2, 3, 1, 3, 2, 3, 1, 5, 1, 2, 3, 3, 2, 3, 1, 5, 4, 2, 1, 4, 2, 2, 2, 4,
-	                1, 4, 2, 3, 2, 2, 2, 6, 1, 3, 3, 4, 1, 3, 1, 4, 3, 2, 1, 5, 1, 3, 2, 5, 1, 3, 2, 3, 3, 2, 2, 5, 2, 2, 2, 3, 3, 4, 1, 7, 2, 3, 1, 4, 2,
-	                2, 4, 4, 1, 3, 1, 4, 2, 2, 2, 6, 2, 2, 3, 3, 1, 4, 1, 4, 3, 3, 2, 4, 1, 2, 2, 6, 2, 5, 1, 3, 3, 2, 1, 5, 2, 3, 3, 3, 1, 3, 3, 5, 2, 2,
-	                1, 5, 1, 3, 2, 4, 2, 3, 2, 3, 4, 3, 1, 7, 1, 2, 3, 4, 1, 4, 1, 5, 2, 2, 2, 4, 2, 2, 3, 5, 2, 4, 1, 3, 2, 2, 2, 6, 2, 2, 2, 4, 2, 3, 1,
-	                6, 4, 2, 1, 4, 1, 3, 3, 4, 1, 4, 2, 3, 2, 3, 1, 6, 1, 3, 5, 3, 3, 3, 2, 4, 2, 4, 1, 5, 2, 2, 3, 8, 1, 3, 2, 4, 3, 2, 1, 5, 2, 3, 2, 3,
-	                1, 5, 1, 5, 3, 2, 3, 4, 1, 2, 3, 5, 1, 3, 1, 3, 3, 3, 2, 7, 2, 3, 2, 3, 1, 4, 2, 4, 4, 2, 2, 5, 2, 2, 2, 5, 2, 4, 1, 4, 2, 3, 1, 5, 1,
-	                2, 4, 3, 1, 3, 2, 7, 2, 3, 2, 6, 3, 2, 2, 4, 2, 4, 1, 3, 3, 2, 2, 6, 1, 3, 2, 4, 2, 4, 3, 4, 3, 2, 1, 4, 1, 4, 4, 6, 1, 3, 2, 3, 3, 2,
-	                1, 6, 2, 2, 3, 4, 2, 3, 1, 5, 3, 3, 2, 4, 1, 3, 4, 4, 2, 5, 1, 4, 2, 2, 1, 8, 3, 2, 3, 3, 1, 4, 2, 5, 2, 2, 2, 5, 1, 2, 3, 6, 1, 3, 2,
-	                3, 5, 3, 2, 5, 1, 3, 2, 3, 2, 4, 2, 6, 2, 3, 1, 5, 1, 2, 3, 4, 3, 3, 2, 3, 3, 3, 1, 7, 1, 3, 3, 3, 2, 3, 1, 5, 4, 3, 1, 4, 2, 2, 2, 7,
-	                1, 5, 2, 3, 2, 2, 3, 5, 1, 2, 4, 4, 1, 4, 1, 5, 3, 2, 1, 5, 2, 3, 2, 4, 2, 3, 3, 4, 3, 2, 1, 7, 2, 2, 3, 4, 2, 6, 1, 4, 2, 4, 1, 4, 2,
-	                3, 4, 5, 2, 3, 1, 5, 2, 2, 1, 6, 2, 3, 3, 3, 1, 4, 2, 9, 4, 2, 2, 4, 2, 3, 2, 5, 1, 4, 1, 3, 4, 2, 2, 6, 2, 3, 3, 4, 2, 3, 2, 4, 2, 2,
-	                3, 6, 1, 2, 2, 6, 2, 4, 1, 3, 3, 4, 2, 5, 2, 2, 3, 3, 1, 4, 2, 6, 3, 2, 1, 4, 2, 2, 5, 4, 1, 4, 1, 4, 2, 3, 3, 8, 1, 3, 2, 4, 2, 3, 2,
-	                4, 4, 2, 1, 5, 2, 3, 2, 5, 1, 5, 3, 3, 2, 3, 1, 6, 1, 3, 3, 3, 3, 3, 1, 6, 3, 3, 2, 5, 1, 2, 3, 5, 1, 3, 1, 4, 4, 2, 2, 6, 4, 2, 3, 3,
-	                2, 5, 1, 4, 2, 2, 2, 4, 3, 3, 3, 8, 1, 3, 1, 4, 3, 3, 1, 7, 2, 4, 3, 3, 1, 3, 2, 5, 3, 3, 1, 5, 1, 2, 3, 4, 3, 4, 2, 3, 2, 3, 2, 7, 1,
-	                2, 5, 4, 1, 3, 2, 5, 2, 3, 1, 5, 2, 4, 2, 5, 2, 4, 1, 3, 4, 2, 2, 5, 2, 2, 2, 5, 1, 5, 2, 7, 3, 2, 2, 4, 1, 3, 3, 4, 2, 4, 3, 3, 2, 2,
-	                1, 7, 2, 3, 2, 3, 3, 4, 1, 5, 6, 3, 2, 4, 1, 2, 4, 6, 2, 4, 1, 4, 3, 3, 1, 5, 2, 2, 3, 4, 2, 5, 1, 5, 2, 3, 2, 6, 1, 2, 3, 5, 1, 3, 2,
-	                3, 4, 2, 2, 9, 1, 4, 2, 3, 1, 4, 3, 4, 3, 2, 2, 5, 2, 3, 4, 6, 2, 3, 1, 3, 2, 3, 2, 6, 2, 2, 3, 3, 1, 4, 2, 7, 3, 2, 2, 4, 3, 3, 2, 4,
-	                1, 6, 1, 4, 2, 3, 2, 6, 2, 2, 4, 4, 1, 3, 1, 4, 4, 3, 1, 5, 1, 3, 2, 7, 3, 3, 2, 4, 4, 2, 1, 6, 2, 2, 2, 3, 3, 4, 3, 5, 2, 4, 2, 4, 1,
-	                3, 4, 4, 1, 4, 1, 4, 3, 2, 1, 8, 2, 2, 3, 4, 2, 4, 2, 4, 3, 3, 4, 4, 1, 2, 2, 6, 1, 5, 1, 4, 3, 2, 1, 5, 2, 3, 5, 3, 2, 3, 2, 8, 3, 2,
-	                2, 6, 2, 3, 3, 4, 2, 3, 1, 3, 3, 4, 1, 6, 2, 2, 3, 3, 2, 5, 1, 5, 2, 2, 2, 5, 3, 2, 3, 6, 1, 4, 3, 3, 2, 2, 3, 6, 1, 3, 2, 4, 1, 3, 2,
-	                5, 5, 3, 1, 4, 2, 4, 2, 5, 1, 4, 2, 3, 3, 2, 2, 8, 2, 3, 3, 3, 2, 4, 1, 5, 3, 3, 1, 7, 2, 2, 4, 5, 1, 3, 2, 5, 3, 2, 1, 5, 2, 3, 3, 4,
-	                2, 5, 1, 6, 2, 3, 2, 4, 1, 2, 4
-	            };
-	        while (true)
 	        {
-	            if (a == 0)
-	                throw new ArgumentException("cannot be zero", nameof(a));
-	            if (a < 0)
-	            {
-	                a = -a;
-	                continue;
-	            }
-	            return a < val.Length ? val[a] : a.primefactors().Count();
+	            -1, 0, 1, 1, 2, 1, 2, 1, 3, 2, 2, 1, 3, 1, 2, 2, 4, 1, 3, 1, 3, 2, 2, 1, 4, 2, 2, 3, 3, 1, 3, 1, 5, 2, 2, 2, 4, 1, 2, 2, 4, 1, 3, 1,
+	            3, 3, 2, 1, 5, 2, 3, 2, 3, 1, 4, 2, 4, 2, 2, 1, 4, 1, 2, 3, 6, 2, 3, 1, 3, 2, 3, 1, 5, 1, 2, 3, 3, 2, 3, 1, 5, 4, 2, 1, 4, 2, 2, 2, 4,
+	            1, 4, 2, 3, 2, 2, 2, 6, 1, 3, 3, 4, 1, 3, 1, 4, 3, 2, 1, 5, 1, 3, 2, 5, 1, 3, 2, 3, 3, 2, 2, 5, 2, 2, 2, 3, 3, 4, 1, 7, 2, 3, 1, 4, 2,
+	            2, 4, 4, 1, 3, 1, 4, 2, 2, 2, 6, 2, 2, 3, 3, 1, 4, 1, 4, 3, 3, 2, 4, 1, 2, 2, 6, 2, 5, 1, 3, 3, 2, 1, 5, 2, 3, 3, 3, 1, 3, 3, 5, 2, 2,
+	            1, 5, 1, 3, 2, 4, 2, 3, 2, 3, 4, 3, 1, 7, 1, 2, 3, 4, 1, 4, 1, 5, 2, 2, 2, 4, 2, 2, 3, 5, 2, 4, 1, 3, 2, 2, 2, 6, 2, 2, 2, 4, 2, 3, 1,
+	            6, 4, 2, 1, 4, 1, 3, 3, 4, 1, 4, 2, 3, 2, 3, 1, 6, 1, 3, 5, 3, 3, 3, 2, 4, 2, 4, 1, 5, 2, 2, 3, 8, 1, 3, 2, 4, 3, 2, 1, 5, 2, 3, 2, 3,
+	            1, 5, 1, 5, 3, 2, 3, 4, 1, 2, 3, 5, 1, 3, 1, 3, 3, 3, 2, 7, 2, 3, 2, 3, 1, 4, 2, 4, 4, 2, 2, 5, 2, 2, 2, 5, 2, 4, 1, 4, 2, 3, 1, 5, 1,
+	            2, 4, 3, 1, 3, 2, 7, 2, 3, 2, 6, 3, 2, 2, 4, 2, 4, 1, 3, 3, 2, 2, 6, 1, 3, 2, 4, 2, 4, 3, 4, 3, 2, 1, 4, 1, 4, 4, 6, 1, 3, 2, 3, 3, 2,
+	            1, 6, 2, 2, 3, 4, 2, 3, 1, 5, 3, 3, 2, 4, 1, 3, 4, 4, 2, 5, 1, 4, 2, 2, 1, 8, 3, 2, 3, 3, 1, 4, 2, 5, 2, 2, 2, 5, 1, 2, 3, 6, 1, 3, 2,
+	            3, 5, 3, 2, 5, 1, 3, 2, 3, 2, 4, 2, 6, 2, 3, 1, 5, 1, 2, 3, 4, 3, 3, 2, 3, 3, 3, 1, 7, 1, 3, 3, 3, 2, 3, 1, 5, 4, 3, 1, 4, 2, 2, 2, 7,
+	            1, 5, 2, 3, 2, 2, 3, 5, 1, 2, 4, 4, 1, 4, 1, 5, 3, 2, 1, 5, 2, 3, 2, 4, 2, 3, 3, 4, 3, 2, 1, 7, 2, 2, 3, 4, 2, 6, 1, 4, 2, 4, 1, 4, 2,
+	            3, 4, 5, 2, 3, 1, 5, 2, 2, 1, 6, 2, 3, 3, 3, 1, 4, 2, 9, 4, 2, 2, 4, 2, 3, 2, 5, 1, 4, 1, 3, 4, 2, 2, 6, 2, 3, 3, 4, 2, 3, 2, 4, 2, 2,
+	            3, 6, 1, 2, 2, 6, 2, 4, 1, 3, 3, 4, 2, 5, 2, 2, 3, 3, 1, 4, 2, 6, 3, 2, 1, 4, 2, 2, 5, 4, 1, 4, 1, 4, 2, 3, 3, 8, 1, 3, 2, 4, 2, 3, 2,
+	            4, 4, 2, 1, 5, 2, 3, 2, 5, 1, 5, 3, 3, 2, 3, 1, 6, 1, 3, 3, 3, 3, 3, 1, 6, 3, 3, 2, 5, 1, 2, 3, 5, 1, 3, 1, 4, 4, 2, 2, 6, 4, 2, 3, 3,
+	            2, 5, 1, 4, 2, 2, 2, 4, 3, 3, 3, 8, 1, 3, 1, 4, 3, 3, 1, 7, 2, 4, 3, 3, 1, 3, 2, 5, 3, 3, 1, 5, 1, 2, 3, 4, 3, 4, 2, 3, 2, 3, 2, 7, 1,
+	            2, 5, 4, 1, 3, 2, 5, 2, 3, 1, 5, 2, 4, 2, 5, 2, 4, 1, 3, 4, 2, 2, 5, 2, 2, 2, 5, 1, 5, 2, 7, 3, 2, 2, 4, 1, 3, 3, 4, 2, 4, 3, 3, 2, 2,
+	            1, 7, 2, 3, 2, 3, 3, 4, 1, 5, 6, 3, 2, 4, 1, 2, 4, 6, 2, 4, 1, 4, 3, 3, 1, 5, 2, 2, 3, 4, 2, 5, 1, 5, 2, 3, 2, 6, 1, 2, 3, 5, 1, 3, 2,
+	            3, 4, 2, 2, 9, 1, 4, 2, 3, 1, 4, 3, 4, 3, 2, 2, 5, 2, 3, 4, 6, 2, 3, 1, 3, 2, 3, 2, 6, 2, 2, 3, 3, 1, 4, 2, 7, 3, 2, 2, 4, 3, 3, 2, 4,
+	            1, 6, 1, 4, 2, 3, 2, 6, 2, 2, 4, 4, 1, 3, 1, 4, 4, 3, 1, 5, 1, 3, 2, 7, 3, 3, 2, 4, 4, 2, 1, 6, 2, 2, 2, 3, 3, 4, 3, 5, 2, 4, 2, 4, 1,
+	            3, 4, 4, 1, 4, 1, 4, 3, 2, 1, 8, 2, 2, 3, 4, 2, 4, 2, 4, 3, 3, 4, 4, 1, 2, 2, 6, 1, 5, 1, 4, 3, 2, 1, 5, 2, 3, 5, 3, 2, 3, 2, 8, 3, 2,
+	            2, 6, 2, 3, 3, 4, 2, 3, 1, 3, 3, 4, 1, 6, 2, 2, 3, 3, 2, 5, 1, 5, 2, 2, 2, 5, 3, 2, 3, 6, 1, 4, 3, 3, 2, 2, 3, 6, 1, 3, 2, 4, 1, 3, 2,
+	            5, 5, 3, 1, 4, 2, 4, 2, 5, 1, 4, 2, 3, 3, 2, 2, 8, 2, 3, 3, 3, 2, 4, 1, 5, 3, 3, 1, 7, 2, 2, 4, 5, 1, 3, 2, 5, 3, 2, 1, 5, 2, 3, 3, 4,
+	            2, 5, 1, 6, 2, 3, 2, 4, 1, 2, 4
+	        };
+	        if (a < 0)
+	        {
+	            a = -a;
 	        }
+	        return a < val.Length ? val[a] : a.primefactors().Count();
 	    }
 	    public static double abundancy(this int a)
 		{
-			return sumoffactors(a) / (double)a;
+			return a.factors().Sum() / (double)a;
 		}
 		public static int totient(this int a)
 		{
@@ -444,33 +444,29 @@ namespace Edge.NumbersMagic
 		{
 			return a.Select(i => i.abundancy()).AllEqual();
 		}
-		public static int choose(int n, params int[] k)
-		{
-			while (true)
-			{
-				if (k.Length == 0)
-				{
-					return 1;
-				}
-				int sum = k.Sum();
-				if (sum > n)
-				{
-					throw new ArithmeticException("cannot choose a subgroup larger than the supergroup");
-				}
-				if (sum != n)
-				{
-					var n1 = n;
-					k = k.Concat((n1 - sum).Enumerate()).ToArray();
-					continue;
-				}
-				ulong ret = n.factorial();
-				foreach (int i in k)
-				{
-					ret /= i.factorial();
-				}
-				return (int) ret;
-			}
-		}
+	    public static BigInteger choose(int n, params int[] k)
+	    {
+	        if (k.Length == 0)
+	        {
+	            return 1;
+	        }
+	        int sum = k.Sum();
+	        if (sum > n)
+	        {
+	            throw new ArithmeticException("cannot choose a subgroup larger than the supergroup");
+	        }
+	        if (sum != n)
+	        {
+	            k = k.Concat((n - sum).Enumerate()).ToArray();
+	        }
+	        BigProduct ret = new BigProduct();
+	        ret.MultiplyFactorial(n);
+	        foreach (int i in k)
+	        {
+	            ret.DivideFactorial(i);
+	        }
+	        return ret.toNum();
+	    }
 	    public static T ExponentialSmoothing<T>(T prevPrediction, T prevVal, T factor)
 	    {
 	        var field = Fields.getField<T>();
@@ -559,7 +555,7 @@ namespace Edge.NumbersMagic
             if (l > 32)
             {
                 var q = new HalvingQuerier<BigInteger>(b, (x, y) => x * y, 1);
-                return arrayExtensions.binSearch(a => (n % q[a]).IsZero, 0, (int)(l / BigInteger.Log(b,2)) + 2);
+                return ArrayExtensions.binSearch(a => (n % q[a]).IsZero, 0, (int)(l / BigInteger.Log(b,2)) + 2);
             }
             if (n == 1 || b > n || n % b != 0)
                 return 0;
@@ -902,10 +898,6 @@ namespace Edge.NumbersMagic
 				return s == x;
 			}
 			return val.binSearch(x) >= 0;
-		}
-		public static bool isperfectpower(this int x, bool includeone = false)
-		{
-			return getperfectpower(x, includeone) != null;
 		}
 		private static bool? isprimebylist(this int x)
 		{
@@ -1356,7 +1348,7 @@ namespace Edge.NumbersMagic
             int i = val.Last();
 			while(true)
 			{
-			    i++;
+			    i+=2;
 				int i1 = i;
 			    if (i.isProbablyPrime(3) && ret.All(a => (i1 % a) != 0))
 			    {
@@ -1682,10 +1674,6 @@ namespace Edge.NumbersMagic
 			double ret = rounded / Math.Pow(10, decimaldigits);
 			return ret;
 		}
-		public static int sumoffactors(this int x)
-		{
-			return factors(x).Sum();
-		}
 		public static bool whole(this double x)
 		{
 			return (x%1 == 0);
@@ -1897,6 +1885,77 @@ namespace Edge.NumbersMagic
                 var sums = parts.Group2().Select(a => a.Item1 + a.Item2);
                 return sums.Group2().Sum(a => a.Item1 - a.Item2);
             })[t];
+        }
+    }
+    public class BigProduct
+    {
+        private readonly IDictionary<int, BigInteger> _factors = new Dictionary<int, BigInteger>();
+        public void Multiply(int n, int pow = 1)
+        {
+            foreach (int factor in n.primefactors())
+            {
+                _factors.SumDefinition(factor, pow);
+            }
+        }
+        public void Divide(int n, int pow = 1)
+        {
+            Multiply(n,-pow);
+        }
+        public void MultiplyFactorial(int n, int pow = 1)
+        {
+            //Legendre's formula
+            foreach (int prime in NumberMagic.primes(n+1))
+            {
+                int toadd = 0;
+                int factor = prime;
+                while (factor <= n)
+                {
+                    toadd += (n / factor);
+                    factor *= prime;
+                }
+                _factors.SumDefinition(prime, toadd * pow);
+            }
+        }
+        public void DivideFactorial(int n, int pow = 1)
+        {
+            MultiplyFactorial(n,-pow);
+        }
+        public void pow(int p)
+        {
+            foreach (int key in _factors.Keys)
+            {
+                _factors[key] *= p;
+            }
+        }
+        public BigInteger toNum()
+        {
+            return _factors.Select(a => ((BigInteger)a.Key).pow(a.Value)).Aggregate(BigInteger.One, (a, b) => a * b);
+        }
+    }
+    public class DivisibilityQuerier
+    {
+        public DivisibilityQuerier(int denominator)
+        {
+            this.denominator = denominator;
+            PowQuerier = new PowQuerier<int>(denominator);
+        }
+        public int denominator { get; }
+        public PowQuerier<int> PowQuerier { get; }
+        public int Divisibility(int n, out int quotient)
+        {
+            IGuard<int> q = new Guard<int>();
+            var ret = ArrayExtensions.binSearch(i =>
+            {
+                int p = PowQuerier[i];
+                if (n % p == 0)
+                {
+                    q.value = n / p;
+                    return true;
+                }
+                return false;
+            }, 0, Math.Log(n, denominator).ceil()+1);
+            quotient = q.value;
+            return ret;
         }
     }
 }

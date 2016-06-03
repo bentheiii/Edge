@@ -23,7 +23,7 @@ namespace Edge.Series
         {
             if (count <= 0)
                 throw new Exception("array count must be higher than 0");
-            return arrayExtensions.Fill(count, i => this[i + startindex]);
+            return ArrayExtensions.Fill(count, i => this[i + startindex]);
         }
         internal Series(T a0)
         {

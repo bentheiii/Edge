@@ -16,7 +16,7 @@ namespace Edge.Random
     {
         public virtual byte[] Bytes(int length)
         {
-            return arrayExtensions.Fill(length, () => (byte)Int(0, byte.MaxValue));
+            return ArrayExtensions.Fill(length, () => (byte)Int(0, byte.MaxValue));
         }
         public virtual IEnumerable<byte> Bytes()
         {
@@ -222,7 +222,7 @@ namespace Edge.Random
         }
         public override byte[] Bytes(int length)
         {
-            return arrayExtensions.Fill(length, () => val);
+            return ArrayExtensions.Fill(length, () => val);
         }
         public override double Double(double min, double max)
         {

@@ -16,31 +16,37 @@ namespace CoreTest
         {
             var val = new int[] {0, 1, 2, 1, 0};
             IsTrue(val.isSymmetrical());
+            IsTrue(((IEnumerable<int>)val).isSymmetrical());
         }
         [TestMethod] public void TrueEven()
         {
             var val = new int[] {0, 1, 1, 0};
             IsTrue(val.isSymmetrical());
+            IsTrue(((IEnumerable<int>)val).isSymmetrical());
         }
         [TestMethod] public void FalseOddFar()
         {
             var val = new int[] {0, 1, 2, 1, 1};
             IsFalse(val.isSymmetrical());
+            IsFalse(((IEnumerable<int>)val).isSymmetrical());
         }
         [TestMethod] public void FalseOddNear()
         {
             var val = new int[] {0, 1, 2, 0, 0};
             IsFalse(val.isSymmetrical());
+            IsFalse(((IEnumerable<int>)val).isSymmetrical());
         }
         [TestMethod] public void FalseEvenFar()
         {
             var val = new int[] {0, 1, 1, 1};
             IsFalse(val.isSymmetrical());
+            IsFalse(((IEnumerable<int>)val).isSymmetrical());
         }
         [TestMethod] public void FalseEvenNear()
         {
             var val = new int[] {0, 1, 0, 0};
             IsFalse(val.isSymmetrical());
+            IsFalse(((IEnumerable<int>)val).isSymmetrical());
         }
     }
     [TestClass]
@@ -51,31 +57,37 @@ namespace CoreTest
         {
             var val = new int[] {0, 1, 2, 4, 3};
             IsTrue(val.isSymmetrical(_comp));
+            IsTrue(((IEnumerable<int>)val).isSymmetrical(_comp));
         }
         [TestMethod] public void TrueEven()
         {
             var val = new int[] {0, 1, 4, 3};
             IsTrue(val.isSymmetrical(_comp));
+            IsTrue(((IEnumerable<int>)val).isSymmetrical(_comp));
         }
         [TestMethod] public void FalseOddFar()
         {
             var val = new int[] {0, 1, 2, 4, 7};
             IsFalse(val.isSymmetrical(_comp));
+            IsFalse(((IEnumerable<int>)val).isSymmetrical(_comp));
         }
         [TestMethod] public void FalseOddNear()
         {
             var val = new int[] {0, 1, 2, 3, 6};
             IsFalse(val.isSymmetrical(_comp));
+            IsFalse(((IEnumerable<int>)val).isSymmetrical(_comp));
         }
         [TestMethod] public void FalseEvenFar()
         {
             var val = new int[] {0, 1, 4, 7};
             IsFalse(val.isSymmetrical(_comp));
+            IsFalse(((IEnumerable<int>)val).isSymmetrical(_comp));
         }
         [TestMethod] public void FalseEvenNear()
         {
             var val = new int[] {0, 1, 3, 6};
             IsFalse(val.isSymmetrical(_comp));
+            IsFalse(((IEnumerable<int>)val).isSymmetrical(_comp));
         }
     }
     [TestClass]

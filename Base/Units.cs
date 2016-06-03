@@ -52,12 +52,12 @@ namespace Edge.Units
                         split = new[] {defaultunit};
                         break;
                     case 1:
-                        arrayExtensions.Append(ref split, "G");
+                        ArrayExtensions.Append(ref split, "G");
                         break;
                     case 2:
                         if (!unitDictionary.ContainsKey(split[0]))
                             throw new FormatException("Unit Specifier not Recognized");
-                        arrayExtensions.Append(ref split, unitDictionary[split[0]].Item2);
+                        ArrayExtensions.Append(ref split, unitDictionary[split[0]].Item2);
                         break;
                     default:
                         throw new FormatException("too many arguments");
@@ -83,12 +83,12 @@ namespace Edge.Units
                         split = new[] { defaultunit };
                         break;
                     case 1:
-                        arrayExtensions.Append(ref split, "G");
+                        ArrayExtensions.Append(ref split, "G");
                         break;
                     case 2:
                         if (!unitDictionary.ContainsKey(split[0]))
                             throw new FormatException("Unit Specifier not Recognized");
-                        arrayExtensions.Append(ref split, unitDictionary[split[0]].Item2);
+                        ArrayExtensions.Append(ref split, unitDictionary[split[0]].Item2);
                         break;
                     default:
                         throw new FormatException("too many arguments");
