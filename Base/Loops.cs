@@ -660,7 +660,50 @@ namespace Edge.Looping
         {
             yield return b;
         }
-		public static IEnumerable<T> Concat<T>(this IEnumerable<IEnumerable<T>> a)
+        private class ConcatList<T> : LockedList<T>
+        {
+            private readonly IList<IEnumerable<T>> _source;
+            public ConcatList(IList<IEnumerable<T>> source)
+            {
+                _source = source;
+            }
+            public override IEnumerator<T> GetEnumerator()
+            {
+                foreach (var l in _source)
+                {
+                    foreach (var t in l)
+                    {
+                        yield return t;
+                    }
+                }
+            }
+            public override int Count
+            {
+                get
+                {
+                    return _source.Sum(a => a.Count());
+                }
+            }
+            public override T this[int index]
+            {
+                get
+                {
+                    foreach (var l in _source)
+                    {
+                        var c = l.Count();
+                        if (index < c)
+                            return l.ElementAt(index);
+                        index -= c;
+                    }
+                    throw new IndexOutOfRangeException();
+                }
+            }
+        }
+        public static LockedList<T> Concat<T>(this IList<IEnumerable<T>> a)
+        {
+            return new ConcatList<T>(a);
+        }
+        public static IEnumerable<T> Concat<T>(this IEnumerable<IEnumerable<T>> a)
 		{
 			foreach (IEnumerable<T> i in a)
 			{
@@ -733,6 +776,10 @@ namespace Edge.Looping
                     buffer.Clear();
                 }
             }
+        }
+        public static LockedList<T> Cycle<T>(this IList<T> @this)
+        {
+            return new RepeatList<T>(@this,int.MaxValue);
         }
         public static IEnumerable<T> Cycle<T>(this IEnumerable<T> @this)
 	    {

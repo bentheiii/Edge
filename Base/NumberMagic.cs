@@ -658,16 +658,16 @@ namespace Edge.NumbersMagic
 		}
 		public static T fibonachi<T>(int x, params T[] starters)
 		{
-			var f = Fields.getField<T>();
 			if (x < starters.Length)
 				return starters[x];
-			Matrix<T> b= new MapMatrix<T>((i,j) => (j == 0 || j - 1 == i) ? f.one : f.zero,starters.Length);
-            T[,] pa = new T[starters.Length,1];
+			var f = Fields.getField<T>();
+			Matrix<T> b= new MapMatrix<T>((i,j) => j == 0 || j - 1 == i ? f.one : f.zero,starters.Length);
+            MatrixBuilder<T> pa = new MatrixBuilder<T>(starters.Length,1);
 			for (int i = 0; i < starters.Length; i++)
 			{
 				pa[i, 0] = starters[starters.Length - i - 1];
 			}
-			Matrix<T> a = Matrix<T>.fromArr(pa);
+		    Matrix<T> a = pa.toMutableMatrix();
 			return b.pow(x - starters.Length + 1).Multiply(a)[0, 0];
 		}
 		public static int[] fibonachiarray(int count, params int[] starters)
