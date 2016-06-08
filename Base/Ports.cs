@@ -22,25 +22,25 @@ namespace Edge.Ports
     {
         public interface IConnectionAutoCommand
         {
-            void onRecieve(IConnection c);
+            void OnRecieve(IConnection c);
         }
         [Serializable]
         public class ConnectionSendCommand : IConnectionAutoCommand
         {
-            private string expectedreply { get; }
+            private string _expectedreply { get; }
             public ConnectionSendCommand(string expectedreply)
             {
-                this.expectedreply = expectedreply;
+                this._expectedreply = expectedreply;
             }
-            public void onRecieve(IConnection c)
+            public void OnRecieve(IConnection c)
             {
-                c.Send(expectedreply);
+                c.Send(_expectedreply);
             }
         }
         [Serializable]
         public class ConnectionIgnoreCommand : IConnectionAutoCommand
         {
-            public void onRecieve(IConnection c)
+            public void OnRecieve(IConnection c)
             {}
         }
         [Serializable]
@@ -51,9 +51,9 @@ namespace Edge.Ports
                 this.target = target;
             }
             public EndPoint target { get; }
-            public void onRecieve(IConnection c)
+            public void OnRecieve(IConnection c)
             {
-                c.Target = target;
+                c.target = target;
             }
         }
         [Serializable]
@@ -64,9 +64,9 @@ namespace Edge.Ports
                 this.source = source;
             }
             public EndPoint source { get; }
-            public void onRecieve(IConnection c)
+            public void OnRecieve(IConnection c)
             {
-                c.Source = source;
+                c.source = source;
             }
         }
         [Serializable]
@@ -78,24 +78,24 @@ namespace Edge.Ports
             {
                 this.commands = commands;
             }
-            public void onRecieve(IConnection c)
+            public void OnRecieve(IConnection c)
             {
                 foreach (var autoCommand in commands)
                 {
-                    autoCommand.onRecieve(c);
+                    autoCommand.OnRecieve(c);
                 }
             }
         }
     }
     public interface IPortBound: IDisposable
     {
-        EndPoint Source { get; set; }
+        EndPoint source { get; set; }
     }
     public interface IConnection: IPortBound
     {
-        EndPoint Target { get; set; }
-        [CanBeNull] ISet<Type> EnabledAutoCommands { get; }
-        int Send(object o);
+        EndPoint target { get; set; }
+        [CanBeNull] ISet<Type> enabledAutoCommands { get; }
+        int SendBytes(byte[] o);
         //receive without autocommands
         object silentrecieve(out EndPoint from, int buffersize);
     }
@@ -107,9 +107,9 @@ namespace Edge.Ports
         {
             object r = c.silentrecieve(out from, buffersize);
             IConnectionAutoCommand a = r as IConnectionAutoCommand;
-            if (a != null && c.EnabledAutoCommands!=null && c.EnabledAutoCommands.Contains(a.GetType()))
+            if (a != null && c.enabledAutoCommands!=null && c.enabledAutoCommands.Contains(a.GetType()))
             {
-                a.onRecieve(c);
+                a.OnRecieve(c);
                 return r;
             }
             return r;
@@ -148,40 +148,40 @@ namespace Edge.Ports
         }
         public static void setLocalTarget(this IConnection c, int port)
         {
-            c.Target = LocalEndPoint(port);
+            c.target = LocalEndPoint(port);
         }
         public static void setLocalSource(this IPortBound c, int port)
         {
-            c.Source = LocalEndPoint(port);
+            c.source = LocalEndPoint(port);
         }
         public static EndPoint EnsureSource(this IPortBound c)
         {
-            if (c.Source == null)
+            if (c.source == null)
             {
                 c.setLocalSource(0);
             }
-            return c.Source;
+            return c.source;
         }
         public static bool AcceptsAutoCommand(this IConnection @this, IConnectionAutoCommand c)
         {
-            if (c != null && @this.EnabledAutoCommands != null && @this.EnabledAutoCommands.Contains(c.GetType()))
+            if (c != null && @this.enabledAutoCommands != null && @this.enabledAutoCommands.Contains(c.GetType()))
                 return true;
             var glued = c as ConnectionGluedAutoCommand;
             return glued != null && glued.commands.All(@this.AcceptsAutoCommand);
         }
         public static T recieve<T>(this IConnection c)
         {
-            EndPoint @from;
-            return recieve<T>(c, out @from);
+            EndPoint from;
+            return recieve<T>(c, out from);
         }
         public static T recieve<T>(this IConnection c, out EndPoint from)
         {
-            return recieve<T>(c, out @from, TimeSpan.FromMilliseconds(int.MaxValue));
+            return recieve<T>(c, out from, TimeSpan.FromMilliseconds(int.MaxValue));
         }
         public static T recieve<T>(this IConnection c, out EndPoint from, TimeSpan timeout)
         {
             TimeSpan time;
-            return recieve<T>(c, out @from, timeout, out time);
+            return recieve<T>(c, out from, timeout, out time);
         }
         public static T recieve<T>(this IConnection c, TimeSpan timeout)
         {
@@ -190,8 +190,8 @@ namespace Edge.Ports
         }
         public static T recieve<T>(this IConnection c, TimeSpan timeout, out TimeSpan time)
         {
-            EndPoint @from;
-            return recieve<T>(c, out @from, timeout, out time);
+            EndPoint from;
+            return recieve<T>(c, out from, timeout, out time);
         }
         public static T recieve<T>(this IConnection c, out EndPoint from, TimeSpan timeout, out TimeSpan time)
         {
@@ -204,20 +204,25 @@ namespace Edge.Ports
             if (!(recievedval is T))
                 throw new InvalidCastException();
             return (T)recievedval;
-        } 
+        }
+        public static int Send<T>(this IConnection @this, T message, Func<T, byte[]> converter = null)
+        {
+            converter = converter ?? (x=> Serialization.Serialize(x));
+            return @this.SendBytes(converter(message));
+        }
     }
     public class UdpConnection : IConnection
     {
         private readonly Socket _sock;
-        public EndPoint Target { get; set; }
-        public ISet<Type> EnabledAutoCommands{ get; }
+        public EndPoint target { get; set; }
+        public ISet<Type> enabledAutoCommands{ get; }
         public UdpConnection()
         {
-            this.EnabledAutoCommands = new HashSet<Type>();
-            this.Target = null;
+            this.enabledAutoCommands = new HashSet<Type>();
+            this.target = null;
             _sock = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
         }
-        public EndPoint Source
+        public EndPoint source
         {
             get
             {
@@ -228,9 +233,9 @@ namespace Edge.Ports
                 _sock.Bind(value);
             }
         }
-        public int Send(object o)
+        public int SendBytes(byte[] o)
         {
-            return _sock.SendTo(Serialization.Serialize(o), Target);
+            return _sock.SendTo(o, target);
         }
         public object silentrecieve(out EndPoint from, int bufferSize)
         {
@@ -265,7 +270,7 @@ namespace Edge.Ports
             _sock = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
             Backlog = 10;
         }
-        public EndPoint Source
+        public EndPoint source
         {
             get
             {
@@ -297,14 +302,14 @@ namespace Edge.Ports
         }
         private class PrivateTcpServerConnection : IConnection
         {
-            public ISet<Type> EnabledAutoCommands { get; }
+            public ISet<Type> enabledAutoCommands { get; }
             private readonly Socket _sock;
             public PrivateTcpServerConnection(Socket sock)
             {
-                this.EnabledAutoCommands = new HashSet<Type>();
+                this.enabledAutoCommands = new HashSet<Type>();
                 this._sock = sock;
             }
-            public EndPoint Source
+            public EndPoint source
             {
                 get
                 {
@@ -315,7 +320,7 @@ namespace Edge.Ports
                     throw new Exception("cannot change source of dedicated TCP connection");
                 }
             }
-            public EndPoint Target
+            public EndPoint target
             {
                 get
                 {
@@ -326,9 +331,9 @@ namespace Edge.Ports
                     throw new Exception("cannot change target of dedicated TCP connection");
                 }
             }
-            public int Send(object o)
+            public int SendBytes(byte[] o)
             {
-                return _sock.Send(Serialization.Serialize(o));
+                return _sock.Send(o);
             }
             public object silentrecieve(out EndPoint from, int buffersize)
             {
@@ -351,16 +356,16 @@ namespace Edge.Ports
     }
     public class TcpClient : IConnection
     {
-        public ISet<Type> EnabledAutoCommands { get; }
+        public ISet<Type> enabledAutoCommands { get; }
         private readonly Socket _sock;
         private EndPoint _target;
         public TcpClient()
         {
-            this.EnabledAutoCommands = new HashSet<Type>();
+            this.enabledAutoCommands = new HashSet<Type>();
             _sock = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
             _target = null;
         }
-        public EndPoint Target
+        public EndPoint target
         {
             get
             {
@@ -368,7 +373,7 @@ namespace Edge.Ports
             }
             set
             {
-                if (Target == null)
+                if (target == null)
                 {
                     _sock.Connect(value);
                     _target = value;
@@ -377,7 +382,7 @@ namespace Edge.Ports
                     throw new Exception("the socket is connected and cannot be re-targeted");
             }
         }
-        public EndPoint Source
+        public EndPoint source
         {
             get
             {
@@ -385,17 +390,17 @@ namespace Edge.Ports
             }
             set
             {
-                if (Target == null)
+                if (target == null)
                     _sock.Bind(value);
                 else
                     throw new Exception("the socket is connected and cannot be rebound");
             }
         }
-        public int Send(object o)
+        public int SendBytes(byte[] o)
         {
-            return _sock.Send(Serialization.Serialize(o));
+            return _sock.Send(o);
         }
-        public object silentrecieve(out EndPoint @from, int buffersize)
+        public object silentrecieve(out EndPoint from, int buffersize)
         {
             from = new IPEndPoint(0, 0);
             byte[] buffer = new byte[buffersize];
@@ -605,7 +610,7 @@ namespace Edge.Ports
             private static bool IsNotifier(EndPoint p, TimeSpan timeout)
             {
                 IConnection testConnection = new UdpConnection();
-                testConnection.Target = p;
+                testConnection.target = p;
                 testConnection.Send(new MultiSocketNotifierConfirmationRequest());
                 ForwardedDataGram g;
                 if (Routine.TimeOut(() =>
@@ -632,7 +637,7 @@ namespace Edge.Ports
                 IConnection testConnection = new UdpConnection();
                 try
                 {
-                    testConnection.Source = p;
+                    testConnection.source = p;
                     return NotifierState.Empty;
                 }
                 catch (SocketException e)
@@ -693,7 +698,7 @@ namespace Edge.Ports
             public MultiSocketListener(EndPoint multiSocketPort, Credential c)
             {
                 this._int = new UdpConnection();
-                _int.Target = multiSocketPort;
+                _int.target = multiSocketPort;
                 _int.Send(new MultiSocket.SubscriptionRequest(c));
                 var reply = _int.recieve(out multiSocketPort);
                 if (!(reply as MultiSocket.SubsciptionConfirmation).allowed)
@@ -705,38 +710,38 @@ namespace Edge.Ports
                 _int.Send(new MultiSocket.ConsiderClosingRequest());
                 this._int.Dispose();
             }
-            public EndPoint Source
+            public EndPoint source
             {
                 get
                 {
-                    return _int.Target;
+                    return _int.target;
                 }
                 set
                 {
                     throw new Exception("MultiPortListener's source cannot be changed");
                 }
             }
-            public EndPoint Target { get; set; }
-            public ISet<Type> EnabledAutoCommands
+            public EndPoint target { get; set; }
+            public ISet<Type> enabledAutoCommands
             {
                 get
                 {
                     return null;
                 }
             }
-            public int Send(object o)
+            public int SendBytes(byte[] o)
             {
-                if (this.Target == null)
+                if (this.target == null)
                     throw new Exception("connection target is not set!");
-                var m = Target.Equals(_int.Target) ? o : new MultiSocket.SendRequest(o, this.Target);
+                var m = target.Equals(_int.target) ? (object)o : new MultiSocket.SendRequest(o, this.target);
                 var ret =_int.Send(m);
-                var r = Target.Equals(_int.Target) ? new MultiSocket.SentConfirmation(ret) : _int.recieve();
+                var r = target.Equals(_int.target) ? new MultiSocket.SentConfirmation(ret) : _int.recieve();
                 var confirmation = r as MultiSocket.SentConfirmation;
                 if (confirmation == null)
                     throw new Exception($"expected a {nameof(MultiSocket.SentConfirmation)}, got {r}");
                 return confirmation.sentBytes;
             }
-            public object silentrecieve(out EndPoint @from, int buffersize)
+            public object silentrecieve(out EndPoint from, int buffersize)
             {
                 var ret = _int.silentrecieve(out from, buffersize);
                 return ret;
@@ -753,42 +758,42 @@ namespace Edge.Ports
             {
                 this._int.Dispose();
             }
-            public EndPoint Source
+            public EndPoint source
             {
                 get
                 {
-                    return _int.Source;
+                    return _int.source;
                 }
                 set
                 {
-                    _int.Source = value;
+                    _int.source = value;
                 }
             }
-            public EndPoint Target
+            public EndPoint target
             {
                 get
                 {
-                    return _int.Target;
+                    return _int.target;
                 }
                 set
                 {
-                    this._int.Target = value;
+                    this._int.target = value;
                 }
             }
-            public ISet<Type> EnabledAutoCommands
+            public ISet<Type> enabledAutoCommands
             {
                 get
                 {
-                    return this._int.EnabledAutoCommands;
+                    return this._int.enabledAutoCommands;
                 }
             }
-            public int Send(object o)
+            public int SendBytes(byte[] o)
             {
                 return this._int.Send(o);
             }
-            public object silentrecieve(out EndPoint @from, int buffersize)
+            public object silentrecieve(out EndPoint from, int buffersize)
             {
-                return (this._int.silentrecieve(out @from, buffersize) as MultiSocket.ForwardedDataGram).data;
+                return (this._int.silentrecieve(out from, buffersize) as MultiSocket.ForwardedDataGram).data;
             }
         }
         class MultiSocketNotifier : IConnection
@@ -802,8 +807,7 @@ namespace Edge.Ports
             public MultiSocketNotifier(ICredentialValidator access, EndPoint p)
             {
                 this._access = access;
-                _int = new UdpConnection();
-                _int.Source = p;
+                _int = new UdpConnection {source = p};
             }
             public MultiSocketNotifier(ICredentialValidator access, out EndPoint p)
             {
@@ -815,118 +819,118 @@ namespace Edge.Ports
             {
                 _int.Dispose();
             }
-            public EndPoint Source
+            public EndPoint source
             {
                 get
                 {
-                    return _int.Source;
+                    return _int.source;
                 }
                 set
                 {
                     throw new Exception("cannot change MultiPort source");
                 }
             }
-            public EndPoint Target
+            public EndPoint target
             {
                 get
                 {
-                    return _int.Target;
+                    return _int.target;
                 }
                 set
                 {
-                    _int.Target = value;
+                    _int.target = value;
                 }
             }
-            public ISet<Type> EnabledAutoCommands
+            public ISet<Type> enabledAutoCommands
             {
                 get
                 {
                     return null;
                 }
             }
-            public int Send(object o)
+            public int SendBytes(byte[] o)
             {
                 return _int.Send(o);
             }
-            public object silentrecieve(out EndPoint @from, int buffersize)
+            public object silentrecieve(out EndPoint from, int buffersize)
             {
                 return _int.silentrecieve(out from, buffersize);
             }
             public void onRecieve(object o, MessageRecieveEventArgs messageRecieveEventArgs)
             {
-                Funnel<object> handler = new Funnel<object>();
-                // ReSharper disable ImplicitlyCapturedClosure
-                handler.Add(a =>
+                Funnel<object> handler = new Funnel<object>
                 {
-                    MultiSocket.SubscriptionRequest request = a as MultiSocket.SubscriptionRequest;
-                    if (request != null)
+                    a =>
                     {
+                        MultiSocket.SubscriptionRequest request = a as MultiSocket.SubscriptionRequest;
+                        if (request == null)
+                            return false;
                         var reply = this._access.isValid(request.access);
                         if (reply)
                         {
                             this._subscibers.Add(messageRecieveEventArgs.source);
                         }
-                        this._int.Target = messageRecieveEventArgs.source;
+                        this._int.target = messageRecieveEventArgs.source;
                         this._int.Send(new MultiSocket.SubsciptionConfirmation(reply));
                         return true;
-                    }
-                    return false;
-                });
-                handler.Add(a =>
-                {
-                    if (a is MultiSocket.UnsubscribeRequest)
+                    },
+                    a =>
                     {
-                        _subscibers.Remove(messageRecieveEventArgs.source);
-                        return true;
-                    }
-                    return false;
-                });
-                handler.Add(a =>
-                {
-                    if (a is MultiSocket.ConsiderClosingRequest)
-                    {
-                        if (_subscibers.Count == 0)
+                        if (a is MultiSocket.UnsubscribeRequest)
                         {
-                            this.Dispose();
-                            ((RecieverThread)o).Dispose();
+                            _subscibers.Remove(messageRecieveEventArgs.source);
+                            return true;
                         }
-                    }
-                    return false;
-                });
-                handler.Add(a =>
-                {
-                    MultiSocket.SendRequest request = a as MultiSocket.SendRequest;
-                    if (request != null)
+                        return false;
+                    },
+                    a =>
                     {
-                        Target = request.Target;
-                        var ret = Send(request.message);
-                        Target = messageRecieveEventArgs.source;
-                        Send(new MultiSocket.SentConfirmation(ret));
+                        if (a is MultiSocket.ConsiderClosingRequest)
+                        {
+                            if (_subscibers.Count == 0)
+                            {
+                                this.Dispose();
+                                ((RecieverThread)o).Dispose();
+                            }
+                        }
+                        return false;
+                    },
+                    a =>
+                    {
+                        MultiSocket.SendRequest request = a as MultiSocket.SendRequest;
+                        if (request != null)
+                        {
+                            target = request.Target;
+                            var ret = this.Send(request.message);
+                            target = messageRecieveEventArgs.source;
+                            this.Send(new MultiSocket.SentConfirmation(ret));
+                            return true;
+                        }
+                        return false;
+                    },
+                    a =>
+                    {
+                        var request = a as MultiSocket.MultiSocketNotifierConfirmationRequest;
+                        if (request != null)
+                        {
+                            target = messageRecieveEventArgs.source;
+                            var ret = this.Send(new MultiSocket.MultiSocketNotifierConfirmationReply());
+                            return true;
+                        }
+                        return false;
+                    },
+                    a =>
+                    {
+                        DateTime t = DateTime.Now;
+                        foreach (EndPoint subsciber in _subscibers.Except(messageRecieveEventArgs.source))
+                        {
+                            target = subsciber;
+                            this.Send(new MultiSocket.ForwardedDataGram(messageRecieveEventArgs.message, messageRecieveEventArgs.source, t));
+                        }
                         return true;
                     }
-                    return false;
-                });
-                handler.Add(a =>
-                {
-                    var request = a as MultiSocket.MultiSocketNotifierConfirmationRequest;
-                    if (request != null)
-                    {
-                        Target = messageRecieveEventArgs.source;
-                        var ret = Send(new MultiSocket.MultiSocketNotifierConfirmationReply());
-                        return true;
-                    }
-                    return false;
-                });
-                handler.Add(a =>
-                {
-                    DateTime t = DateTime.Now;
-                    foreach (EndPoint subsciber in _subscibers.Except(messageRecieveEventArgs.source))
-                    {
-                        Target = subsciber;
-                        Send(new MultiSocket.ForwardedDataGram(messageRecieveEventArgs.message, messageRecieveEventArgs.source, t));
-                    }
-                    return true;
-                });
+                };
+                // ReSharper disable ImplicitlyCapturedClosure
                 // ReSharper restore ImplicitlyCapturedClosure
                 handler.Process(messageRecieveEventArgs.message);
             }
@@ -957,15 +961,15 @@ namespace Edge.Ports
             {
                 _int.Dispose();
             }
-            public EndPoint Source
+            public EndPoint source
             {
                 get
                 {
-                    return _int.Source;
+                    return _int.source;
                 }
                 set
                 {
-                    _int.Source = value;
+                    _int.source = value;
                 }
             }
             public enum ConnectionOutcome { Fail = 0, Server = -1, Client = 1}
@@ -977,7 +981,7 @@ namespace Edge.Ports
             public IConnection Create(EndPoint target, out ConnectionOutcome outcome)
             {
                 _int.EnsureSource();
-                return Create(target, new LocalRandomGenerator(_int.Source.GetHashCode()), out outcome);
+                return Create(target, new LocalRandomGenerator(_int.source.GetHashCode()), out outcome);
             }
             public IConnection Create(EndPoint target, RandomGenerator gen)
             {
@@ -987,12 +991,12 @@ namespace Edge.Ports
             public IConnection Create(EndPoint target, RandomGenerator gen, out ConnectionOutcome outcome)
             {
                 outcome = ConnectionOutcome.Fail;
-                _int.Target = target;
+                _int.target = target;
                 IConnection placeholder = new UdpConnection();
                 placeholder.EnsureSource();
                 PeerTcpGeneratorConnectionMessage mes =
                     new PeerTcpGeneratorConnectionMessage(
-                        Loops.Generate(() => gen.ULong(0, ulong.MaxValue)).Take(PeerTcpGeneratorConnectionMessage.SEED_LENGTH).ToArray(), placeholder.Source);
+                        Loops.Generate(() => gen.ULong(0, ulong.MaxValue)).Take(PeerTcpGeneratorConnectionMessage.SEED_LENGTH).ToArray(), placeholder.source);
                 _int.Send(mes);
                 EndPoint from;
                 var peermes = _int.recieve<PeerTcpGeneratorConnectionMessage>(out from);
@@ -1005,7 +1009,7 @@ namespace Edge.Ports
                 {
                     placeholder.Dispose();
                     //we are server
-                    var ret = new TcpServer() {Source = mes.ConnEndPoint}.Create();
+                    var ret = new TcpServer() {source = mes.ConnEndPoint}.Create();
                     outcome = ConnectionOutcome.Server;
                     return ret;
                 }
@@ -1014,7 +1018,7 @@ namespace Edge.Ports
                     Thread.Sleep(TimeSpan.FromSeconds(0.1));
                     placeholder.Dispose();
                     //we are client
-                    var ret = new TcpClient() {Target = peermes.ConnEndPoint};
+                    var ret = new TcpClient() {target = peermes.ConnEndPoint};
                     outcome = ConnectionOutcome.Client;
                     return ret;
                 }

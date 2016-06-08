@@ -102,7 +102,7 @@ namespace Edge.Random
         }
         public string String(int length, char[] allowedChars)
         {
-            return Loops.Range(length).Select(a => allowedChars[Int(allowedChars.Length)]).convertToString();
+            return Loops.Range(length).Select(a => allowedChars[Int(allowedChars.Length)]).ConvertToString();
         }
         public T FromField<T>()
         {

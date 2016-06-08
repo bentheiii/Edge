@@ -338,7 +338,7 @@ namespace Edge.PermanentObject
             set
             {
                 _int.value = value;
-                _conn.Target = _conn.Source;
+                _conn.target = _conn.source;
                 _conn.Send(new ValChangedNotification());
             }
         }
@@ -738,7 +738,7 @@ namespace Edge.PermanentObject
             {
                 return
                     _dic.SelectMany(
-                        a => new string[] { NumberSerialization.FullCodeSerializer.EncodeSpecificLength(_kwrite(a.Key).Select(x=>(char)x).convertToString()), NumberSerialization.FullCodeSerializer.EncodeSpecificLength(a.Value.name)})
+                        a => new string[] { NumberSerialization.FullCodeSerializer.EncodeSpecificLength(_kwrite(a.Key).Select(x=>(char)x).ConvertToString()), NumberSerialization.FullCodeSerializer.EncodeSpecificLength(a.Value.name)})
                         .ToPrintable("", "", "");
             }
             
@@ -756,7 +756,7 @@ namespace Edge.PermanentObject
                 LoadDictionary();
                 if (!_dic.ContainsKey(item.Key))
                 {
-                    _dic.Add(item.Key, getVPerma(NumberSerialization.AlphaNumbreicSerializer.ToString((ulong)(_data.value.nextname + 1)).Reverse().convertToString()));
+                    _dic.Add(item.Key, getVPerma(NumberSerialization.AlphaNumbreicSerializer.ToString((ulong)(_data.value.nextname + 1)).Reverse().ConvertToString()));
                     _data.MutauteValue(a => new PermaDictionaryData(a.nextname + 1, SaveDictionaryToString()));
                 }
                 _dic[item.Key].value = item.Value;

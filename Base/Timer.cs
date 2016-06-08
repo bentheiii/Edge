@@ -211,7 +211,7 @@ namespace Edge.Timer
 			char[] ret = new char[index];
 			s.CopyTo(0,ret,0,index + Environment.NewLine.Length);
 			_buffer.Remove(0, index+Environment.NewLine.Length);
-			return ret.convertToString();
+			return ret.ConvertToString();
 		}
 		public override int ReadBlock(char[] buffer, int index, int count)
 		{

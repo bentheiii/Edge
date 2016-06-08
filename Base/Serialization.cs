@@ -79,7 +79,7 @@ namespace Edge.Serializations
         }
         public static string ToString(this INumberSerializer @this, ulong s)
         {
-            return @this.ToBytes(s).Select(a => (char)a).convertToString();
+            return @this.ToBytes(s).Select(a => (char)a).ConvertToString();
         }
         public static string EncodeSpecificLength(this INumberSerializer @this, string s, int maxlengthlengthlength = 1)
         {

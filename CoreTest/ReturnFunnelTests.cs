@@ -112,10 +112,10 @@ namespace CoreTest
         public void Simple()
         {
             var val = new PrefixFunnel<char,string>();
-            val.Add("U", a=>a.convertToString().ToUpper());
-            val.Add("L",a=>a.convertToString().ToLower());
-            val.Add("R",a=>a.Reverse().convertToString());
-            val.Add(a=>a.convertToString());
+            val.Add("U", a=>a.ConvertToString().ToUpper());
+            val.Add("L",a=>a.ConvertToString().ToLower());
+            val.Add("R",a=>a.Reverse().ConvertToString());
+            val.Add(a=>a.ConvertToString());
             AreEqual(val.Process("LA"), "a");
             AreEqual(val.Process("Ub"), "B");
             AreEqual(val.Process("Rab"), "ba");

@@ -29,10 +29,11 @@ namespace CoreTest
         }
         public static void CheckSecureEncryptor(IEnumerable<string> inputs, IEnumerable<string> keys)
         {
-            foreach (var i in inputs.Join(inputs.Concat(keys)))
+            foreach (var i in inputs.Join(inputs.Concat(keys)).Join(Loops.IRange(20)))
             {
-                var input = i.Item1;
-                var key = i.Item2;
+                var input = i.Item1.Item1;
+                var key = i.Item1.Item2;
+                var pad = i.Item2;
                 var valKey = Encryption.GenValidKey(key);
                 var b = Encoding.Unicode.GetBytes(input);
                 var cypher = SecureEncryption.Encrypt(b, valKey);
@@ -47,8 +48,8 @@ namespace CoreTest
     {
         [TestMethod] public void Simple()
         {
-            AssertEnc.CheckEncryptor(new string[] {"aaa", "abc", "secret", "this is a secret","אבג"},
-                new string[] {"key", "this is a key", "i have a key", "keykeykeykey", ""});
+            AssertEnc.CheckEncryptor(new[] {"aaa", "abc", "secret", "this is a secret","אבג"},
+                new[] {"key", "this is a key", "i have a key", "keykeykeykey", ""});
         }
     }
     [TestClass]

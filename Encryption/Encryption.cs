@@ -5,6 +5,8 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using Edge.Arrays;
+using Edge.Looping;
+using Edge.Serializations;
 using Edge.Streams;
 
 namespace Edge.Crypto
@@ -129,15 +131,28 @@ namespace Edge.Crypto
     }
     public static class SecureEncryption
     {
+        public const int ORIGINALSIZELENGTH = 16;
         /*secure cypher scheme:
         64 bytes-hash of everything after this
         16 bits-iv of encryption
-        the rest is cyphertext, the original input is padded by
+        16 (encrypted) bits of plaintext length (serialized in base-256, max input size is 2^64)
+        the rest is encrypted plaintext+padding
         */
-        public static byte[] Encrypt(byte[] plainText, byte[] key)
+        public static byte[] Encrypt(byte[] plainText, byte[] key,int padding=0, Func<byte> padGenerator = null)
         {
+            if (padGenerator != null && padding == 0)
+                throw new ArgumentException();
             byte[] iv;
-            byte[] cypher = Encryption.Encrypt(plainText, key, out iv);
+            byte[] padded;
+            if (padding == 0)
+                padded = plainText;
+            else
+                padded = plainText.Concat(ArrayExtensions.Fill(padding,padGenerator)).ToArray(plainText.Length+padding);
+            var orglength = NumberSerialization.FullCodeSerializer.ToBytes(plainText.Length).ToArray();
+            if (orglength.Length > ORIGINALSIZELENGTH)
+                throw new ArgumentException("plaintext too long");
+            orglength = orglength.Concat(ArrayExtensions.Fill(ORIGINALSIZELENGTH - orglength.Length, (byte)0)).ToArray(ORIGINALSIZELENGTH);
+            byte[] cypher = Encryption.Encrypt(orglength.Concat(padded).ToArray(), key, out iv);
             var hash = Sha2Hashing.Hash(iv.Concat(cypher));
             return hash.Concat(iv).Concat(cypher).ToArray(iv.Length + cypher.Length + hash.Length);
         }
@@ -145,8 +160,10 @@ namespace Edge.Crypto
         {
             if (!enc.Take(Sha2Hashing.HASH_LENGTH).SequenceEqual(Sha2Hashing.Hash(enc.Skip(Sha2Hashing.HASH_LENGTH))))
                 throw new FormatException("hash mismatch");
-            return Encryption.Decrypt(enc.Skip(Sha2Hashing.HASH_LENGTH + Encryption.IV_LENGTH).ToArray(), key,
+            var padded = Encryption.Decrypt(enc.Skip(Sha2Hashing.HASH_LENGTH + Encryption.IV_LENGTH).ToArray(), key,
                 enc.Skip(Sha2Hashing.HASH_LENGTH).Take(Encryption.IV_LENGTH).ToArray(Encryption.IV_LENGTH));
+            var orglen = (int)NumberSerialization.FullCodeSerializer.FromBytes(padded.Take(ORIGINALSIZELENGTH));
+            return padded.Skip(ORIGINALSIZELENGTH).Take(orglen).ToArray(orglen);
         }
     }
 }

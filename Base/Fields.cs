@@ -1185,7 +1185,7 @@ namespace Edge.Fielding {
                 if (!string.IsNullOrEmpty(bounds?.Item1) && !string.IsNullOrEmpty(bounds.Item2))
                     charbounds = Tuple.Create(bounds.Item1[0], bounds.Item2[0]);
                 var cf = getField<char>();
-                return bytes.Group(sizeof(char)).Select(a => cf.Generate(a,charbounds)).Take(length).convertToString();
+                return bytes.Group(sizeof(char)).Select(a => cf.Generate(a,charbounds)).Take(length).ConvertToString();
             }
             public override string fromFraction(double a)
             {

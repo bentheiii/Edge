@@ -18,11 +18,11 @@ namespace Edge.WordsPlay
         {
             return @this.ToString(format, CultureInfo.CurrentCulture);
         }
-        public static string convertToString(this IEnumerable<byte> x)
+        public static string ConvertToString(this IEnumerable<byte> x)
         {
             return new string(x.Select(a=>(char)a).ToArray());
         }
-        public static string convertToString (this IEnumerable<char> x)
+        public static string ConvertToString (this IEnumerable<char> x)
         {
 			return new string(x.ToArray());
         }
@@ -30,11 +30,11 @@ namespace Edge.WordsPlay
         {
             return @this.SelectToArray(a => (byte)a);
         }
-        public static string pluralize(int c, string singular, string plural, bool includecount = false, bool pluralreplacesingle = false)
+        public static string Pluralize(int c, string singular, string plural, bool includecount = false, bool pluralreplacesingle = false)
         {
-            return pluralize((double)c, singular, plural, includecount, pluralreplacesingle);
+            return Pluralize((double)c, singular, plural, includecount, pluralreplacesingle);
         }
-        public static string pluralize(double c, string singular, string plural, bool includecount = false, bool pluralreplacesingle = false)
+        public static string Pluralize(double c, string singular, string plural, bool includecount = false, bool pluralreplacesingle = false)
         {
             string ret = "";
             if (includecount)
@@ -166,7 +166,7 @@ namespace Edge.WordsPlay
                 this._query = q;
                 this._converter = c;
             }
-            public bool tryParse(string s, [CanBeNull] out T u)
+            public bool TryParse(string s, [CanBeNull] out T u)
             {
                 Match m = Regex.Match(s, this._query);
                 u = m.Success ? this._converter(m) : default(T);
@@ -174,7 +174,7 @@ namespace Edge.WordsPlay
             }
             public Proccesor<string, T> toProcessor()
             {
-                return tryParse;
+                return TryParse;
             }
         }
     }
