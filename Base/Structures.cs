@@ -120,8 +120,7 @@ namespace Edge.Structures.Tries
                 {
                     //we need to split an existing key
                     _children.Remove(match.Key);
-                    var newchild = new Trie<T,V>(_comp, _tokencomp);
-                    newchild.Add(new T[0], value, fullkey);
+                    var newchild = new Trie<T, V>(_comp, _tokencomp) {{new T[0], value, fullkey}};
                     newchild._children[match.Key.Slice(key.Count)] = match.Value;
                     _children[key] = newchild;
                     return;
@@ -139,8 +138,7 @@ namespace Edge.Structures.Tries
                 if (trie == null)
                 {
                     _children.Remove(match);
-                    trie = new Trie<T,V>(_comp, _tokencomp);
-                    trie.Add(new T[0], match.Value.First().Value, match.Value.First().Key);
+                    trie = new Trie<T, V>(_comp, _tokencomp) {{new T[0], match.Value.First().Value, match.Value.First().Key}};
                     _children[match.Key] = trie;
                 }
                 trie.Add(key.Slice(match.Key.Count), value, fullkey);
@@ -153,8 +151,7 @@ namespace Edge.Structures.Tries
                 match = submatch.Item1;
                 var prefix = submatch.Item2.Select(a => a.Item1).ToArray();
                 _children.Remove(match.Key);
-                var newchild = new Trie<T,V>(_comp, _tokencomp);
-                newchild.Add(key.Slice(prefix.Length), value, fullkey);
+                var newchild = new Trie<T, V>(_comp, _tokencomp) {{key.Slice(prefix.Length), value, fullkey}};
                 newchild._children[match.Key.Slice(prefix.Length)] = match.Value;
                 _children[prefix] = newchild;
                 return;
@@ -323,8 +320,7 @@ namespace Edge.Structures.Tries
                 {
                     //we need to split an existing key
                     _children.Remove(match.Key);
-                    var newchild = new Trie<T>(_comp, _tokencomp);
-                    newchild.Add(new T[0], fullkey);
+                    var newchild = new Trie<T>(_comp, _tokencomp) {{new T[0], fullkey}};
                     newchild._children[match.Key.Slice(key.Count)] = match.Value;
                     _children[key] = newchild;
                     return;
@@ -342,8 +338,7 @@ namespace Edge.Structures.Tries
                 if (trie == null)
                 {
                     _children.Remove(match);
-                    trie = new Trie<T>(_comp, _tokencomp);
-                    trie.Add(new T[0], match.Value.First());
+                    trie = new Trie<T>(_comp, _tokencomp) {{new T[0], match.Value.First()}};
                     _children[match.Key] = trie;
                 }
                 trie.Add(key.Slice(match.Key.Count), fullkey);
@@ -356,8 +351,7 @@ namespace Edge.Structures.Tries
                 match = submatch.Item1;
                 var prefix = submatch.Item2.Select(a => a.Item1).ToArray();
                 _children.Remove(match.Key);
-                var newchild = new Trie<T>(_comp, _tokencomp);
-                newchild.Add(key.Slice(prefix.Length), fullkey);
+                var newchild = new Trie<T>(_comp, _tokencomp) {{key.Slice(prefix.Length), fullkey}};
                 newchild._children[match.Key.Slice(prefix.Length)] = match.Value;
                 _children[prefix] = newchild;
                 return;

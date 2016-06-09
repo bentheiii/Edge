@@ -510,13 +510,15 @@ namespace Edge.Formulas
         }
         public override Funnel<Tuple<Formula<T>, FormulaAggregator<T>>> getOptimiserFunnel()
         {
-            Funnel<Tuple<Formula<T>, FormulaAggregator<T>>> constoptimizer = new Funnel<Tuple<Formula<T>, FormulaAggregator<T>>>();
-            //0=>()
-            constoptimizer.Add(a =>
+            Funnel<Tuple<Formula<T>, FormulaAggregator<T>>> constoptimizer = new Funnel<Tuple<Formula<T>, FormulaAggregator<T>>>
             {
-                var field = getField<T>();
-                return a.Item1.Equals(field.zero);
-            });
+                a =>
+                {
+                    var field = getField<T>();
+                    return a.Item1.Equals(field.zero);
+                }
+            };
+            //0=>()
             return constoptimizer;
         }
     }
@@ -591,134 +593,136 @@ namespace Edge.Formulas
         }
         public override Funnel<Tuple<Formula<T>, FormulaAggregator<T>>> getOptimiserFunnel()
         {
-            Funnel<Tuple<Formula<T>, FormulaAggregator<T>>> sumoptimizer = new Funnel<Tuple<Formula<T>, FormulaAggregator<T>>>();
-            //c0+c1=>(c0+c1)
-            sumoptimizer.Add(a =>
+            Funnel<Tuple<Formula<T>, FormulaAggregator<T>>> sumoptimizer = new Funnel<Tuple<Formula<T>, FormulaAggregator<T>>>
             {
-                var formula = a.Item1 as SumFormula<T>;
-                var field = getField<T>();
-                if (formula._arg1 is ConstantFormula<T> && formula._arg2 is ConstantFormula<T>)
+                a =>
                 {
-                    a.Item2.Add(a.Item1[field.zero]);
-                    return true;
-                }
-                return false;
-            });
-            //0+f=>f
-            sumoptimizer.Add(a =>
-            {
-                var formula = a.Item1 as SumFormula<T>;
-                var field = getField<T>();
-                if (formula._arg1.Equals(field.zero))
-                {
-                    a.Item2.Add(formula._arg2);
-                    return true;
-                }
-                if (formula._arg2.Equals(field.zero))
-                {
-                    a.Item2.Add(formula._arg1);
-                    return true;
-                }
-                return false;
-            });
-            //a+(-1)*b => a-b
-            sumoptimizer.Add(a =>
-            {
-                var formula = a.Item1 as SumFormula<T>;
-                var field = getField<T>();
-                ProductFormula<T> internalproduct = formula._arg1 as ProductFormula<T>;
-                if (internalproduct != null)
-                {
-                    if (internalproduct._arg1.Equals(field.fromInt(-1)))
+                    var formula = a.Item1 as SumFormula<T>;
+                    var field = getField<T>();
+                    if (formula._arg1 is ConstantFormula<T> && formula._arg2 is ConstantFormula<T>)
                     {
-                        a.Item2.Add(formula._arg2 - internalproduct._arg2);
+                        a.Item2.Add(a.Item1[field.zero]);
                         return true;
                     }
-                    if (internalproduct._arg2.Equals(field.fromInt(-1)))
-                    {
-                        a.Item2.Add(formula._arg2 - internalproduct._arg1);
-                        return true;
-                    }
-                }
-                internalproduct = formula._arg2 as ProductFormula<T>;
-                if (internalproduct != null)
+                    return false;
+                },
+                a =>
                 {
-                    if (internalproduct._arg1.Equals(field.fromInt(-1)))
+                    var formula = a.Item1 as SumFormula<T>;
+                    var field = getField<T>();
+                    if (formula._arg1.Equals(field.zero))
                     {
-                        a.Item2.Add(formula._arg1 - internalproduct._arg2);
+                        a.Item2.Add(formula._arg2);
                         return true;
                     }
-                    if (internalproduct._arg2.Equals(field.fromInt(-1)))
+                    if (formula._arg2.Equals(field.zero))
                     {
-                        a.Item2.Add(formula._arg1 - internalproduct._arg1);
+                        a.Item2.Add(formula._arg1);
                         return true;
                     }
-                }
-                return false;
-            });
-            //(ab+bc) -> a(b+c)
-            sumoptimizer.Add(a =>
-            {
-                bool op;
-                var field = getField<T>();
-                var components = a.Item1.getAdditonComponents(out op);
-                ISet<Formula<T>> devisable = new HashSet<Formula<T>>();
-                foreach (Formula<T> productComponent in components.First().getProductComponents(out op))
+                    return false;
+                },
+                a =>
                 {
-                    if (components.Skip(1).All(b => b.getProductComponents(out op).Any(c=>c.neatlyDevisibleBy(productComponent))))
+                    var formula = a.Item1 as SumFormula<T>;
+                    var field = getField<T>();
+                    ProductFormula<T> internalproduct = formula._arg1 as ProductFormula<T>;
+                    if (internalproduct != null)
                     {
-                        devisable.Add(productComponent);
-                    }
-                    else
-                    {
-                        ExponentFormula<T> formula = productComponent as ExponentFormula<T>;
-                        if (formula != null)
+                        if (internalproduct._arg1.Equals(field.fromInt(-1)))
                         {
-                            if (components.Skip(1).All(b => b.getProductComponents(out op).Any(c => c.neatlyDevisibleBy(formula._base))))
+                            a.Item2.Add(formula._arg2 - internalproduct._arg2);
+                            return true;
+                        }
+                        if (internalproduct._arg2.Equals(field.fromInt(-1)))
+                        {
+                            a.Item2.Add(formula._arg2 - internalproduct._arg1);
+                            return true;
+                        }
+                    }
+                    internalproduct = formula._arg2 as ProductFormula<T>;
+                    if (internalproduct != null)
+                    {
+                        if (internalproduct._arg1.Equals(field.fromInt(-1)))
+                        {
+                            a.Item2.Add(formula._arg1 - internalproduct._arg2);
+                            return true;
+                        }
+                        if (internalproduct._arg2.Equals(field.fromInt(-1)))
+                        {
+                            a.Item2.Add(formula._arg1 - internalproduct._arg1);
+                            return true;
+                        }
+                    }
+                    return false;
+                },
+                a =>
+                {
+                    bool op;
+                    var field = getField<T>();
+                    var components = a.Item1.getAdditonComponents(out op);
+                    ISet<Formula<T>> devisable = new HashSet<Formula<T>>();
+                    foreach (Formula<T> productComponent in components.First().getProductComponents(out op))
+                    {
+                        if (components.Skip(1).All(b => b.getProductComponents(out op).Any(c => c.neatlyDevisibleBy(productComponent))))
+                        {
+                            devisable.Add(productComponent);
+                        }
+                        else
+                        {
+                            ExponentFormula<T> formula = productComponent as ExponentFormula<T>;
+                            if (formula != null)
                             {
-                                devisable.Add(formula._base);
+                                if (components.Skip(1).All(b => b.getProductComponents(out op).Any(c => c.neatlyDevisibleBy(formula._base))))
+                                {
+                                    devisable.Add(formula._base);
+                                }
                             }
                         }
                     }
-                }
-                if (devisable.Count == 0)
-                    return false;
-                var @out = devisable.Aggregate((i, j) => i * j);
-                var @in =
-                    components.Select(
-                        formula => formula.neatlydivide(devisable)).Aggregate((i,j)=>i+j).Optimise();
-                a.Item2.Add(@out*@in);
-                return true;
-            });
-            //component grouper
-            sumoptimizer.Add(a =>
-            {
-                bool op;
-                var components = a.Item1.getAdditonComponents(out op);
-                if (!op)
-                    return false;
-                FormulaAggregator<T> aggregator = new FormulaAggregator<T>();
-                Field<T> field = getField<T>();
-                T constants = field.zero;
-                foreach (Formula<T> component in components)
+                    if (devisable.Count == 0)
+                        return false;
+                    var @out = devisable.Aggregate((i, j) => i*j);
+                    var @in =
+                        components.Select(
+                            formula => formula.neatlydivide(devisable)).Aggregate((i, j) => i + j).Optimise();
+                    a.Item2.Add(@out*@in);
+                    return true;
+                },
+                a =>
                 {
-                    var optimise = component.Optimise();
-                    var formula = optimise as ConstantFormula<T>;
-                    if (formula != null)
+                    bool op;
+                    var components = a.Item1.getAdditonComponents(out op);
+                    if (!op)
+                        return false;
+                    FormulaAggregator<T> aggregator = new FormulaAggregator<T>();
+                    Field<T> field = getField<T>();
+                    T constants = field.zero;
+                    foreach (Formula<T> component in components)
                     {
-                        if (!formula.Equals(field.zero))
-                            constants = field.add(constants, formula._val);
+                        var optimise = component.Optimise();
+                        var formula = optimise as ConstantFormula<T>;
+                        if (formula != null)
+                        {
+                            if (!formula.Equals(field.zero))
+                                constants = field.add(constants, formula._val);
+                        }
+                        else
+                        {
+                            aggregator.Add(optimise);
+                        }
                     }
-                    else
-                    {
-                        aggregator.Add(optimise);
-                    }
+                    if (!field.zero.Equals(constants))
+                        aggregator.Add(constants);
+                    a.Item2.Add(aggregator.Create(Add));
+                    return true;
                 }
-                if (!field.zero.Equals(constants))
-                    aggregator.Add(constants);
-                a.Item2.Add(aggregator.Create(Add));
-                return true;
-            });
+            };
+            //c0+c1=>(c0+c1)
+            //0+f=>f
+            //a+(-1)*b => a-b
+            //(ab+bc) -> a(b+c)
+            //component grouper
             return sumoptimizer;
         }
         public override Formula<T> optimisedInternals()
@@ -774,66 +778,68 @@ namespace Edge.Formulas
         }
         public override Funnel<Tuple<Formula<T>, FormulaAggregator<T>>> getOptimiserFunnel()
         {
-            Funnel<Tuple<Formula<T>, FormulaAggregator<T>>> productoptimizer = new Funnel<Tuple<Formula<T>, FormulaAggregator<T>>>();
-            //c0*c1=>(c0*c1)
-            productoptimizer.Add(a =>
+            Funnel<Tuple<Formula<T>, FormulaAggregator<T>>> productoptimizer = new Funnel<Tuple<Formula<T>, FormulaAggregator<T>>>
             {
-                var formula = a.Item1 as ProductFormula<T>;
-                var field = getField<T>();
-                if (formula._arg1 is ConstantFormula<T> && formula._arg2 is ConstantFormula<T>)
+                a =>
                 {
-                    a.Item2.Add(a.Item1[field.zero]);
-                    return true;
-                }
-                return false;
-            });
-            //1*f=>f
-            productoptimizer.Add(a =>
-            {
-                var formula = a.Item1 as ProductFormula<T>;
-                var field = getField<T>();
-                if (formula._arg1.Equals(field.one))
-                {
-                    a.Item2.Add(formula._arg2);
-                    return true;
-                }
-                if (formula._arg2.Equals(field.one))
-                {
-                    a.Item2.Add(formula._arg1);
-                    return true;
-                }
-                return false;
-            });
-            //component grouper
-            productoptimizer.Add(a =>
-            {
-                bool op;
-                var components = a.Item1.getProductComponents(out op);
-                if (!op)
-                    return false;
-                FormulaAggregator<T> aggregator = new FormulaAggregator<T>();
-                Field<T> field = getField<T>();
-                T constants = field.one;
-                foreach (Formula<T> component in components)
-                {
-                    var optimise = component.Optimise();
-                    var formula = optimise as ConstantFormula<T>;
-                    if (formula != null)
+                    var formula = a.Item1 as ProductFormula<T>;
+                    var field = getField<T>();
+                    if (formula._arg1 is ConstantFormula<T> && formula._arg2 is ConstantFormula<T>)
                     {
-                        if (formula.Equals(field.zero))
-                        {
-                            return true;
-                        }
-                        if (!formula.Equals(field.one))
-                            constants = field.multiply(constants, formula._val);
+                        a.Item2.Add(a.Item1[field.zero]);
+                        return true;
                     }
-                    else
-                        aggregator.Add(optimise);
+                    return false;
+                },
+                a =>
+                {
+                    var formula = a.Item1 as ProductFormula<T>;
+                    var field = getField<T>();
+                    if (formula._arg1.Equals(field.one))
+                    {
+                        a.Item2.Add(formula._arg2);
+                        return true;
+                    }
+                    if (formula._arg2.Equals(field.one))
+                    {
+                        a.Item2.Add(formula._arg1);
+                        return true;
+                    }
+                    return false;
+                },
+                a =>
+                {
+                    bool op;
+                    var components = a.Item1.getProductComponents(out op);
+                    if (!op)
+                        return false;
+                    FormulaAggregator<T> aggregator = new FormulaAggregator<T>();
+                    Field<T> field = getField<T>();
+                    T constants = field.one;
+                    foreach (Formula<T> component in components)
+                    {
+                        var optimise = component.Optimise();
+                        var formula = optimise as ConstantFormula<T>;
+                        if (formula != null)
+                        {
+                            if (formula.Equals(field.zero))
+                            {
+                                return true;
+                            }
+                            if (!formula.Equals(field.one))
+                                constants = field.multiply(constants, formula._val);
+                        }
+                        else
+                            aggregator.Add(optimise);
+                    }
+                    aggregator.Add(constants);
+                    a.Item2.Add(aggregator.Create(Multiply));
+                    return true;
                 }
-                aggregator.Add(constants);
-                a.Item2.Add(aggregator.Create(Multiply));
-                return true;
-            });
+            };
+            //c0*c1=>(c0*c1)
+            //1*f=>f
+            //component grouper
             return productoptimizer;
         }
         public override Formula<T> optimisedInternals()
@@ -894,32 +900,34 @@ namespace Edge.Formulas
         }
         public override Funnel<Tuple<Formula<T>, FormulaAggregator<T>>> getOptimiserFunnel()
         {
-            Funnel<Tuple<Formula<T>, FormulaAggregator<T>>> ret = new Funnel<Tuple<Formula<T>, FormulaAggregator<T>>>();
+            Funnel<Tuple<Formula<T>, FormulaAggregator<T>>> ret = new Funnel<Tuple<Formula<T>, FormulaAggregator<T>>>
+            {
+                a =>
+                {
+                    var formula = a.Item1 as LogFormula<T>;
+                    var field = getField<T>();
+                    if (formula._int is ConstantFormula<T>)
+                    {
+                        a.Item2.Add(a.Item1[field.zero]);
+                        return true;
+                    }
+                    return false;
+                },
+                a =>
+                {
+                    var formula = a.Item1 as LogFormula<T>;
+                    var field = getField<T>();
+                    ExponentFormula<T> exponentFormula = formula._int as ExponentFormula<T>;
+                    if (exponentFormula != null)
+                    {
+                        a.Item2.Add(exponentFormula._pow*exponentFormula._base.log());
+                        return true;
+                    }
+                    return false;
+                }
+            };
             //log(c)=>(log(c))
-            ret.Add(a =>
-            {
-                var formula = a.Item1 as LogFormula<T>;
-                var field = getField<T>();
-                if (formula._int is ConstantFormula<T>)
-                {
-                    a.Item2.Add(a.Item1[field.zero]);
-                    return true;
-                }
-                return false;
-            });
             //log(f1^f2)=>f2*log(f1)
-            ret.Add(a =>
-            {
-                var formula = a.Item1 as LogFormula<T>;
-                var field = getField<T>();
-                ExponentFormula<T> exponentFormula = formula._int as ExponentFormula<T>;
-                if (exponentFormula != null)
-                {
-                    a.Item2.Add(exponentFormula._pow * exponentFormula._base.log());
-                    return true;
-                }
-                return false;
-            });
             return ret;
         }
     }
@@ -958,50 +966,52 @@ namespace Edge.Formulas
         }
         public override Funnel<Tuple<Formula<T>, FormulaAggregator<T>>> getOptimiserFunnel()
         {
-            Funnel<Tuple<Formula<T>, FormulaAggregator<T>>> powoptimizer = new Funnel<Tuple<Formula<T>, FormulaAggregator<T>>>();
+            Funnel<Tuple<Formula<T>, FormulaAggregator<T>>> powoptimizer = new Funnel<Tuple<Formula<T>, FormulaAggregator<T>>>
+            {
+                a =>
+                {
+                    var formula = a.Item1 as ExponentFormula<T>;
+                    var field = getField<T>();
+                    if (formula._base.Equals(field.zero))
+                    {
+                        return true;
+                    }
+                    if (formula._pow.Equals(field.zero) || formula._base.Equals(field.one))
+                    {
+                        a.Item2.Add(field.one);
+                        return true;
+                    }
+                    if (formula._pow.Equals(field.one))
+                    {
+                        a.Item2.Add(formula._base);
+                        return true;
+                    }
+                    ConstantFormula<T> constantFormula = formula._pow as ConstantFormula<T>;
+                    if (constantFormula != null && field.isNegative(constantFormula._val))
+                    {
+                        a.Item2.Add(field.one/(formula._base ^ field.Negate(constantFormula._val)));
+                        return true;
+                    }
+                    return false;
+                },
+                a =>
+                {
+                    var formula = a.Item1 as ExponentFormula<T>;
+                    var field = getField<T>();
+                    if (formula._base is ConstantFormula<T> && formula._pow is ConstantFormula<T>)
+                    {
+                        a.Item2.Add(a.Item1[field.zero]);
+                        return true;
+                    }
+                    return false;
+                }
+            };
             //constant pow handler
             //0^f => 0
             //f^0,1^f=>1
             //f^1=>f
             //f1^-f2=>1/(f1^f2)
-            powoptimizer.Add(a =>
-            {
-                var formula = a.Item1 as ExponentFormula<T>;
-                var field = getField<T>();
-                if (formula._base.Equals(field.zero))
-                {
-                    return true;
-                }
-                if (formula._pow.Equals(field.zero) || formula._base.Equals(field.one))
-                {
-                    a.Item2.Add(field.one);
-                    return true;
-                }
-                if (formula._pow.Equals(field.one))
-                {
-                    a.Item2.Add(formula._base);
-                    return true;
-                }
-                ConstantFormula<T> constantFormula = formula._pow as ConstantFormula<T>;
-                if (constantFormula != null && field.isNegative(constantFormula._val))
-                {
-                    a.Item2.Add(field.one / (formula._base ^ field.Negate(constantFormula._val)));
-                    return true;
-                }
-                return false;
-            });
             //c1^c2=>c3
-            powoptimizer.Add(a =>
-            {
-                var formula = a.Item1 as ExponentFormula<T>;
-                var field = getField<T>();
-                if (formula._base is ConstantFormula<T> && formula._pow is ConstantFormula<T>)
-                {
-                    a.Item2.Add(a.Item1[field.zero]);
-                    return true;
-                }
-                return false;
-            });
             return powoptimizer;
         }
         public override Formula<T> optimisedInternals()
@@ -1042,18 +1052,20 @@ namespace Edge.Formulas
         }
         public override Funnel<Tuple<Formula<double>, FormulaAggregator<double>>> getOptimiserFunnel()
         {
-            Funnel<Tuple<Formula<double>, FormulaAggregator<double>>> ret = new Funnel<Tuple<Formula<double>, FormulaAggregator<double>>>();
-            ret.Add(a =>
+            Funnel<Tuple<Formula<double>, FormulaAggregator<double>>> ret = new Funnel<Tuple<Formula<double>, FormulaAggregator<double>>>
             {
-                var formula = a.Item1 as SineFormula;
-                var field = getField<double>();
-                if (formula._int is ConstantFormula<double>)
+                a =>
                 {
-                    a.Item2.Add(a.Item1[field.zero]);
-                    return true;
+                    var formula = a.Item1 as SineFormula;
+                    var field = getField<double>();
+                    if (formula._int is ConstantFormula<double>)
+                    {
+                        a.Item2.Add(a.Item1[field.zero]);
+                        return true;
+                    }
+                    return false;
                 }
-                return false;
-            });
+            };
             return ret;
         }
         public override Formula<double> optimisedInternals()
@@ -1094,18 +1106,20 @@ namespace Edge.Formulas
         }
         public override Funnel<Tuple<Formula<double>, FormulaAggregator<double>>> getOptimiserFunnel()
         {
-            Funnel<Tuple<Formula<double>, FormulaAggregator<double>>> ret = new Funnel<Tuple<Formula<double>, FormulaAggregator<double>>>();
-            ret.Add(a =>
+            Funnel<Tuple<Formula<double>, FormulaAggregator<double>>> ret = new Funnel<Tuple<Formula<double>, FormulaAggregator<double>>>
             {
-                var formula = a.Item1 as CosineFormula;
-                var field = getField<double>();
-                if (formula._int is ConstantFormula<double>)
+                a =>
                 {
-                    a.Item2.Add(a.Item1[field.zero]);
-                    return true;
+                    var formula = a.Item1 as CosineFormula;
+                    var field = getField<double>();
+                    if (formula._int is ConstantFormula<double>)
+                    {
+                        a.Item2.Add(a.Item1[field.zero]);
+                        return true;
+                    }
+                    return false;
                 }
-                return false;
-            });
+            };
             return ret;
         }
         public override Formula<double> optimisedInternals()
@@ -1150,18 +1164,21 @@ namespace Edge.Formulas
         }
         public override Funnel<Tuple<Formula<ComplexNumber>, FormulaAggregator<ComplexNumber>>> getOptimiserFunnel()
         {
-            Funnel<Tuple<Formula<ComplexNumber>, FormulaAggregator<ComplexNumber>>> ret = new Funnel<Tuple<Formula<ComplexNumber>, FormulaAggregator<ComplexNumber>>>();
-            ret.Add(a =>
+            Funnel<Tuple<Formula<ComplexNumber>, FormulaAggregator<ComplexNumber>>> ret = new Funnel
+                <Tuple<Formula<ComplexNumber>, FormulaAggregator<ComplexNumber>>>
             {
-                var formula = a.Item1 as ComplexSineFormula;
-                var field = getField<ComplexNumber>();
-                if (formula._int is ConstantFormula<ComplexNumber>)
+                a =>
                 {
-                    a.Item2.Add(a.Item1[field.zero]);
-                    return true;
+                    var formula = a.Item1 as ComplexSineFormula;
+                    var field = getField<ComplexNumber>();
+                    if (formula._int is ConstantFormula<ComplexNumber>)
+                    {
+                        a.Item2.Add(a.Item1[field.zero]);
+                        return true;
+                    }
+                    return false;
                 }
-                return false;
-            });
+            };
             return ret;
         }
         public override Formula<ComplexNumber> optimisedInternals()
@@ -1202,18 +1219,21 @@ namespace Edge.Formulas
         }
         public override Funnel<Tuple<Formula<ComplexNumber>, FormulaAggregator<ComplexNumber>>> getOptimiserFunnel()
         {
-            Funnel<Tuple<Formula<ComplexNumber>, FormulaAggregator<ComplexNumber>>> ret = new Funnel<Tuple<Formula<ComplexNumber>, FormulaAggregator<ComplexNumber>>>();
-            ret.Add(a =>
+            Funnel<Tuple<Formula<ComplexNumber>, FormulaAggregator<ComplexNumber>>> ret = new Funnel
+                <Tuple<Formula<ComplexNumber>, FormulaAggregator<ComplexNumber>>>
             {
-                var formula = a.Item1 as ComplexCosineFormula;
-                var field = getField<ComplexNumber>();
-                if (formula._int is ConstantFormula<ComplexNumber>)
+                a =>
                 {
-                    a.Item2.Add(a.Item1[field.zero]);
-                    return true;
+                    var formula = a.Item1 as ComplexCosineFormula;
+                    var field = getField<ComplexNumber>();
+                    if (formula._int is ConstantFormula<ComplexNumber>)
+                    {
+                        a.Item2.Add(a.Item1[field.zero]);
+                        return true;
+                    }
+                    return false;
                 }
-                return false;
-            });
+            };
             return ret;
         }
         public override Formula<ComplexNumber> optimisedInternals()
@@ -1258,18 +1278,20 @@ namespace Edge.Formulas
         }
         public override Funnel<Tuple<Formula<double>, FormulaAggregator<double>>> getOptimiserFunnel()
         {
-            Funnel<Tuple<Formula<double>, FormulaAggregator<double>>> ret = new Funnel<Tuple<Formula<double>, FormulaAggregator<double>>>();
-            ret.Add(a =>
+            Funnel<Tuple<Formula<double>, FormulaAggregator<double>>> ret = new Funnel<Tuple<Formula<double>, FormulaAggregator<double>>>
             {
-                var formula = a.Item1 as ArcSineFormula;
-                var field = getField<double>();
-                if (formula._int is ConstantFormula<double>)
+                a =>
                 {
-                    a.Item2.Add(a.Item1[field.zero]);
-                    return true;
+                    var formula = a.Item1 as ArcSineFormula;
+                    var field = getField<double>();
+                    if (formula._int is ConstantFormula<double>)
+                    {
+                        a.Item2.Add(a.Item1[field.zero]);
+                        return true;
+                    }
+                    return false;
                 }
-                return false;
-            });
+            };
             return ret;
         }
         public override Formula<double> optimisedInternals()
@@ -1310,18 +1332,20 @@ namespace Edge.Formulas
         }
         public override Funnel<Tuple<Formula<double>, FormulaAggregator<double>>> getOptimiserFunnel()
         {
-            Funnel<Tuple<Formula<double>, FormulaAggregator<double>>> ret = new Funnel<Tuple<Formula<double>, FormulaAggregator<double>>>();
-            ret.Add(a =>
+            Funnel<Tuple<Formula<double>, FormulaAggregator<double>>> ret = new Funnel<Tuple<Formula<double>, FormulaAggregator<double>>>
             {
-                var formula = a.Item1 as ArcCosineFormula;
-                var field = getField<double>();
-                if (formula._int is ConstantFormula<double>)
+                a =>
                 {
-                    a.Item2.Add(a.Item1[field.zero]);
-                    return true;
+                    var formula = a.Item1 as ArcCosineFormula;
+                    var field = getField<double>();
+                    if (formula._int is ConstantFormula<double>)
+                    {
+                        a.Item2.Add(a.Item1[field.zero]);
+                        return true;
+                    }
+                    return false;
                 }
-                return false;
-            });
+            };
             return ret;
         }
         public override Formula<double> optimisedInternals()
@@ -1362,18 +1386,20 @@ namespace Edge.Formulas
         }
         public override Funnel<Tuple<Formula<double>, FormulaAggregator<double>>> getOptimiserFunnel()
         {
-            Funnel<Tuple<Formula<double>, FormulaAggregator<double>>> ret = new Funnel<Tuple<Formula<double>, FormulaAggregator<double>>>();
-            ret.Add(a =>
+            Funnel<Tuple<Formula<double>, FormulaAggregator<double>>> ret = new Funnel<Tuple<Formula<double>, FormulaAggregator<double>>>
             {
-                var formula = a.Item1 as ArcTangentFormula;
-                var field = getField<double>();
-                if (formula._int is ConstantFormula<double>)
+                a =>
                 {
-                    a.Item2.Add(a.Item1[field.zero]);
-                    return true;
+                    var formula = a.Item1 as ArcTangentFormula;
+                    var field = getField<double>();
+                    if (formula._int is ConstantFormula<double>)
+                    {
+                        a.Item2.Add(a.Item1[field.zero]);
+                        return true;
+                    }
+                    return false;
                 }
-                return false;
-            });
+            };
             return ret;
         }
         public override Formula<double> optimisedInternals()
@@ -1414,18 +1440,21 @@ namespace Edge.Formulas
         }
         public override Funnel<Tuple<Formula<ComplexNumber>, FormulaAggregator<ComplexNumber>>> getOptimiserFunnel()
         {
-            Funnel<Tuple<Formula<ComplexNumber>, FormulaAggregator<ComplexNumber>>> ret = new Funnel<Tuple<Formula<ComplexNumber>, FormulaAggregator<ComplexNumber>>>();
-            ret.Add(a =>
+            Funnel<Tuple<Formula<ComplexNumber>, FormulaAggregator<ComplexNumber>>> ret = new Funnel
+                <Tuple<Formula<ComplexNumber>, FormulaAggregator<ComplexNumber>>>
             {
-                var formula = a.Item1 as ComplexArcSineFormula;
-                var field = getField<ComplexNumber>();
-                if (formula._int is ConstantFormula<ComplexNumber>)
+                a =>
                 {
-                    a.Item2.Add(a.Item1[field.zero]);
-                    return true;
+                    var formula = a.Item1 as ComplexArcSineFormula;
+                    var field = getField<ComplexNumber>();
+                    if (formula._int is ConstantFormula<ComplexNumber>)
+                    {
+                        a.Item2.Add(a.Item1[field.zero]);
+                        return true;
+                    }
+                    return false;
                 }
-                return false;
-            });
+            };
             return ret;
         }
         public override Formula<ComplexNumber> optimisedInternals()
@@ -1466,18 +1495,21 @@ namespace Edge.Formulas
         }
         public override Funnel<Tuple<Formula<ComplexNumber>, FormulaAggregator<ComplexNumber>>> getOptimiserFunnel()
         {
-            Funnel<Tuple<Formula<ComplexNumber>, FormulaAggregator<ComplexNumber>>> ret = new Funnel<Tuple<Formula<ComplexNumber>, FormulaAggregator<ComplexNumber>>>();
-            ret.Add(a =>
+            Funnel<Tuple<Formula<ComplexNumber>, FormulaAggregator<ComplexNumber>>> ret = new Funnel
+                <Tuple<Formula<ComplexNumber>, FormulaAggregator<ComplexNumber>>>
             {
-                var formula = a.Item1 as ComplexArcCosineFormula;
-                var field = getField<ComplexNumber>();
-                if (formula._int is ConstantFormula<ComplexNumber>)
+                a =>
                 {
-                    a.Item2.Add(a.Item1[field.zero]);
-                    return true;
+                    var formula = a.Item1 as ComplexArcCosineFormula;
+                    var field = getField<ComplexNumber>();
+                    if (formula._int is ConstantFormula<ComplexNumber>)
+                    {
+                        a.Item2.Add(a.Item1[field.zero]);
+                        return true;
+                    }
+                    return false;
                 }
-                return false;
-            });
+            };
             return ret;
         }
         public override Formula<ComplexNumber> optimisedInternals()
@@ -1518,18 +1550,21 @@ namespace Edge.Formulas
         }
         public override Funnel<Tuple<Formula<ComplexNumber>, FormulaAggregator<ComplexNumber>>> getOptimiserFunnel()
         {
-            Funnel<Tuple<Formula<ComplexNumber>, FormulaAggregator<ComplexNumber>>> ret = new Funnel<Tuple<Formula<ComplexNumber>, FormulaAggregator<ComplexNumber>>>();
-            ret.Add(a =>
+            Funnel<Tuple<Formula<ComplexNumber>, FormulaAggregator<ComplexNumber>>> ret = new Funnel
+                <Tuple<Formula<ComplexNumber>, FormulaAggregator<ComplexNumber>>>
             {
-                var formula = a.Item1 as ComplexArcTangentFormula;
-                var field = getField<ComplexNumber>();
-                if (formula._int is ConstantFormula<ComplexNumber>)
+                a =>
                 {
-                    a.Item2.Add(a.Item1[field.zero]);
-                    return true;
+                    var formula = a.Item1 as ComplexArcTangentFormula;
+                    var field = getField<ComplexNumber>();
+                    if (formula._int is ConstantFormula<ComplexNumber>)
+                    {
+                        a.Item2.Add(a.Item1[field.zero]);
+                        return true;
+                    }
+                    return false;
                 }
-                return false;
-            });
+            };
             return ret;
         }
         public override Formula<ComplexNumber> optimisedInternals()
@@ -1574,19 +1609,21 @@ namespace Edge.Formulas
         }
         public override Funnel<Tuple<Formula<T>, FormulaAggregator<T>>> getOptimiserFunnel()
         {
-            Funnel<Tuple<Formula<T>, FormulaAggregator<T>>> ret = new Funnel<Tuple<Formula<T>, FormulaAggregator<T>>>();
-            //log(c)=>(log(c))
-            ret.Add(a =>
+            Funnel<Tuple<Formula<T>, FormulaAggregator<T>>> ret = new Funnel<Tuple<Formula<T>, FormulaAggregator<T>>>
             {
-                var formula = a.Item1 as AbsFormula<T>;
-                var field = getField<T>();
-                if (formula._int is ConstantFormula<T>)
+                a =>
                 {
-                    a.Item2.Add(a.Item1[field.zero]);
-                    return true;
+                    var formula = a.Item1 as AbsFormula<T>;
+                    var field = getField<T>();
+                    if (formula._int is ConstantFormula<T>)
+                    {
+                        a.Item2.Add(a.Item1[field.zero]);
+                        return true;
+                    }
+                    return false;
                 }
-                return false;
-            });
+            };
+            //log(c)=>(log(c))
             return ret;
         }
     }

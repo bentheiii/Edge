@@ -16,7 +16,7 @@ using Numerics;
 
 namespace Edge.NumbersMagic
 {
-	public static partial class NumberMagic
+	public static class NumberMagic
 	{
 		public const double Phi = 1.618033988749894848204586834365638117720309179805762862;
 		public const double Tau = 2 * Math.PI;
@@ -1485,8 +1485,8 @@ namespace Edge.NumbersMagic
 		{
 		    string[][] unitsnames =
 		    {
-		        new string[] {"", " Thousand", " Million", " Billion", " Trillion", " Quadrillion", " Quintillion"},
-		        new string[] {"", " Thousand", " Million", " Milliard", " Billion", " Billiard", " Trillion"}
+		        new[] {"", " Thousand", " Million", " Billion", " Trillion", " Quadrillion", " Quintillion"},
+		        new[] {"", " Thousand", " Million", " Milliard", " Billion", " Billiard", " Trillion"}
 		    };
 			if (x < 0)
 				return "Negative " + name(-x, scaletouse);
@@ -1847,7 +1847,7 @@ namespace Edge.NumbersMagic
 	    }
 	    public static IEnumerable<int> Pentagonals(int start = 0)
 	    {
-	        return Loops.Count(start).SelectMany(a=>a==0? a.Enumerate() : new int[] {a,-a}).Select(a => (a * (3 * a - 1)) / 2);
+	        return Loops.Count(start).SelectMany(a=>a==0? a.Enumerate() : new[] {a,-a}).Select(a => (a * (3 * a - 1)) / 2);
 	    }
 	    public static IEnumerable<IEnumerable<int>> Partitions(this int @this, int? largestpart = int.MaxValue)
 	    {
@@ -1868,7 +1868,7 @@ namespace Edge.NumbersMagic
 	    }
         public static int Partition(this int t)
         {
-            var val = new int[]
+            var val = new[]
             {
                 1, 1, 2, 3, 5, 7, 11, 15, 22, 30, 42, 56, 77, 101, 135, 176, 231, 297, 385, 490, 627, 792, 1002, 1255, 1575, 1958, 2436, 3010,
                 3718, 4565, 5604, 6842, 8349, 10143, 12310, 14883, 17977, 21637, 26015, 31185, 37338, 44583, 53174, 63261, 75175, 89134, 105558,

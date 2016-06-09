@@ -104,15 +104,15 @@ namespace CoreTest
     {
         [TestMethod] public void Simple()
         {
-            IsTrue(new int[3, 4].getSize().SequenceEqual(new int[] {3, 4}));
+            IsTrue(new int[3, 4].getSize().SequenceEqual(new[] {3, 4}));
         }
         [TestMethod] public void oneD()
         {
-            IsTrue(new int[3].getSize().SequenceEqual(new int[] {3}));
+            IsTrue(new int[3].getSize().SequenceEqual(new[] {3}));
         }
         [TestMethod] public void multiD()
         {
-            IsTrue(new int[1, 2, 3, 4, 5, 0, 1, 2, 3, 4].getSize().SequenceEqual(new int[] {1, 2, 3, 4, 5, 0, 1, 2, 3, 4}));
+            IsTrue(new int[1, 2, 3, 4, 5, 0, 1, 2, 3, 4].getSize().SequenceEqual(new[] {1, 2, 3, 4, 5, 0, 1, 2, 3, 4}));
         }
     }
     [TestClass]
@@ -120,8 +120,8 @@ namespace CoreTest
     {
         [TestMethod] public void Simple()
         {
-            var orig = new int[] {0, 2, 4, 1, 3, 5};
-            IsTrue(orig.to2DArr(3).getSize().SequenceEqual(new int[] {3, 2}));
+            var orig = new[] {0, 2, 4, 1, 3, 5};
+            IsTrue(orig.to2DArr(3).getSize().SequenceEqual(new[] {3, 2}));
         }
     }
     [TestClass]
@@ -164,7 +164,7 @@ namespace CoreTest
     {
         [TestMethod] public void Simple()
         {
-            AreEqual((new int[,] {{0, 1, 2}, {3, 2, 1}}).ToTablePrintable(), @"/0 1 2\" + Environment.NewLine + @"\3 2 1/" + Environment.NewLine);
+            AreEqual((new[,] {{0, 1, 2}, {3, 2, 1}}).ToTablePrintable(), @"/0 1 2\" + Environment.NewLine + @"\3 2 1/" + Environment.NewLine);
         }
         [TestMethod] public void Empty()
         {
@@ -176,18 +176,18 @@ namespace CoreTest
     {
         [TestMethod] public void Simple0()
         {
-            var val0 = new int[,] {{0, 1}, {4, 5}};
-            var val1 = new int[,] {{2, 3}, {6, 7}, {8, 7}};
+            var val0 = new[,] {{0, 1}, {4, 5}};
+            var val1 = new[,] {{2, 3}, {6, 7}, {8, 7}};
             var con = val0.Concat(val1, 0).Cast<int>().ToArray();
-            var exp = new int[,] {{0, 1}, {4, 5}, {2, 3}, {6, 7}, {8, 7}}.Cast<int>().ToArray();
+            var exp = new[,] {{0, 1}, {4, 5}, {2, 3}, {6, 7}, {8, 7}}.Cast<int>().ToArray();
             IsTrue(con.SequenceEqual(exp));
         }
         [TestMethod] public void Simple1()
         {
-            var val0 = new int[,] {{0, 1}, {4, 5}};
-            var val1 = new int[,] {{2, 3, 0}, {6, 7, 0}};
+            var val0 = new[,] {{0, 1}, {4, 5}};
+            var val1 = new[,] {{2, 3, 0}, {6, 7, 0}};
             var con = val0.Concat(val1, 1).Cast<int>().ToArray();
-            var exp = new int[,] {{0, 1, 2, 3, 0}, {4, 5, 6, 7, 0}}.Cast<int>().ToArray();
+            var exp = new[,] {{0, 1, 2, 3, 0}, {4, 5, 6, 7, 0}}.Cast<int>().ToArray();
             IsTrue(con.SequenceEqual(exp));
         }
     }

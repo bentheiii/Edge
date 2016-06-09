@@ -64,7 +64,7 @@ namespace CoreTest
     {
         [TestMethod] public void Simple()
         {
-            var messages = new string[] {"anc", "abc", "hi there", "", "my my", "there's choclate behind this string"};
+            var messages = new[] {"anc", "abc", "hi there", "", "my my", "there's choclate behind this string"};
             foreach (var message in messages)
             {
                 RSAParameters pub;

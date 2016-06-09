@@ -29,7 +29,7 @@ namespace Edge.Path
     {
         public static class FileThumbnails
         {
-            public enum ThumbnailSize {none,Small, Medium, Large, ExtraLarge}
+            public enum ThumbnailSize {None,Small, Medium, Large, ExtraLarge}
             public static Bitmap getthumbnailforfile(string filepath, ThumbnailSize s = ThumbnailSize.Medium)
             {
                 ShellFile sf = ShellFile.FromFilePath(filepath);
@@ -42,7 +42,7 @@ namespace Edge.Path
                 ShellThumbnail t = sf.Thumbnail;
                 return getimagefromthumbnail(t, s);
             }
-            private static Bitmap getimagefromthumbnail(ShellThumbnail t, ThumbnailSize s = ThumbnailSize.none)
+            private static Bitmap getimagefromthumbnail(ShellThumbnail t, ThumbnailSize s = ThumbnailSize.None)
             {
                 switch (s)
                 {

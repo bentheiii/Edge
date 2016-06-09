@@ -283,8 +283,7 @@ namespace Edge.Random
                 _runners = new Thread[threadCount];
                 for (int i = 0; i < threadCount; i++)
                 {
-                    _runners[i] = new Thread(ThreadProcedure);
-                    _runners[i].Priority = priority;
+                    _runners[i] = new Thread(ThreadProcedure) {Priority = priority};
                     _runners[i].Start();
                 }
             }

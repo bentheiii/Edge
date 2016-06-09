@@ -124,12 +124,12 @@ namespace CoreTest
         [TestMethod] public void Simple()
         {
             var val = new EnumerableEqualityCompararer<int>();
-            IsWorking(val, new int[] {0, 1, 2}, new int[] {1, 2, 0}, new int[] {10, 20, 30});
+            IsWorking(val, new[] {0, 1, 2}, new[] {1, 2, 0}, new[] {10, 20, 30});
         }
         [TestMethod] public void SpecialComparer()
         {
             var val = new EnumerableEqualityCompararer<int>(new EqualityFunctionComparer<int,int>(a => a % 3));
-            IsWorking(val, new int[] {0, 1, 2}, new int[] {1, 2, 0}, new int[] {10, 3, 30});
+            IsWorking(val, new[] {0, 1, 2}, new[] {1, 2, 0}, new[] {10, 3, 30});
         }
     }
 }

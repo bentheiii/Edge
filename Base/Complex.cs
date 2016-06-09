@@ -14,7 +14,7 @@ using Edge.WordsPlay.Parsing;
 
 namespace Edge.Complex
 {
-    public static partial class Mathextensions
+    public static class Mathextensions
     {
         public static ComplexNumber pow(this double powbase, ComplexNumber powpower)
         {
@@ -551,7 +551,7 @@ namespace Edge.Complex
         }
         public Matrix<double> ToMatrix()
         {
-            return new ExplicitMatrix<double>(new double[,]
+            return new ExplicitMatrix<double>(new[,]
                 {
                     {this.RealPart,-this.ImaginaryPart},
                     {this.ImaginaryPart, this.RealPart}

@@ -25,14 +25,14 @@ namespace CoreTest
             var val = new ComboBox();
             val.BindEnum<TestEnum>();
             var c = ((IEnumerable<TestEnum>)val.DataSource).ToArray();
-            IsTrue(c.SequenceEqual(new TestEnum[] {TestEnum.Zero,TestEnum.One, TestEnum.Two, TestEnum.Three,TestEnum.Five, }));
+            IsTrue(c.SequenceEqual(new[] {TestEnum.Zero,TestEnum.One, TestEnum.Two, TestEnum.Three,TestEnum.Five, }));
         }
         public void SimpleSelect()
         {
             var val = new ComboBox();
             val.BindEnum<TestEnum>(TestEnum.Two);
             var c = ((IEnumerable<TestEnum>)val.DataSource).ToArray();
-            IsTrue(c.SequenceEqual(new TestEnum[] { TestEnum.Zero, TestEnum.One, TestEnum.Two, TestEnum.Three, TestEnum.Five, }));
+            IsTrue(c.SequenceEqual(new[] { TestEnum.Zero, TestEnum.One, TestEnum.Two, TestEnum.Three, TestEnum.Five, }));
             AreEqual(val.SelectedItem, TestEnum.Two);
         }
     }

@@ -84,41 +84,41 @@ namespace CoreTest
                 k++;
             }
             l.UnlockBits();
-            IsTrue(b.EnumerateBorders(ImageExtentions.BorderType.Bottom).Select(a => a.ToArgb()).OrderBy().SequenceEqual(new int[] {6, 7, 8}));
-            IsTrue(b.EnumerateBorders(ImageExtentions.BorderType.Left).Select(a => a.ToArgb()).OrderBy().SequenceEqual(new int[] {0, 3, 6}));
-            IsTrue(b.EnumerateBorders(ImageExtentions.BorderType.Right).Select(a => a.ToArgb()).OrderBy().SequenceEqual(new int[] {2, 5, 8}));
-            IsTrue(b.EnumerateBorders(ImageExtentions.BorderType.Top).Select(a => a.ToArgb()).OrderBy().SequenceEqual(new int[] {0, 1, 2}));
+            IsTrue(b.EnumerateBorders(ImageExtentions.BorderType.Bottom).Select(a => a.ToArgb()).OrderBy().SequenceEqual(new[] {6, 7, 8}));
+            IsTrue(b.EnumerateBorders(ImageExtentions.BorderType.Left).Select(a => a.ToArgb()).OrderBy().SequenceEqual(new[] {0, 3, 6}));
+            IsTrue(b.EnumerateBorders(ImageExtentions.BorderType.Right).Select(a => a.ToArgb()).OrderBy().SequenceEqual(new[] {2, 5, 8}));
+            IsTrue(b.EnumerateBorders(ImageExtentions.BorderType.Top).Select(a => a.ToArgb()).OrderBy().SequenceEqual(new[] {0, 1, 2}));
             IsTrue(
                 b.EnumerateBorders(ImageExtentions.BorderType.Bottom | ImageExtentions.BorderType.Left).Select(a => a.ToArgb()).OrderBy()
-                 .SequenceEqual(new int[] {0, 3, 6, 7, 8}));
+                 .SequenceEqual(new[] {0, 3, 6, 7, 8}));
             IsTrue(
                 b.EnumerateBorders(ImageExtentions.BorderType.Bottom | ImageExtentions.BorderType.Right).Select(a => a.ToArgb()).OrderBy()
-                 .SequenceEqual(new int[] {2, 5, 6, 7, 8}));
+                 .SequenceEqual(new[] {2, 5, 6, 7, 8}));
             IsTrue(
                 b.EnumerateBorders(ImageExtentions.BorderType.Bottom | ImageExtentions.BorderType.Top).Select(a => a.ToArgb()).OrderBy().SequenceEqual
-                    (new int[] {0, 1, 2, 6, 7, 8}));
+                    (new[] {0, 1, 2, 6, 7, 8}));
             IsTrue(
                 b.EnumerateBorders(ImageExtentions.BorderType.Left | ImageExtentions.BorderType.Right).Select(a => a.ToArgb()).OrderBy().SequenceEqual
-                    (new int[] {0, 2, 3, 5, 6, 8}));
+                    (new[] {0, 2, 3, 5, 6, 8}));
             IsTrue(
                 b.EnumerateBorders(ImageExtentions.BorderType.Left | ImageExtentions.BorderType.Top).Select(a => a.ToArgb()).OrderBy().SequenceEqual(
-                    new int[] {0, 1, 2, 3, 6}));
+                    new[] {0, 1, 2, 3, 6}));
             IsTrue(
                 b.EnumerateBorders(ImageExtentions.BorderType.Right | ImageExtentions.BorderType.Top).Select(a => a.ToArgb()).OrderBy().SequenceEqual(
-                    new int[] {0, 1, 2, 5, 8}));
+                    new[] {0, 1, 2, 5, 8}));
             IsTrue(
                 b.EnumerateBorders(ImageExtentions.BorderType.All & ~ImageExtentions.BorderType.Bottom).Select(a => a.ToArgb()).OrderBy()
-                 .SequenceEqual(new int[] {0, 1, 2, 3, 5, 6, 8}));
+                 .SequenceEqual(new[] {0, 1, 2, 3, 5, 6, 8}));
             IsTrue(
                 b.EnumerateBorders(ImageExtentions.BorderType.All & ~ImageExtentions.BorderType.Left).Select(a => a.ToArgb()).OrderBy().SequenceEqual(
-                    new int[] {0, 1, 2, 5, 6, 7, 8}));
+                    new[] {0, 1, 2, 5, 6, 7, 8}));
             IsTrue(
                 b.EnumerateBorders(ImageExtentions.BorderType.All & ~ImageExtentions.BorderType.Right).Select(a => a.ToArgb()).OrderBy().SequenceEqual
-                    (new int[] {0, 1, 2, 3, 6, 7, 8}));
+                    (new[] {0, 1, 2, 3, 6, 7, 8}));
             IsTrue(
                 b.EnumerateBorders(ImageExtentions.BorderType.All & ~ImageExtentions.BorderType.Bottom).Select(a => a.ToArgb()).OrderBy()
-                 .SequenceEqual(new int[] {0, 1, 2, 3, 5, 6, 8}));
-            IsTrue(b.EnumerateBorders().Select(a => a.ToArgb()).OrderBy().SequenceEqual(new int[] {0, 1, 2, 3, 5, 6, 7, 8}));
+                 .SequenceEqual(new[] {0, 1, 2, 3, 5, 6, 8}));
+            IsTrue(b.EnumerateBorders().Select(a => a.ToArgb()).OrderBy().SequenceEqual(new[] {0, 1, 2, 3, 5, 6, 7, 8}));
         }
         [TestMethod] public void EnumerateBorderLock()
         {
@@ -133,41 +133,41 @@ namespace CoreTest
                 k++;
             }
             b.UnlockBits();
-            IsTrue(b.EnumerateBorders(ImageExtentions.BorderType.Bottom).Select(a => a.ToArgb()).OrderBy().SequenceEqual(new int[] {6, 7, 8}));
-            IsTrue(b.EnumerateBorders(ImageExtentions.BorderType.Left).Select(a => a.ToArgb()).OrderBy().SequenceEqual(new int[] {0, 3, 6}));
-            IsTrue(b.EnumerateBorders(ImageExtentions.BorderType.Right).Select(a => a.ToArgb()).OrderBy().SequenceEqual(new int[] {2, 5, 8}));
-            IsTrue(b.EnumerateBorders(ImageExtentions.BorderType.Top).Select(a => a.ToArgb()).OrderBy().SequenceEqual(new int[] {0, 1, 2}));
+            IsTrue(b.EnumerateBorders(ImageExtentions.BorderType.Bottom).Select(a => a.ToArgb()).OrderBy().SequenceEqual(new[] {6, 7, 8}));
+            IsTrue(b.EnumerateBorders(ImageExtentions.BorderType.Left).Select(a => a.ToArgb()).OrderBy().SequenceEqual(new[] {0, 3, 6}));
+            IsTrue(b.EnumerateBorders(ImageExtentions.BorderType.Right).Select(a => a.ToArgb()).OrderBy().SequenceEqual(new[] {2, 5, 8}));
+            IsTrue(b.EnumerateBorders(ImageExtentions.BorderType.Top).Select(a => a.ToArgb()).OrderBy().SequenceEqual(new[] {0, 1, 2}));
             IsTrue(
                 b.EnumerateBorders(ImageExtentions.BorderType.Bottom | ImageExtentions.BorderType.Left).Select(a => a.ToArgb()).OrderBy()
-                 .SequenceEqual(new int[] {0, 3, 6, 7, 8}));
+                 .SequenceEqual(new[] {0, 3, 6, 7, 8}));
             IsTrue(
                 b.EnumerateBorders(ImageExtentions.BorderType.Bottom | ImageExtentions.BorderType.Right).Select(a => a.ToArgb()).OrderBy()
-                 .SequenceEqual(new int[] {2, 5, 6, 7, 8}));
+                 .SequenceEqual(new[] {2, 5, 6, 7, 8}));
             IsTrue(
                 b.EnumerateBorders(ImageExtentions.BorderType.Bottom | ImageExtentions.BorderType.Top).Select(a => a.ToArgb()).OrderBy().SequenceEqual
-                    (new int[] {0, 1, 2, 6, 7, 8}));
+                    (new[] {0, 1, 2, 6, 7, 8}));
             IsTrue(
                 b.EnumerateBorders(ImageExtentions.BorderType.Left | ImageExtentions.BorderType.Right).Select(a => a.ToArgb()).OrderBy().SequenceEqual
-                    (new int[] {0, 2, 3, 5, 6, 8}));
+                    (new[] {0, 2, 3, 5, 6, 8}));
             IsTrue(
                 b.EnumerateBorders(ImageExtentions.BorderType.Left | ImageExtentions.BorderType.Top).Select(a => a.ToArgb()).OrderBy().SequenceEqual(
-                    new int[] {0, 1, 2, 3, 6}));
+                    new[] {0, 1, 2, 3, 6}));
             IsTrue(
                 b.EnumerateBorders(ImageExtentions.BorderType.Right | ImageExtentions.BorderType.Top).Select(a => a.ToArgb()).OrderBy().SequenceEqual(
-                    new int[] {0, 1, 2, 5, 8}));
+                    new[] {0, 1, 2, 5, 8}));
             IsTrue(
                 b.EnumerateBorders(ImageExtentions.BorderType.All & ~ImageExtentions.BorderType.Bottom).Select(a => a.ToArgb()).OrderBy()
-                 .SequenceEqual(new int[] {0, 1, 2, 3, 5, 6, 8}));
+                 .SequenceEqual(new[] {0, 1, 2, 3, 5, 6, 8}));
             IsTrue(
                 b.EnumerateBorders(ImageExtentions.BorderType.All & ~ImageExtentions.BorderType.Left).Select(a => a.ToArgb()).OrderBy().SequenceEqual(
-                    new int[] {0, 1, 2, 5, 6, 7, 8}));
+                    new[] {0, 1, 2, 5, 6, 7, 8}));
             IsTrue(
                 b.EnumerateBorders(ImageExtentions.BorderType.All & ~ImageExtentions.BorderType.Right).Select(a => a.ToArgb()).OrderBy().SequenceEqual
-                    (new int[] {0, 1, 2, 3, 6, 7, 8}));
+                    (new[] {0, 1, 2, 3, 6, 7, 8}));
             IsTrue(
                 b.EnumerateBorders(ImageExtentions.BorderType.All & ~ImageExtentions.BorderType.Bottom).Select(a => a.ToArgb()).OrderBy()
-                 .SequenceEqual(new int[] {0, 1, 2, 3, 5, 6, 8}));
-            IsTrue(b.EnumerateBorders().Select(a => a.ToArgb()).OrderBy().SequenceEqual(new int[] {0, 1, 2, 3, 5, 6, 7, 8}));
+                 .SequenceEqual(new[] {0, 1, 2, 3, 5, 6, 8}));
+            IsTrue(b.EnumerateBorders().Select(a => a.ToArgb()).OrderBy().SequenceEqual(new[] {0, 1, 2, 3, 5, 6, 7, 8}));
         }
     }
     [TestClass]

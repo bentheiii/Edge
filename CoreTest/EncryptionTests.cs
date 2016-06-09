@@ -58,8 +58,8 @@ namespace CoreTest
         [TestMethod]
         public void Simple()
         {
-            AssertEnc.CheckSecureEncryptor(new string[] { "aaa", "abc", "secret", "this is a secret","אבג" },
-                new string[] { "key", "this is a key", "i have a key", "keykeykeykey", "" });
+            AssertEnc.CheckSecureEncryptor(new[] { "aaa", "abc", "secret", "this is a secret","אבג" },
+                new[] { "key", "this is a key", "i have a key", "keykeykeykey", "" });
         }
     }
 }

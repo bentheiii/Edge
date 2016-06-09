@@ -100,24 +100,24 @@ namespace CoreTest
     {
         [TestMethod] public void SimpleMax()
         {
-            IsTrue(Loops.Range(5).SequenceEqual(new int[] {0, 1, 2, 3, 4}));
+            IsTrue(Loops.Range(5).SequenceEqual(new[] {0, 1, 2, 3, 4}));
         }
         [TestMethod] public void SimpleStart()
         {
-            IsTrue(Loops.Range(1, 5).SequenceEqual(new int[] {1, 2, 3, 4}));
+            IsTrue(Loops.Range(1, 5).SequenceEqual(new[] {1, 2, 3, 4}));
         }
         [TestMethod] public void RevStart()
         {
-            IsTrue(Loops.Range(3, 1).SequenceEqual(new int[] {3,2}));
+            IsTrue(Loops.Range(3, 1).SequenceEqual(new[] {3,2}));
         }
         [TestMethod] public void SimpleStep()
         {
-            IsTrue(Loops.Range(1, 10, 2).SequenceEqual(new int[] {1, 3, 5, 7, 9}));
+            IsTrue(Loops.Range(1, 10, 2).SequenceEqual(new[] {1, 3, 5, 7, 9}));
         }
         [TestMethod]
         public void NegStep()
         {
-            IsTrue(Loops.Range(8, 1, -1).SequenceEqual(new int[] { 8, 7, 6, 5, 4, 3, 2 }));
+            IsTrue(Loops.Range(8, 1, -1).SequenceEqual(new[] { 8, 7, 6, 5, 4, 3, 2 }));
         }
     }
     [TestClass]
@@ -209,25 +209,25 @@ namespace CoreTest
     {
         [TestMethod] public void SimpleMax()
         {
-            IsTrue(Loops.IRange(5).SequenceEqual(new int[] {0, 1, 2, 3, 4, 5}));
+            IsTrue(Loops.IRange(5).SequenceEqual(new[] {0, 1, 2, 3, 4, 5}));
         }
         [TestMethod] public void SimpleStart()
         {
-            IsTrue(Loops.IRange(1, 5).SequenceEqual(new int[] {1, 2, 3, 4, 5}));
+            IsTrue(Loops.IRange(1, 5).SequenceEqual(new[] {1, 2, 3, 4, 5}));
         }
         [TestMethod] public void RevStart()
         {
-            IsTrue(Loops.IRange(3, 1).SequenceEqual(new int[] {3,2,1}));
+            IsTrue(Loops.IRange(3, 1).SequenceEqual(new[] {3,2,1}));
         }
         [TestMethod] public void SimpleStep()
         {
-            IsTrue(Loops.IRange(1, 11, 2).SequenceEqual(new int[] {1, 3, 5, 7, 9, 11}));
+            IsTrue(Loops.IRange(1, 11, 2).SequenceEqual(new[] {1, 3, 5, 7, 9, 11}));
         }
         [TestMethod]
         public void NegStep()
         {
             var val = Loops.IRange(8, 1, -1);
-            IsTrue(val.SequenceEqual(new int[] { 8, 7, 6, 5, 4, 3, 2, 1 }));
+            IsTrue(val.SequenceEqual(new[] { 8, 7, 6, 5, 4, 3, 2, 1 }));
         }
     }
     [TestClass]
@@ -393,13 +393,13 @@ namespace CoreTest
         [TestMethod] public void SimpleTwo()
         {
             IsTrue(
-                Loops.Range(6).ZipUnbound(new int[] {3, 2, 6, 9}).SequenceEqual(new[]
+                Loops.Range(6).ZipUnbound(new[] {3, 2, 6, 9}).SequenceEqual(new[]
                 {Tuple.Create(0, 3), Tuple.Create(1, 2), Tuple.Create(2, 6), Tuple.Create(3, 9), Tuple.Create(4, 0), Tuple.Create(5, 0)}));
         }
         [TestMethod] public void SimpleThree()
         {
             IsTrue(
-                Loops.Range(6).ZipUnbound(new int[] {3, 2, 6, 9}, new[] {9, 7, 1, 2, 6}).SequenceEqual(new[]
+                Loops.Range(6).ZipUnbound(new[] {3, 2, 6, 9}, new[] {9, 7, 1, 2, 6}).SequenceEqual(new[]
                 {
                     Tuple.Create(0, 3, 9), Tuple.Create(1, 2, 7), Tuple.Create(2, 6, 1), Tuple.Create(3, 9, 2), Tuple.Create(4, 0, 6),
                     Tuple.Create(5, 0, 0)
@@ -408,7 +408,7 @@ namespace CoreTest
         [TestMethod] public void SimpleFour()
         {
             IsTrue(
-                Loops.Range(6).ZipUnbound(new int[] {3, 2, 6, 9}, new[] {9, 7, 1, 2, 6}, new[] {1, 7, 9, 3}).SequenceEqual(new[]
+                Loops.Range(6).ZipUnbound(new[] {3, 2, 6, 9}, new[] {9, 7, 1, 2, 6}, new[] {1, 7, 9, 3}).SequenceEqual(new[]
                 {
                     Tuple.Create(0, 3, 9, 1), Tuple.Create(1, 2, 7, 7), Tuple.Create(2, 6, 1, 9), Tuple.Create(3, 9, 2, 3), Tuple.Create(4, 0, 6, 0),
                     Tuple.Create(5, 0, 0, 0)
@@ -420,55 +420,55 @@ namespace CoreTest
     {
         [TestMethod] public void Enumerate()
         {
-            IsTrue(3.Enumerate().SequenceEqual(new int[] {3}));
+            IsTrue(3.Enumerate().SequenceEqual(new[] {3}));
         }
         [TestMethod] public void Concat()
         {
-            var val = new int[][] {new int[] {0, 1, 2, 3, 4}, new int[] {5, 6, 7}, new int[] {8, 9}, new int[] {10}}.Concat();
+            var val = new[] {new[] {0, 1, 2, 3, 4}, new[] {5, 6, 7}, new[] {8, 9}, new[] {10}}.Concat();
             IsTrue(val.SequenceEqual(Loops.Range(11)));
         }
         [TestMethod] public void Choose()
         {
-            var val = new int[][] {new[] {1, 7, 8, 9}, new[] {2, 3, 4, 6}, new[] {5, 8, 11}, new[] {0, 5, 5}};
+            var val = new[] {new[] {1, 7, 8, 9}, new[] {2, 3, 4, 6}, new[] {5, 8, 11}, new[] {0, 5, 5}};
             var ch = val.Choose(a =>
             {
                 int ret;
                 a.getMin(out ret);
                 return ret;
             }).ToArray();
-            IsTrue(ch.SequenceEqual(new int[] {0, 1, 2, 3, 4, 5, 5, 5, 6, 7, 8, 8, 9, 11}));
+            IsTrue(ch.SequenceEqual(new[] {0, 1, 2, 3, 4, 5, 5, 5, 6, 7, 8, 8, 9, 11}));
         }
         [TestMethod] public void ChooseComp()
         {
-            IsTrue(new[] {1, 7, 8, 9}.Choose(new[] {2, 3, 4, 6}, Comparer<int>.Default).SequenceEqual(new int[] {1, 2, 3, 4, 6, 7, 8, 9}));
+            IsTrue(new[] {1, 7, 8, 9}.Choose(new[] {2, 3, 4, 6}, Comparer<int>.Default).SequenceEqual(new[] {1, 2, 3, 4, 6, 7, 8, 9}));
         }
         [TestMethod] public void Switch()
         {
-            var val = new int[][] {new[] {1, 7, 8, 9}, new[] {2, 3, 4, 6}, new[] {5, 8, 11}, new[] {0, 5, 5}};
-            IsTrue(val.Switch().SequenceEqual(new int[] {1, 2, 5, 0, 7, 3, 8, 5, 8, 4, 11, 5, 9, 6}));
+            var val = new[] {new[] {1, 7, 8, 9}, new[] {2, 3, 4, 6}, new[] {5, 8, 11}, new[] {0, 5, 5}};
+            IsTrue(val.Switch().SequenceEqual(new[] {1, 2, 5, 0, 7, 3, 8, 5, 8, 4, 11, 5, 9, 6}));
         }
         [TestMethod] public void SwitchUnBound()
         {
-            var val = new int[][] {new[] {1, 7, 8, 9}, new[] {2, 3, 4, 6}, new[] {5, 8, 11}, new[] {0, 5, 5}};
+            var val = new[] {new[] {1, 7, 8, 9}, new[] {2, 3, 4, 6}, new[] {5, 8, 11}, new[] {0, 5, 5}};
             var v = val.SwitchUnbound().ToArray();
-            IsTrue(v.SequenceEqual(new int[] {1, 2, 5, 0, 7, 3, 8, 5, 8, 4, 11, 5, 9, 6, 0, 0}));
+            IsTrue(v.SequenceEqual(new[] {1, 2, 5, 0, 7, 3, 8, 5, 8, 4, 11, 5, 9, 6, 0, 0}));
         }
         [TestMethod] public void Cycle()
         {
-            IsTrue(Loops.Range(3).Cycle().Take(8).SequenceEqual(new int[] {0, 1, 2, 0, 1, 2, 0, 1}));
+            IsTrue(Loops.Range(3).Cycle().Take(8).SequenceEqual(new[] {0, 1, 2, 0, 1, 2, 0, 1}));
         }
         [TestMethod] public void Where()
         {
-            IsTrue(Loops.Range(3).Cycle().Take(8).Where(0, 2).SequenceEqual(new int[] {0, 2, 0, 2, 0}));
+            IsTrue(Loops.Range(3).Cycle().Take(8).Where(0, 2).SequenceEqual(new[] {0, 2, 0, 2, 0}));
         }
         [TestMethod] public void Except()
         {
-            IsTrue(Loops.Range(3).Cycle().Take(8).Except(1).SequenceEqual(new int[] {0, 2, 0, 2, 0}));
+            IsTrue(Loops.Range(3).Cycle().Take(8).Except(1).SequenceEqual(new[] {0, 2, 0, 2, 0}));
         }
         [TestMethod] public void PositionBind()
         {
             IsTrue(
-                Loops.Range(4).PositionBind().Select(a => a.Item2).SequenceEqual(new Loops.Position[]
+                Loops.Range(4).PositionBind().Select(a => a.Item2).SequenceEqual(new[]
                 {
                     Loops.Position.First | Loops.Position.Middle, Loops.Position.Middle, Loops.Position.Middle,
                     Loops.Position.Middle | Loops.Position.Last
@@ -505,22 +505,22 @@ namespace CoreTest
         }
         [TestMethod] public void Enum()
         {
-            IsTrue(Loops.Enum<Sample>().SequenceEqual(new Sample[] {Sample.f, Sample.s, Sample.t, Sample.e}));
+            IsTrue(Loops.Enum<Sample>().SequenceEqual(new[] {Sample.f, Sample.s, Sample.t, Sample.e}));
         }
         [TestMethod] public void EnumFlags()
         {
             var val = Loops.EnumFlags<SampleFlags>().ToArray();
-            IsTrue(val.SequenceEqual(new SampleFlags[] {SampleFlags.f, SampleFlags.s, SampleFlags.t, SampleFlags.e}));
+            IsTrue(val.SequenceEqual(new[] {SampleFlags.f, SampleFlags.s, SampleFlags.t, SampleFlags.e}));
         }
         [TestMethod] public void YieldAggregate()
         {
-            IsTrue(Loops.YieldAggregate<Tuple<int,int>>(a=>Tuple.Create(a.Item2, a.Item1 + a.Item2), Tuple.Create(1,0)).Take(13).Select(a=>a.Item2).SequenceEqual(new int[] {0,1,1,2,3,5,8,13,21,34,55,89,144}));
+            IsTrue(Loops.YieldAggregate<Tuple<int,int>>(a=>Tuple.Create(a.Item2, a.Item1 + a.Item2), Tuple.Create(1,0)).Take(13).Select(a=>a.Item2).SequenceEqual(new[] {0,1,1,2,3,5,8,13,21,34,55,89,144}));
         }
         [TestMethod]
         public void YieldAggregateTwo()
         {
-            var val = new int[] {0, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144};
-            IsTrue(val.YieldAggregate((a,b)=>a+b,0).SequenceEqual(new int[] {0,1,2,4,7,12,20,33,54,88,143,232,376}));
+            var val = new[] {0, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144};
+            IsTrue(val.YieldAggregate((a,b)=>a+b,0).SequenceEqual(new[] {0,1,2,4,7,12,20,33,54,88,143,232,376}));
         }
     }
     [TestClass]
@@ -528,36 +528,36 @@ namespace CoreTest
     {
         [TestMethod] public void SingleAll()
         {
-            IsTrue(Loops.Range(3).Join().Select(a => a.Item1 * 10 + a.Item2).SequenceEqual(new int[] {0, 1, 2, 10, 11, 12, 20, 21, 22}));
+            IsTrue(Loops.Range(3).Join().Select(a => a.Item1 * 10 + a.Item2).SequenceEqual(new[] {0, 1, 2, 10, 11, 12, 20, 21, 22}));
         }
         [TestMethod] public void SingleNoS()
         {
             IsTrue(
-                Loops.Range(3).Join(Loops.CartesianType.NoSymmatry).Select(a => a.Item1 * 10 + a.Item2).SequenceEqual(new int[]
+                Loops.Range(3).Join(Loops.CartesianType.NoSymmatry).Select(a => a.Item1 * 10 + a.Item2).SequenceEqual(new[]
                 {00, 10, 11, 20, 21, 22}));
         }
         [TestMethod] public void SingleNoR()
         {
             IsTrue(
-                Loops.Range(3).Join(Loops.CartesianType.NoReflexive).Select(a => a.Item1 * 10 + a.Item2).SequenceEqual(new int[]
+                Loops.Range(3).Join(Loops.CartesianType.NoReflexive).Select(a => a.Item1 * 10 + a.Item2).SequenceEqual(new[]
                 {1, 2, 10, 12, 20, 21}));
         }
         [TestMethod] public void SingleNoSoR()
         {
             IsTrue(
                 Loops.Range(3).Join(Loops.CartesianType.NoReflexive | Loops.CartesianType.NoSymmatry).Select(a => a.Item1 * 10 + a.Item2)
-                     .SequenceEqual(new int[] {10, 20, 21}));
+                     .SequenceEqual(new[] {10, 20, 21}));
         }
         [TestMethod] public void DoubleAll()
         {
             IsTrue(
-                Loops.Range(3).Join(Loops.Range(1, 4)).Select(a => a.Item1 * 10 + a.Item2).SequenceEqual(new int[]
+                Loops.Range(3).Join(Loops.Range(1, 4)).Select(a => a.Item1 * 10 + a.Item2).SequenceEqual(new[]
                 {01, 02, 03, 11, 12, 13, 21, 22, 23}));
         }
         [TestMethod] public void TripleAll()
         {
             IsTrue(
-                Loops.Range(3).Join(Loops.Range(1, 4), Loops.Range(2)).Select(a => a.Item1 * 100 + a.Item2 * 10 + a.Item3).SequenceEqual(new int[]
+                Loops.Range(3).Join(Loops.Range(1, 4), Loops.Range(2)).Select(a => a.Item1 * 100 + a.Item2 * 10 + a.Item3).SequenceEqual(new[]
                 {010, 011, 020, 021, 030, 031, 110, 111, 120, 121, 130, 131, 210, 211, 220, 221, 230, 231}));
         }
         [TestMethod] public void CartesSimple()
@@ -632,11 +632,11 @@ namespace CoreTest
     {
         [TestMethod] public void Simple()
         {
-            var val = new int[] {0, 3, 6, 12, 0, 9, 2, 5, 14, 1, 12, 0};
+            var val = new[] {0, 3, 6, 12, 0, 9, 2, 5, 14, 1, 12, 0};
             var s = val.Split(new EqualityFunctionComparer<int>(a => a % 3));
             IsTrue(
                 s.SequenceEqual(
-                    new int[][] {new int[] {0, 3, 6, 12, 0, 9}, new int[] {2, 5, 14}, new int[] {1}, new int[] {12, 0}},
+                    new[] {new[] {0, 3, 6, 12, 0, 9}, new[] {2, 5, 14}, new[] {1}, new[] {12, 0}},
                     new EqualityFunctionComparer<IEnumerable<int>>((a, b) => a.SequenceEqual(b), ints => ints.GetHashCode())));
         }
     }

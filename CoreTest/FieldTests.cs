@@ -211,34 +211,34 @@ namespace CoreTest
             val.CheckOne(1);
             val.CheckBase(Math.E);
             val.CheckNegativeOne(-1);
-            val.CheckNegate(new double[] {1, -1, 5, -5, 0.3, -0.3, -2.817, 2.817, 0, 0, Math.PI, -Math.PI}.Attach(a => -a));
-            val.CheckInvert(new double[] {1, 1, 0.25, 4, 9, 1.0 / 9, -5, -0.2}.Attach(a => 1.0 / a));
-            val.CheckProduct(new double[] {0, 2, 0, 3, 6, 18, 0.25, 4, 1, 9, 0.23, 2.07, 1.25, 6.32, 7.9}.Group2().Attach((a, b) => a * b));
+            val.CheckNegate(new[] {1, -1, 5, -5, 0.3, -0.3, -2.817, 2.817, 0, 0, Math.PI, -Math.PI}.Attach(a => -a));
+            val.CheckInvert(new[] {1, 1, 0.25, 4, 9, 1.0 / 9, -5, -0.2}.Attach(a => 1.0 / a));
+            val.CheckProduct(new[] {0, 2, 0, 3, 6, 18, 0.25, 4, 1, 9, 0.23, 2.07, 1.25, 6.32, 7.9}.Group2().Attach((a, b) => a * b));
             val.CheckDivide(
-                new double[] {0, 2, 0, 3, 6, 0.5, 0.25, 4, 0.0625, 9, 0.24, 37.5, 1.25, 6.32, 0.19778481012658227848101265822785}.Group2().Attach(
+                new[] {0, 2, 0, 3, 6, 0.5, 0.25, 4, 0.0625, 9, 0.24, 37.5, 1.25, 6.32, 0.19778481012658227848101265822785}.Group2().Attach(
                     (a, b) => a / b));
-            val.CheckMod(new double[] {5, 3, 2, 12, 2.2, 1, 5.3, 1.1, 0.9}.Group2().Attach((a, b) => a % b));
-            val.CheckSum(new double[] {0, 1, 1, 6.2, 8.3, 14.5, -2, 3, 1, 85, 100.32, 185.32}.Group2().Attach((a, b) => a + b));
-            val.CheckDifference(new double[] {2, 1, 1, 3, 9, -6, 1.2, 1, 0.2}.Group2().Attach((a, b) => a - b));
-            val.CheckConjugate(new double[] {1, 1, 0, 0, -3, -3, 5, 5, 0.69, 0.69}.Attach(a => a));
-            val.Checkpow(new double[] {1, 6, 112, 2, 12544, 6, 0.5, 2.4494897427831780981972840747059, 0.5, 0.7, 0.61557220667245814224969653458387}
+            val.CheckMod(new[] {5, 3, 2, 12, 2.2, 1, 5.3, 1.1, 0.9}.Group2().Attach((a, b) => a % b));
+            val.CheckSum(new[] {0, 1, 1, 6.2, 8.3, 14.5, -2, 3, 1, 85, 100.32, 185.32}.Group2().Attach((a, b) => a + b));
+            val.CheckDifference(new[] {2, 1, 1, 3, 9, -6, 1.2, 1, 0.2}.Group2().Attach((a, b) => a - b));
+            val.CheckConjugate(new[] {1, 1, 0, 0, -3, -3, 5, 5, 0.69, 0.69}.Attach(a => a));
+            val.Checkpow(new[] {1, 6, 112, 2, 12544, 6, 0.5, 2.4494897427831780981972840747059, 0.5, 0.7, 0.61557220667245814224969653458387}
                 .Group2().Attach((a, b) => a.pow(b)));
-            val.CheckLog(new double[] {7.8, 2.0541237336955460528479733452617, Math.E, 1, 1000, 6.9077552789821370520539743640531}.Attach(a => a.log()));
-            val.CheckDouble(new double[] {1.2, 6, 0, -0.0002}.Attach(a => (double?)a));
-            val.CheckString(new double[] {1.2, 6, 0, -0.0002}.Attach(a => a.ToString()));
+            val.CheckLog(new[] {7.8, 2.0541237336955460528479733452617, Math.E, 1, 1000, 6.9077552789821370520539743640531}.Attach(a => a.log()));
+            val.CheckDouble(new[] {1.2, 6, 0, -0.0002}.Attach(a => (double?)a));
+            val.CheckString(new[] {1.2, 6, 0, -0.0002}.Attach(a => a.ToString()));
             val.CheckInvertible(true);
             val.CheckParsable(true);
             val.CheckModuloable(true);
             val.CheckNegatable(true);
-            val.CheckIsNegative(new double[] {1.5, 0.0, 0.2}.Attach(a => a < 0));
+            val.CheckIsNegative(new[] {1.5, 0.0, 0.2}.Attach(a => a < 0));
             val.CheckOrder(OrderType.TotalOrder);
             val.CheckComparer(-123.01, -123, -20, -9, 0, 1, 10, 52, 10000);
             val.CheckAbs(new double[] {0, 0, -2, 2, 3, 3, -3, 3, -1000, 1000, 1000, 1000}.Attach(a => a.abs()));
-            val.CheckFromInt(new int[] {0, 3, -2, 4, 9, 4}.Attach(a => (double)a));
-            val.CheckFromFraction(new Tuple<int, int>[] {Tuple.Create(0, 9), Tuple.Create(9, 8), Tuple.Create(-8, 1)}.Attach((a, b) => a / (double)b));
-            val.CheckPow(new Tuple<double, int>[] {Tuple.Create(0.0, 9), Tuple.Create(9.0, 3), Tuple.Create(-8.0, 1)}.Attach((a, b) => a.pow(b)));
-            val.CheckFactorial(new int[] {0, 9, 3}.Attach(a => (double)a.factorial()));
-            val.CheckParse(new string[] {"1.5", "0.0", "-0.0002"}.Attach(double.Parse));
+            val.CheckFromInt(new[] {0, 3, -2, 4, 9, 4}.Attach(a => (double)a));
+            val.CheckFromFraction(new[] {Tuple.Create(0, 9), Tuple.Create(9, 8), Tuple.Create(-8, 1)}.Attach((a, b) => a / (double)b));
+            val.CheckPow(new[] {Tuple.Create(0.0, 9), Tuple.Create(9.0, 3), Tuple.Create(-8.0, 1)}.Attach((a, b) => a.pow(b)));
+            val.CheckFactorial(new[] {0, 9, 3}.Attach(a => (double)a.factorial()));
+            val.CheckParse(new[] {"1.5", "0.0", "-0.0002"}.Attach(double.Parse));
         }
         [TestMethod] public void ComplexNumberTest()
         {
@@ -251,21 +251,21 @@ namespace CoreTest
                 new ComplexNumber[] {1, -1, 5, -5, 0.3, (-0.3), -2.817, 2.817, 0, 0, Math.PI, -Math.PI}.Attach(a => -a));
             val.CheckInvert(new ComplexNumber[] {1, 1, 0.25, 4, 9, 1.0 / 9, -5, -0.2}.Attach(a => 1.0 / a));
             val.CheckProduct(
-                new ComplexNumber[] {0, 2, 0, 3, 6, 18, 0.25, 4, 1, 9, 0.23, 2.07, 1.25, 6.32, 7.9, ComplexNumber.ImaginaryUnit}.Group2().Attach(
+                new[] {0, 2, 0, 3, 6, 18, 0.25, 4, 1, 9, 0.23, 2.07, 1.25, 6.32, 7.9, ComplexNumber.ImaginaryUnit}.Group2().Attach(
                     (a, b) => a * b));
             val.CheckDivide(
-                new ComplexNumber[]
+                new[]
                 {
                     0, 2, 0, 3, 6, 0.5, 0.25, 4, 0.0625, 9, 0.24, 37.5, 1.25, 6.32,
                     0.19778481012658227848101265822785, ComplexNumber.ImaginaryUnit
                 }.Group2().Attach((a, b) => a / b));
-            val.CheckMod(new ComplexNumber[] {5, 3, 2, 12, 2.2, 1, 5.3, 1.1, 0.9, ComplexNumber.ImaginaryUnit }.Group2().Attach((a, b) => a % b));
+            val.CheckMod(new[] {5, 3, 2, 12, 2.2, 1, 5.3, 1.1, 0.9, ComplexNumber.ImaginaryUnit }.Group2().Attach((a, b) => a % b));
             val.CheckSum(
                 new ComplexNumber[] {0, 1, 1, 6.2, 8.3, 14.5, -2, 3, 1, 85, 100.32, 185.32}.Group2().Attach((a, b) => a + b));
-            val.CheckDifference(new ComplexNumber[] {2, 1, 1, 3, 9, -6, 1.2, 1, 0.2, ComplexNumber.ImaginaryUnit }.Group2().Attach((a, b) => a - b));
-            val.CheckConjugate(new ComplexNumber[] {1, 1, 0, 0, -3, -3, 5, 5, 0.69, 0.69, ComplexNumber.ImaginaryUnit }.Attach(a => a.Conjugate()));
+            val.CheckDifference(new[] {2, 1, 1, 3, 9, -6, 1.2, 1, 0.2, ComplexNumber.ImaginaryUnit }.Group2().Attach((a, b) => a - b));
+            val.CheckConjugate(new[] {1, 1, 0, 0, -3, -3, 5, 5, 0.69, 0.69, ComplexNumber.ImaginaryUnit }.Attach(a => a.Conjugate()));
             val.Checkpow(
-                new ComplexNumber[]
+                new[]
                 {
                     1, 6, 112, 2, 12544, 6, 0.5, 2.4494897427831780981972840747059, 0.5, 0.7,
                     0.61557220667245814224969653458387, ComplexNumber.ImaginaryUnit
@@ -283,13 +283,13 @@ namespace CoreTest
             val.CheckOrder(OrderType.PartialOrder);
             val.CheckComparer(0, 1, 10, 52, 10000);
             val.CheckAbs(new ComplexNumber[] {0, 0, -2, 2, 3, 3, -3, 3, -1000, 1000, 1000, 1000}.Attach(a => (ComplexNumber)a.abs()));
-            val.CheckFromInt(new int[] {0, 3, -2, 4, 9, 4}.Attach(a => (ComplexNumber)a));
-            val.CheckFromFraction(new Tuple<int, int>[] {Tuple.Create(0, 9), Tuple.Create(9, 8), Tuple.Create(-8, 1)}.Attach((a, b) => (ComplexNumber)a / b));
+            val.CheckFromInt(new[] {0, 3, -2, 4, 9, 4}.Attach(a => (ComplexNumber)a));
+            val.CheckFromFraction(new[] {Tuple.Create(0, 9), Tuple.Create(9, 8), Tuple.Create(-8, 1)}.Attach((a, b) => (ComplexNumber)a / b));
             val.CheckPow(
-                new Tuple<ComplexNumber, int>[] {Tuple.Create((ComplexNumber)0.0, 9), Tuple.Create((ComplexNumber)9.0, 3), Tuple.Create((ComplexNumber)(-8.0), 1)}.Attach(
+                new[] {Tuple.Create((ComplexNumber)0.0, 9), Tuple.Create((ComplexNumber)9.0, 3), Tuple.Create((ComplexNumber)(-8.0), 1)}.Attach(
                     (a, b) => a.pow(b)));
-            val.CheckFactorial(new int[] {0, 9, 3}.Attach(a => (ComplexNumber)a.factorial()));
-            val.CheckParse(new string[] {"1.5", "0.0", "-0.0002"}.Attach(ComplexNumber.Parse));
+            val.CheckFactorial(new[] {0, 9, 3}.Attach(a => (ComplexNumber)a.factorial()));
+            val.CheckParse(new[] {"1.5", "0.0", "-0.0002"}.Attach(ComplexNumber.Parse));
         }
         [TestMethod] public void DecimalTest()
         {
@@ -299,52 +299,52 @@ namespace CoreTest
             val.CheckBase((decimal)Math.E);
             val.CheckNegativeOne(-1);
             val.CheckNegate(
-                new decimal[] {1, -1, 5, -5, (decimal)0.3, (decimal)-0.3, (decimal)-2.817, (decimal)2.817, 0, 0, (decimal)Math.PI, (decimal)-Math.PI}
+                new[] {1, -1, 5, -5, (decimal)0.3, (decimal)-0.3, (decimal)-2.817, (decimal)2.817, 0, 0, (decimal)Math.PI, (decimal)-Math.PI}
                     .Attach(a => -a));
-            val.CheckInvert(new decimal[] {1, 1, (decimal)0.25, 4, 9, (decimal)1.0 / 9, -5, (decimal)-0.2}.Attach(a => (decimal)1.0 / a));
+            val.CheckInvert(new[] {1, 1, (decimal)0.25, 4, 9, (decimal)1.0 / 9, -5, (decimal)-0.2}.Attach(a => (decimal)1.0 / a));
             val.CheckProduct(
-                new decimal[] {0, 2, 0, 3, 6, 18, (decimal)0.25, 4, 1, 9, (decimal)0.23, (decimal)2.07, (decimal)1.25, (decimal)6.32, (decimal)7.9}
+                new[] {0, 2, 0, 3, 6, 18, (decimal)0.25, 4, 1, 9, (decimal)0.23, (decimal)2.07, (decimal)1.25, (decimal)6.32, (decimal)7.9}
                     .Group2().Attach((a, b) => a * b));
             val.CheckDivide(
-                new decimal[]
+                new[]
                 {
                     0, 2, 3, 6, (decimal)0.5, (decimal)0.25, 4, (decimal)0.0625, 9, (decimal)0.24, (decimal)37.5, (decimal)1.25, (decimal)6.32,
                     (decimal)0.19778481012658227848101265822785
                 }.Group2().Attach((a, b) => a / b));
             val.CheckMod(
-                new decimal[] {5, 3, 2, 12, (decimal)2.2, 1, (decimal)5.3, (decimal)1.1, (decimal)0.9, 6, 0, 2}.Group2().Attach((a, b) => a % b));
+                new[] {5, 3, 2, 12, (decimal)2.2, 1, (decimal)5.3, (decimal)1.1, (decimal)0.9, 6, 0, 2}.Group2().Attach((a, b) => a % b));
             val.CheckSum(
-                new decimal[] {0, 1, 1, (decimal)6.2, (decimal)8.3, (decimal)14.5, -2, 3, 1, 85, (decimal)100.32, (decimal)185.32}.Group2().Attach(
+                new[] {0, 1, 1, (decimal)6.2, (decimal)8.3, (decimal)14.5, -2, 3, 1, 85, (decimal)100.32, (decimal)185.32}.Group2().Attach(
                     (a, b) => a + b));
-            val.CheckDifference(new decimal[] {2, 1, 1, 3, 9, -6, (decimal)1.2, 1, (decimal)0.2}.Group2().Attach((a, b) => a - b));
-            val.CheckConjugate(new decimal[] {1, 1, 0, 0, -3, -3, 5, 5, (decimal)0.69, (decimal)0.69}.Attach(a => a));
+            val.CheckDifference(new[] {2, 1, 1, 3, 9, -6, (decimal)1.2, 1, (decimal)0.2}.Group2().Attach((a, b) => a - b));
+            val.CheckConjugate(new[] {1, 1, 0, 0, -3, -3, 5, 5, (decimal)0.69, (decimal)0.69}.Attach(a => a));
             val.Checkpow(
-                new decimal[]
+                new[]
                 {
                     1, 6, 112, 2, 12544, 6, (decimal)0.5, (decimal)2.4494897427831780981972840747059, (decimal)0.5, (decimal)0.7,
                     (decimal)0.61557220667245814224969653458387
                 }.Group2().Attach((a, b) => a.pow(b)));
             val.CheckLog(
-                new decimal[]
+                new[]
                 {(decimal)7.8, (decimal)2.0541237336955460528479733452617, (decimal)Math.E, 1, 1000, (decimal)6.9077552789821370520539743640531}
                     .Attach(a => (decimal)((double)a).log()));
-            val.CheckDouble(new decimal[] {(decimal)1.2, 6, 0, (decimal)-0.0002}.Attach(a => (double?)a));
-            val.CheckString(new decimal[] {(decimal)1.2, 6, 0, (decimal)-0.0002}.Attach(a => a.ToString()));
+            val.CheckDouble(new[] {(decimal)1.2, 6, 0, (decimal)-0.0002}.Attach(a => (double?)a));
+            val.CheckString(new[] {(decimal)1.2, 6, 0, (decimal)-0.0002}.Attach(a => a.ToString()));
             val.CheckInvertible(true);
             val.CheckParsable(true);
             val.CheckModuloable(true);
             val.CheckNegatable(true);
-            val.CheckIsNegative(new decimal[] {(decimal)1.5, (decimal)0.0, (decimal)0.2}.Attach(a => a < 0));
+            val.CheckIsNegative(new[] {(decimal)1.5, (decimal)0.0, (decimal)0.2}.Attach(a => a < 0));
             val.CheckOrder(OrderType.TotalOrder);
             val.CheckComparer((decimal)-123.01, -123, -20, -9, 0, 1, 10, 52, 10000);
             val.CheckAbs(new decimal[] {0, 0, -2, 2, 3, 3, -3, 3, -1000, 1000, 1000, 1000}.Attach(a => a.abs()));
-            val.CheckFromInt(new int[] {0, 3, -2, 4, 9, 4}.Attach(a => (decimal)a));
-            val.CheckFromFraction(new Tuple<int, int>[] {Tuple.Create(0, 9), Tuple.Create(9, 8), Tuple.Create(-8, 1)}.Attach((a, b) => a / (decimal)b));
+            val.CheckFromInt(new[] {0, 3, -2, 4, 9, 4}.Attach(a => (decimal)a));
+            val.CheckFromFraction(new[] {Tuple.Create(0, 9), Tuple.Create(9, 8), Tuple.Create(-8, 1)}.Attach((a, b) => a / (decimal)b));
             val.CheckPow(
-                new Tuple<decimal, int>[] {Tuple.Create((decimal)0.0, 9), Tuple.Create((decimal)9.0, 3), Tuple.Create((decimal)-8.0, 1)}.Attach(
+                new[] {Tuple.Create((decimal)0.0, 9), Tuple.Create((decimal)9.0, 3), Tuple.Create((decimal)-8.0, 1)}.Attach(
                     (a, b) => a.pow(b)));
-            val.CheckFactorial(new int[] {0, 9, 3}.Attach(a => (decimal)a.factorial()));
-            val.CheckParse(new string[] {"1.5", "0.0", "-0.0002"}.Attach(decimal.Parse));
+            val.CheckFactorial(new[] {0, 9, 3}.Attach(a => (decimal)a.factorial()));
+            val.CheckParse(new[] {"1.5", "0.0", "-0.0002"}.Attach(decimal.Parse));
         }
         [TestMethod] public void RationalTest()
         {
@@ -373,7 +373,7 @@ namespace CoreTest
             val.CheckDifference(new BigRational[] {2, 1, 1, 3, 9, -6, 1.2, 1, 0.2, 21}.Group2().Attach((a, b) => a - b));
             val.CheckConjugate(new BigRational[] {1, 1, 0, 0, -3, -3, 5, 5, 0.69, 0.69}.Attach(a => a));
             val.Checkpow(
-                new BigRational[]
+                new[]
                 {
                     new BigRational(1, 3), new BigRational(2, 1), new BigRational(7, 8), new BigRational(2, 3)
                 }.Group2().Attach((a, b) => a.pow(b, new BigRational(1, a.Denominator))));
@@ -391,10 +391,10 @@ namespace CoreTest
             val.CheckOrder(OrderType.TotalOrder);
             val.CheckComparer(-123.01, -123, -20, -9, 0, 1, 10, 52, 10000);
             val.CheckAbs(new BigRational[] {0, 0, -2, 2, 3, 3, -3, 3, -1000, 1000, 1000, 1000}.Attach(a => a.abs()));
-            val.CheckFromInt(new int[] {0, 3, -2, 4, 9, 4}.Attach(a => (BigRational)a));
+            val.CheckFromInt(new[] {0, 3, -2, 4, 9, 4}.Attach(a => (BigRational)a));
             val.CheckFromFraction(
-                new Tuple<int, int>[] {Tuple.Create(0, 9), Tuple.Create(9, 8), Tuple.Create(-8, 1)}.Attach((a, b) => a / (BigRational)b));
-            var parr = new Tuple<BigRational, int>[]
+                new[] {Tuple.Create(0, 9), Tuple.Create(9, 8), Tuple.Create(-8, 1)}.Attach((a, b) => a / (BigRational)b));
+            var parr = new[]
             {Tuple.Create((BigRational)0.0, 9), Tuple.Create((BigRational)9.0, 3), Tuple.Create((BigRational)(-8.0), 1)}.Attach((a, b) =>
             {
                 var ret= a.pow(b);
@@ -402,8 +402,8 @@ namespace CoreTest
             }).ToArray();
             val.CheckPow(
                 parr);
-            val.CheckFactorial(new int[] {0, 9, 3}.Attach(a => (BigRational)a.factorial()));
-            val.CheckParse(new string[] {"1.5", "0.0", "-0.0002"}.Attach(a => new BigRational(double.Parse(a))));
+            val.CheckFactorial(new[] {0, 9, 3}.Attach(a => (BigRational)a.factorial()));
+            val.CheckParse(new[] {"1.5", "0.0", "-0.0002"}.Attach(a => new BigRational(double.Parse(a))));
         }
         [TestMethod] public void FloatTest()
         {
@@ -413,48 +413,48 @@ namespace CoreTest
             val.CheckBase((float)Math.E);
             val.CheckNegativeOne(-1);
             val.CheckNegate(
-                new float[] { 1, -1, 5, -5, (float)0.3, (float)-0.3, (float)-2.817, (float)2.817, 0, 0, (float)Math.PI, (float)-Math.PI }.Attach(a => -a));
-            val.CheckInvert(new float[] { 1, 1, (float)0.25, 4, 9, (float)1.0 / 9, -5, (float)-0.2 }.Attach(a => (float)1.0 / a));
+                new[] { 1, -1, 5, -5, (float)0.3, (float)-0.3, (float)-2.817, (float)2.817, 0, 0, (float)Math.PI, (float)-Math.PI }.Attach(a => -a));
+            val.CheckInvert(new[] { 1, 1, (float)0.25, 4, 9, (float)1.0 / 9, -5, (float)-0.2 }.Attach(a => (float)1.0 / a));
             val.CheckProduct(
-                new float[] { 0, 2, 0, 3, 6, 18, (float)0.25, 4, 1, 9, (float)0.23, (float)2.07, (float)1.25, (float)6.32, (float)7.9 }.Group2().Attach(
+                new[] { 0, 2, 0, 3, 6, 18, (float)0.25, 4, 1, 9, (float)0.23, (float)2.07, (float)1.25, (float)6.32, (float)7.9 }.Group2().Attach(
                     (a, b) => a * b));
             val.CheckDivide(
-                new float[]
+                new[]
                 {
                     0, 2, 0, 3, 6, (float)0.5, (float)0.25, 4, (float)0.0625, 9, (float)0.24, (float)37.5, (float)1.25, (float)6.32,
                     (float)0.19778481012658227848101265822785
                 }.Group2().Attach((a, b) => a / b));
-            val.CheckMod(new float[] { 5, 3, 2, 12, (float)2.2, 1, (float)5.3, (float)1.1, (float)0.9 }.Group2().Attach((a, b) => a % b));
+            val.CheckMod(new[] { 5, 3, 2, 12, (float)2.2, 1, (float)5.3, (float)1.1, (float)0.9 }.Group2().Attach((a, b) => a % b));
             val.CheckSum(
-                new float[] { 0, 1, 1, (float)6.2, (float)8.3, (float)14.5, -2, 3, 1, 85, (float)100.32, (float)185.32 }.Group2().Attach((a, b) => a + b));
-            val.CheckDifference(new float[] { 2, 1, 1, 3, 9, -6, (float)1.2, 1, (float)0.2 }.Group2().Attach((a, b) => a - b));
-            val.CheckConjugate(new float[] { 1, 1, 0, 0, -3, -3, 5, 5, (float)0.69, (float)0.69 }.Attach(a => a));
+                new[] { 0, 1, 1, (float)6.2, (float)8.3, (float)14.5, -2, 3, 1, 85, (float)100.32, (float)185.32 }.Group2().Attach((a, b) => a + b));
+            val.CheckDifference(new[] { 2, 1, 1, 3, 9, -6, (float)1.2, 1, (float)0.2 }.Group2().Attach((a, b) => a - b));
+            val.CheckConjugate(new[] { 1, 1, 0, 0, -3, -3, 5, 5, (float)0.69, (float)0.69 }.Attach(a => a));
             val.Checkpow(
-                new float[]
+                new[]
                 {
                     1, 6, 112, 2, 12544, 6, (float)0.5, (float)2.4494897427831780981972840747059, (float)0.5, (float)0.7,
                     (float)0.61557220667245814224969653458387
                 }.Group2().Attach((a, b) => a.pow(b)));
             val.CheckLog(
-                new float[] { (float)7.8, (float)2.0541237336955460528479733452617, (float)Math.E, 1, 1000, (float)6.9077552789821370520539743640531 }
+                new[] { (float)7.8, (float)2.0541237336955460528479733452617, (float)Math.E, 1, 1000, (float)6.9077552789821370520539743640531 }
                     .Attach(a => (float)((double)a).log()));
-            val.CheckDouble(new float[] { (float)1.2, 6, 0, (float)-0.0002 }.Attach(a => (double?)a));
-            val.CheckString(new float[] { (float)1.2, 6, 0, (float)-0.0002 }.Attach(a => a.ToString()));
+            val.CheckDouble(new[] { (float)1.2, 6, 0, (float)-0.0002 }.Attach(a => (double?)a));
+            val.CheckString(new[] { (float)1.2, 6, 0, (float)-0.0002 }.Attach(a => a.ToString()));
             val.CheckInvertible(true);
             val.CheckParsable(true);
             val.CheckModuloable(true);
             val.CheckNegatable(true);
-            val.CheckIsNegative(new float[] { (float)1.5, (float)0.0, (float)0.2 }.Attach(a => a < 0));
+            val.CheckIsNegative(new[] { (float)1.5, (float)0.0, (float)0.2 }.Attach(a => a < 0));
             val.CheckOrder(OrderType.TotalOrder);
             val.CheckComparer((float)-123.01, -123, -20, -9, 0, 1, 10, 52, 10000);
             val.CheckAbs(new float[] { 0, 0, -2, 2, 3, 3, -3, 3, -1000, 1000, 1000, 1000 }.Attach(a => a.abs()));
-            val.CheckFromInt(new int[] { 0, 3, -2, 4, 9, 4 }.Attach(a => (float)a));
-            val.CheckFromFraction(new Tuple<int, int>[] { Tuple.Create(0, 9), Tuple.Create(9, 8), Tuple.Create(-8, 1) }.Attach((a, b) => a / (float)b));
+            val.CheckFromInt(new[] { 0, 3, -2, 4, 9, 4 }.Attach(a => (float)a));
+            val.CheckFromFraction(new[] { Tuple.Create(0, 9), Tuple.Create(9, 8), Tuple.Create(-8, 1) }.Attach((a, b) => a / (float)b));
             val.CheckPow(
-                new Tuple<float, int>[] { Tuple.Create((float)0.0, 9), Tuple.Create((float)9.0, 3), Tuple.Create((float)-8.0, 1) }.Attach(
+                new[] { Tuple.Create((float)0.0, 9), Tuple.Create((float)9.0, 3), Tuple.Create((float)-8.0, 1) }.Attach(
                     (a, b) => a.pow(b)));
-            val.CheckFactorial(new int[] { 0, 9, 3 }.Attach(a => (float)a.factorial()));
-            val.CheckParse(new string[] { "1.5", "0.0", "-0.0002" }.Attach(float.Parse));
+            val.CheckFactorial(new[] { 0, 9, 3 }.Attach(a => (float)a.factorial()));
+            val.CheckParse(new[] { "1.5", "0.0", "-0.0002" }.Attach(float.Parse));
         }
     }
     [TestClass]
@@ -467,28 +467,28 @@ namespace CoreTest
             val.CheckOne(1);
             val.CheckBase(2);
             val.CheckNegativeOne(-1);
-            val.CheckNegate(new int[] {1, 5, 2, 6, 8, 4, -4, 2, 3, -7, 5, -1, 2}.Attach(a => -a));
-            val.CheckProduct(new int[] {0, 2, 0, 3, 6, 18, 3, 4, 1, 9, 6, 9, 8, 1, 6}.Group2().Attach((a, b) => a * b));
-            val.CheckMod(new int[] {5, 3, 2, 12, 4, 102, 8, 2, 91, 6}.Group2().Attach((a, b) => a % b));
-            val.CheckSum(new int[] {0, 1, 1, 62, 83, 145, -2, 3, 1, 85, 10032, 18532}.Group2().Attach((a, b) => a + b));
-            val.CheckDifference(new int[] {2, 1, 1, 3, 9, -6, 12, 1, 2}.Group2().Attach((a, b) => a - b));
-            val.CheckConjugate(new int[] {1, 1, 20, 0, -3, -13, 5, 15, 69, 169}.Attach(a => a));
-            val.Checkpow(new int[] {1, 6, 1, 2, 1, 6, 5, 4, 5, 7, 6}.Group2().Attach((a, b) => a.pow(b)));
-            val.CheckDouble(new int[] {1, 0, -3, -9, 10}.Attach(a => (double?)a));
-            val.CheckString(new int[] {1, 0, 8, 12, -95, -87, -100, 100}.Attach(a => a.ToString()));
+            val.CheckNegate(new[] {1, 5, 2, 6, 8, 4, -4, 2, 3, -7, 5, -1, 2}.Attach(a => -a));
+            val.CheckProduct(new[] {0, 2, 0, 3, 6, 18, 3, 4, 1, 9, 6, 9, 8, 1, 6}.Group2().Attach((a, b) => a * b));
+            val.CheckMod(new[] {5, 3, 2, 12, 4, 102, 8, 2, 91, 6}.Group2().Attach((a, b) => a % b));
+            val.CheckSum(new[] {0, 1, 1, 62, 83, 145, -2, 3, 1, 85, 10032, 18532}.Group2().Attach((a, b) => a + b));
+            val.CheckDifference(new[] {2, 1, 1, 3, 9, -6, 12, 1, 2}.Group2().Attach((a, b) => a - b));
+            val.CheckConjugate(new[] {1, 1, 20, 0, -3, -13, 5, 15, 69, 169}.Attach(a => a));
+            val.Checkpow(new[] {1, 6, 1, 2, 1, 6, 5, 4, 5, 7, 6}.Group2().Attach((a, b) => a.pow(b)));
+            val.CheckDouble(new[] {1, 0, -3, -9, 10}.Attach(a => (double?)a));
+            val.CheckString(new[] {1, 0, 8, 12, -95, -87, -100, 100}.Attach(a => a.ToString()));
             val.CheckInvertible(false);
             val.CheckParsable(true);
             val.CheckModuloable(true);
             val.CheckNegatable(true);
-            val.CheckIsNegative(new int[] {2, 0, -8, -1}.Attach(a => a < 0));
+            val.CheckIsNegative(new[] {2, 0, -8, -1}.Attach(a => a < 0));
             val.CheckOrder(OrderType.TotalOrder);
             val.CheckComparer(-123, -20, -9, 0, 1, 10, 52, 10000);
-            val.CheckAbs(new int[] {0, 0, -2, 2, 3, 3, -3, 3, -1000, 1000, 1000, 1000}.Attach(a => a.abs()));
-            val.CheckFromInt(new int[] {0, 3, -2, 4, 9, 4}.Attach(a => a));
-            val.CheckFromFraction(new Tuple<int, int>[] {Tuple.Create(0, 9), Tuple.Create(9, 8), Tuple.Create(-8, 1)}.Attach((a, b) => a / b));
-            val.CheckPow(new int[] {0, 1, 8, 3, 9, 0, 4, 5, 2, 8, 1}.Group2().Attach((a, b) => a.pow(b)));
-            val.CheckFactorial(new int[] {0, 9, 3}.Attach(a => (int)a.factorial()));
-            val.CheckParse(new string[] {"1", "0", "-98", "785"}.Attach(int.Parse));
+            val.CheckAbs(new[] {0, 0, -2, 2, 3, 3, -3, 3, -1000, 1000, 1000, 1000}.Attach(a => a.abs()));
+            val.CheckFromInt(new[] {0, 3, -2, 4, 9, 4}.Attach(a => a));
+            val.CheckFromFraction(new[] {Tuple.Create(0, 9), Tuple.Create(9, 8), Tuple.Create(-8, 1)}.Attach((a, b) => a / b));
+            val.CheckPow(new[] {0, 1, 8, 3, 9, 0, 4, 5, 2, 8, 1}.Group2().Attach((a, b) => a.pow(b)));
+            val.CheckFactorial(new[] {0, 9, 3}.Attach(a => (int)a.factorial()));
+            val.CheckParse(new[] {"1", "0", "-98", "785"}.Attach(int.Parse));
         }
         [TestMethod] public void LongTest()
         {
@@ -514,14 +514,14 @@ namespace CoreTest
             val.CheckOrder(OrderType.TotalOrder);
             val.CheckComparer(-123, -20, -9, 0, 1, 10, 52, 10000);
             val.CheckAbs(new long[] {0, 0, -2, 2, 3, 3, -3, 3, -1000, 1000, 1000, 1000}.Attach(a => a.abs()));
-            val.CheckFromInt(new int[] {0, 3, -2, 4, 9, 4}.Attach(a => (long)a));
-            val.CheckFromFraction(new Tuple<int, int>[] {Tuple.Create(0, 9), Tuple.Create(9, 8), Tuple.Create(-8, 1)}.Attach((a, b) => a / (long)b));
+            val.CheckFromInt(new[] {0, 3, -2, 4, 9, 4}.Attach(a => (long)a));
+            val.CheckFromFraction(new[] {Tuple.Create(0, 9), Tuple.Create(9, 8), Tuple.Create(-8, 1)}.Attach((a, b) => a / (long)b));
             val.CheckPow(
-                new Tuple<long, int>[]
+                new[]
                 {Tuple.Create<long, int>(12, 3), Tuple.Create<long, int>(1, 3), Tuple.Create<long, int>(0, 3), Tuple.Create<long, int>(12, 0)}.Attach(
                     (a, b) => a.pow(b)));
-            val.CheckFactorial(new int[] {0, 9, 3}.Attach(a => (long)a.factorial()));
-            val.CheckParse(new string[] {"1", "0", "-98", "785"}.Attach(long.Parse));
+            val.CheckFactorial(new[] {0, 9, 3}.Attach(a => (long)a.factorial()));
+            val.CheckParse(new[] {"1", "0", "-98", "785"}.Attach(long.Parse));
         }
         [TestMethod] public void ShortTest()
         {
@@ -547,15 +547,15 @@ namespace CoreTest
             val.CheckOrder(OrderType.TotalOrder);
             val.CheckComparer((short)-123, (short)-20, (short)-9, (short)0, (short)1, (short)10, (short)52, (short)10000);
             val.CheckAbs(new short[] {0, 0, -2, 2, 3, 3, -3, 3, -1000, 1000, 1000, 1000}.Attach(a => a.abs()));
-            val.CheckFromInt(new int[] {0, 3, -2, 4, 9, 4}.Attach(a => (short)a));
+            val.CheckFromInt(new[] {0, 3, -2, 4, 9, 4}.Attach(a => (short)a));
             val.CheckFromFraction(
-                new Tuple<int, int>[] {Tuple.Create(0, 9), Tuple.Create(9, 8), Tuple.Create(-8, 1)}.Attach((a, b) => (short)(a / (short)b)));
+                new[] {Tuple.Create(0, 9), Tuple.Create(9, 8), Tuple.Create(-8, 1)}.Attach((a, b) => (short)(a / (short)b)));
             val.CheckPow(
-                new Tuple<short, int>[]
+                new[]
                 {Tuple.Create<short, int>(12, 3), Tuple.Create<short, int>(1, 3), Tuple.Create<short, int>(0, 3), Tuple.Create<short, int>(12, 0)}
                     .Attach((a, b) => a.pow((short)b)));
-            val.CheckFactorial(new int[] {0, 9, 3}.Attach(a => (short)a.factorial()));
-            val.CheckParse(new string[] {"1", "0", "-98", "785"}.Attach(short.Parse));
+            val.CheckFactorial(new[] {0, 9, 3}.Attach(a => (short)a.factorial()));
+            val.CheckParse(new[] {"1", "0", "-98", "785"}.Attach(short.Parse));
         }
         [TestMethod] public void SbyteTest()
         {
@@ -581,15 +581,15 @@ namespace CoreTest
             val.CheckOrder(OrderType.TotalOrder);
             val.CheckComparer((sbyte)-123, (sbyte)-20, (sbyte)-9, (sbyte)0, (sbyte)1, (sbyte)10, (sbyte)52, (sbyte)100);
             val.CheckAbs(new sbyte[] {0, 0, -2, 2, 3, 3, -3, 3, -100}.Attach(a => a.abs()));
-            val.CheckFromInt(new int[] {0, 3, -2, 4, 9, 4}.Attach(a => (sbyte)a));
+            val.CheckFromInt(new[] {0, 3, -2, 4, 9, 4}.Attach(a => (sbyte)a));
             val.CheckFromFraction(
-                new Tuple<int, int>[] {Tuple.Create(0, 9), Tuple.Create(9, 8), Tuple.Create(-8, 1)}.Attach((a, b) => (sbyte)(a / (sbyte)b)));
+                new[] {Tuple.Create(0, 9), Tuple.Create(9, 8), Tuple.Create(-8, 1)}.Attach((a, b) => (sbyte)(a / (sbyte)b)));
             val.CheckPow(
-                new Tuple<sbyte, int>[]
+                new[]
                 {Tuple.Create<sbyte, int>(12, 3), Tuple.Create<sbyte, int>(1, 3), Tuple.Create<sbyte, int>(0, 3), Tuple.Create<sbyte, int>(12, 0)}
                     .Attach((a, b) => a.pow((sbyte)b)));
-            val.CheckFactorial(new int[] {0, 9, 3}.Attach(a => (sbyte)a.factorial()));
-            val.CheckParse(new string[] {"1", "0", "-98", "85"}.Attach(sbyte.Parse));
+            val.CheckFactorial(new[] {0, 9, 3}.Attach(a => (sbyte)a.factorial()));
+            val.CheckParse(new[] {"1", "0", "-98", "85"}.Attach(sbyte.Parse));
         }
         [TestMethod] public void BigintegerTest()
         {
@@ -615,17 +615,17 @@ namespace CoreTest
             val.CheckOrder(OrderType.TotalOrder);
             val.CheckComparer(-123, -20, -9, 0, 1, 10, 52, 10000);
             val.CheckAbs(new BigInteger[] {0, 0, -2, 2, 3, 3, -3, 3, -1000, 1000, 1000, 1000}.Attach(BigInteger.Abs));
-            val.CheckFromInt(new int[] {0, 3, -2, 4, 9, 4}.Attach(a => (BigInteger)a));
+            val.CheckFromInt(new[] {0, 3, -2, 4, 9, 4}.Attach(a => (BigInteger)a));
             val.CheckFromFraction(
-                new Tuple<int, int>[] {Tuple.Create(0, 9), Tuple.Create(9, 8), Tuple.Create(-8, 1)}.Attach((a, b) => a / (BigInteger)b));
+                new[] {Tuple.Create(0, 9), Tuple.Create(9, 8), Tuple.Create(-8, 1)}.Attach((a, b) => a / (BigInteger)b));
             val.CheckPow(
-                new Tuple<BigInteger, int>[]
+                new[]
                 {
                     Tuple.Create<BigInteger, int>(12, 3), Tuple.Create<BigInteger, int>(1, 3), Tuple.Create<BigInteger, int>(0, 3),
                     Tuple.Create<BigInteger, int>(12, 0)
                 }.Attach((a, b) => a.pow(b)));
-            val.CheckFactorial(new int[] {0, 9, 3}.Attach(a => (BigInteger)a.factorial()));
-            val.CheckParse(new string[] {"1", "0", "-98", "785"}.Attach(BigInteger.Parse));
+            val.CheckFactorial(new[] {0, 9, 3}.Attach(a => (BigInteger)a.factorial()));
+            val.CheckParse(new[] {"1", "0", "-98", "785"}.Attach(BigInteger.Parse));
         }
     }
     [TestClass]
@@ -653,15 +653,15 @@ namespace CoreTest
             val.CheckOrder(OrderType.TotalOrder);
             val.CheckComparer<uint>(0, 1, 10, 52, 10000);
             val.CheckAbs(new uint[] {0, 0, 2, 3, 1000}.Attach(a => a));
-            val.CheckFromInt(new int[] {0, 3, 2, 4, 9, 4}.Attach(a => (uint)a));
+            val.CheckFromInt(new[] {0, 3, 2, 4, 9, 4}.Attach(a => (uint)a));
             val.CheckFromFraction(
-                new Tuple<int, int>[] {Tuple.Create(0, 9), Tuple.Create(9, 8), Tuple.Create(8, 1)}.Attach((a, b) => (uint)a / (uint)b));
+                new[] {Tuple.Create(0, 9), Tuple.Create(9, 8), Tuple.Create(8, 1)}.Attach((a, b) => (uint)a / (uint)b));
             val.CheckPow(
-                new Tuple<uint, int>[]
+                new[]
                 {Tuple.Create<uint, int>(12, 3), Tuple.Create<uint, int>(1, 3), Tuple.Create<uint, int>(0, 3), Tuple.Create<uint, int>(12, 0)}.Attach(
                     (a, b) => a.pow((uint)b)));
-            val.CheckFactorial(new int[] {0, 9, 3}.Attach(a => (uint)a.factorial()));
-            val.CheckParse(new string[] {"1", "0", "98", "785"}.Attach(uint.Parse));
+            val.CheckFactorial(new[] {0, 9, 3}.Attach(a => (uint)a.factorial()));
+            val.CheckParse(new[] {"1", "0", "98", "785"}.Attach(uint.Parse));
         }
         [TestMethod] public void UlongTest()
         {
@@ -685,16 +685,16 @@ namespace CoreTest
             val.CheckOrder(OrderType.TotalOrder);
             val.CheckComparer<ulong>(0, 1, 10, 52, 10000);
             val.CheckAbs(new ulong[] {0, 0, 2, 3, 1000}.Attach(a => a));
-            val.CheckFromInt(new int[] {0, 3, 2, 4, 9, 4}.Attach(a => (ulong)a));
+            val.CheckFromInt(new[] {0, 3, 2, 4, 9, 4}.Attach(a => (ulong)a));
             val.CheckFromFraction(
-                new Tuple<int, int>[] {Tuple.Create(0, 9), Tuple.Create(9, 8), Tuple.Create(8, 1)}.Attach((a, b) => (ulong)a / (ulong)b));
+                new[] {Tuple.Create(0, 9), Tuple.Create(9, 8), Tuple.Create(8, 1)}.Attach((a, b) => (ulong)a / (ulong)b));
             val.CheckPow(
-                new Tuple<ulong, int>[]
+                new[]
                 {Tuple.Create<ulong, int>(12, 3), Tuple.Create<ulong, int>(1, 3), Tuple.Create<ulong, int>(0, 3), Tuple.Create<ulong, int>(12, 0)}
                     .Attach(
                         (a, b) => a.pow((ulong)b)));
-            val.CheckFactorial(new int[] {0, 9, 3}.Attach(a => a.factorial()));
-            val.CheckParse(new string[] {"1", "0", "98", "785"}.Attach(ulong.Parse));
+            val.CheckFactorial(new[] {0, 9, 3}.Attach(a => a.factorial()));
+            val.CheckParse(new[] {"1", "0", "98", "785"}.Attach(ulong.Parse));
         }
         [TestMethod] public void UshortTest()
         {
@@ -718,16 +718,16 @@ namespace CoreTest
             val.CheckOrder(OrderType.TotalOrder);
             val.CheckComparer<ushort>(0, 1, 10, 52, 10000);
             val.CheckAbs(new ushort[] {0, 0, 2, 3, 1000}.Attach(a => a));
-            val.CheckFromInt(new int[] {0, 3, 2, 4, 9, 4}.Attach(a => (ushort)a));
+            val.CheckFromInt(new[] {0, 3, 2, 4, 9, 4}.Attach(a => (ushort)a));
             val.CheckFromFraction(
-                new Tuple<int, int>[] {Tuple.Create(0, 9), Tuple.Create(9, 8), Tuple.Create(8, 1)}.Attach((a, b) => (ushort)((ushort)a / (ushort)b)));
+                new[] {Tuple.Create(0, 9), Tuple.Create(9, 8), Tuple.Create(8, 1)}.Attach((a, b) => (ushort)((ushort)a / (ushort)b)));
             val.CheckPow(
-                new Tuple<ushort, int>[]
+                new[]
                 {Tuple.Create<ushort, int>(12, 3), Tuple.Create<ushort, int>(1, 3), Tuple.Create<ushort, int>(0, 3), Tuple.Create<ushort, int>(12, 0)}
                     .Attach(
                         (a, b) => a.pow((ushort)b)));
-            val.CheckFactorial(new int[] {0, 9, 3}.Attach(a => (ushort)a.factorial()));
-            val.CheckParse(new string[] {"1", "0", "98", "785"}.Attach(ushort.Parse));
+            val.CheckFactorial(new[] {0, 9, 3}.Attach(a => (ushort)a.factorial()));
+            val.CheckParse(new[] {"1", "0", "98", "785"}.Attach(ushort.Parse));
         }
         [TestMethod] public void byteTest()
         {
@@ -751,15 +751,15 @@ namespace CoreTest
             val.CheckOrder(OrderType.TotalOrder);
             val.CheckComparer<byte>(0, 1, 10, 52, 100);
             val.CheckAbs(new byte[] {0, 0, 2, 3, 10}.Attach(a => a));
-            val.CheckFromInt(new int[] {0, 3, 2, 4, 9, 4}.Attach(a => (byte)a));
+            val.CheckFromInt(new[] {0, 3, 2, 4, 9, 4}.Attach(a => (byte)a));
             val.CheckFromFraction(
-                new Tuple<int, int>[] {Tuple.Create(0, 9), Tuple.Create(9, 8), Tuple.Create(8, 1)}.Attach((a, b) => (byte)((byte)a / (byte)b)));
+                new[] {Tuple.Create(0, 9), Tuple.Create(9, 8), Tuple.Create(8, 1)}.Attach((a, b) => (byte)((byte)a / (byte)b)));
             val.CheckPow(
-                new Tuple<byte, int>[]
+                new[]
                 {Tuple.Create<byte, int>(12, 3), Tuple.Create<byte, int>(1, 3), Tuple.Create<byte, int>(0, 3), Tuple.Create<byte, int>(12, 0)}.Attach(
                     (a, b) => a.pow((byte)b)));
-            val.CheckFactorial(new int[] {0, 9, 3}.Attach(a => (byte)a.factorial()));
-            val.CheckParse(new string[] {"1", "0", "98", "85"}.Attach(byte.Parse));
+            val.CheckFactorial(new[] {0, 9, 3}.Attach(a => (byte)a.factorial()));
+            val.CheckParse(new[] {"1", "0", "98", "85"}.Attach(byte.Parse));
         }
     }
     [TestClass]
@@ -771,21 +771,21 @@ namespace CoreTest
             val.CheckZero("");
             val.CheckOne("");
             val.CheckBase("");
-            val.CheckSum(false, new string[] {"a", "cas", "", "strion", "hello world", "sdad"}.Group2().Attach((a, b) => a + b));
+            val.CheckSum(false, new[] {"a", "cas", "", "strion", "hello world", "sdad"}.Group2().Attach((a, b) => a + b));
             val.CheckComparer("", "aaaaa", "bbbsd", "sretr", "t", "tttt", "z");
-            val.CheckFromInt(new int[] {0, 5, 1, 3, 9, 10}.Attach(a => new string(' ', a)));
-            val.CheckAbs(new string[] {"asd", "fddf", "tf", "oopopo"}.Attach(a => a));
-            val.CheckConjugate(new string[] {"asd", "fddf", "tf", "oopopo"}.Attach(a => a));
-            val.CheckIsNegative(new string[] {"asd", "fddf", "tf", "oopopo"}.Attach(a => false));
+            val.CheckFromInt(new[] {0, 5, 1, 3, 9, 10}.Attach(a => new string(' ', a)));
+            val.CheckAbs(new[] {"asd", "fddf", "tf", "oopopo"}.Attach(a => a));
+            val.CheckConjugate(new[] {"asd", "fddf", "tf", "oopopo"}.Attach(a => a));
+            val.CheckIsNegative(new[] {"asd", "fddf", "tf", "oopopo"}.Attach(a => false));
             val.CheckDouble(
-                new string[] {"12.6", "9", "87.12", "-3.6"}.Attach(a => (double?)double.Parse(a)).Concat(
-                    new string[] {"", "ab", "-ab"}.Attach(a => (double?)null)));
+                new[] {"12.6", "9", "87.12", "-3.6"}.Attach(a => (double?)double.Parse(a)).Concat(
+                    new[] {"", "ab", "-ab"}.Attach(a => (double?)null)));
             val.CheckInvertible(false);
             val.CheckNegatable(false);
             val.CheckModuloable(false);
-            val.CheckString(new string[] {"asd", "fddf", "tf", "oopopo"}.Attach(a => a));
+            val.CheckString(new[] {"asd", "fddf", "tf", "oopopo"}.Attach(a => a));
             val.CheckParsable(true);
-            val.CheckParse(new string[] {"asd", "fddf", "tf", "oopopo"}.Attach(a => a));
+            val.CheckParse(new[] {"asd", "fddf", "tf", "oopopo"}.Attach(a => a));
             val.CheckOrder(OrderType.TotalOrder);
         }
         [TestMethod] public void BoolTest()
@@ -795,36 +795,36 @@ namespace CoreTest
             val.CheckOne(true);
             val.CheckBase(true);
             val.CheckNegativeOne<bool>(true);
-            val.CheckNegate(new bool[] {true, false}.Attach(a => a));
-            val.CheckProduct(new bool[] {true, true, false, true, false, false}.Group2().Attach((a, b) => (a && b)));
-            val.CheckMod(new bool[] {true, true, false, true}.Group2().Attach((a, b) => false));
-            val.CheckSum(new bool[] {true, true, false, true, false, false}.Group2().Attach((a, b) => (a ^ b)));
-            val.CheckDifference(new bool[] {true, true, false, true, false, false}.Group2().Attach((a, b) => (a ^ !b)));
-            val.CheckConjugate(new bool[] {true, true, false, true, false, false}.Attach(a => a));
-            val.Checkpow(new bool[] {true, true, false, true}.Group2().Attach((a, b) => !b || a));
-            val.CheckDouble(new bool[] {true, false}.Attach<bool, double?>(a => a ? 1.0 : 0.0));
-            val.CheckString(new bool[] {true, false}.Attach(a => a.ToString()));
+            val.CheckNegate(new[] {true, false}.Attach(a => a));
+            val.CheckProduct(new[] {true, true, false, true, false, false}.Group2().Attach((a, b) => (a && b)));
+            val.CheckMod(new[] {true, true, false, true}.Group2().Attach((a, b) => false));
+            val.CheckSum(new[] {true, true, false, true, false, false}.Group2().Attach((a, b) => (a ^ b)));
+            val.CheckDifference(new[] {true, true, false, true, false, false}.Group2().Attach((a, b) => (a ^ !b)));
+            val.CheckConjugate(new[] {true, true, false, true, false, false}.Attach(a => a));
+            val.Checkpow(new[] {true, true, false, true}.Group2().Attach((a, b) => !b || a));
+            val.CheckDouble(new[] {true, false}.Attach<bool, double?>(a => a ? 1.0 : 0.0));
+            val.CheckString(new[] {true, false}.Attach(a => a.ToString()));
             val.CheckInvert(true.Enumerate().Attach(a => true));
             val.CheckInvertible(true);
             val.CheckParsable(true);
             val.CheckModuloable(true);
             val.CheckNegatable(true);
-            val.CheckIsNegative(new bool[] {true, false}.Attach(a => false));
+            val.CheckIsNegative(new[] {true, false}.Attach(a => false));
             val.CheckOrder(OrderType.ReflexiveZero);
             val.CheckComparer(false, true);
-            val.CheckAbs(new bool[] {true, false}.Attach(a => a));
-            val.CheckFromInt(new int[] {0, 3, -2, 4, 9, 4}.Attach(a => a.TrueMod(2) == 1));
+            val.CheckAbs(new[] {true, false}.Attach(a => a));
+            val.CheckFromInt(new[] {0, 3, -2, 4, 9, 4}.Attach(a => a.TrueMod(2) == 1));
             val.CheckFromFraction(
-                new Tuple<int, int>[] {Tuple.Create(0, 9), Tuple.Create(9, 1), Tuple.Create(-8, 1)}.Attach((a, b) => a.TrueMod(2) == 1));
+                new[] {Tuple.Create(0, 9), Tuple.Create(9, 1), Tuple.Create(-8, 1)}.Attach((a, b) => a.TrueMod(2) == 1));
             val.CheckPow(
-                new Tuple<bool, int>[]
+                new[]
                 {
                     Tuple.Create<bool, int>(true, 3), Tuple.Create<bool, int>(false, 3), Tuple.Create<bool, int>(false, 0),
                     Tuple.Create<bool, int>(true, 0)
                 }
                     .Attach((a, b) => a && b % 2 == 1));
-            val.CheckFactorial(new int[] {0, 9, 3}.Attach(a => a <= 1));
-            val.CheckParse(new string[] {"True", "False"}.Attach(bool.Parse));
+            val.CheckFactorial(new[] {0, 9, 3}.Attach(a => a <= 1));
+            val.CheckParse(new[] {"True", "False"}.Attach(bool.Parse));
         }
     }
 }

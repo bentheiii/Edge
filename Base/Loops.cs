@@ -731,7 +731,7 @@ namespace Edge.Looping
         }
         public static IEnumerable<T> Choose<T>(this IEnumerable<T> @this, IEnumerable<T> other, IComparer<T> chooser)
         {
-            return new IEnumerable<T>[] {@this,other}.Choose(a=>a.Length > 1 ? (chooser.Compare(a[0],a[1]) < 0 ? 0 : 1) : 0);
+            return new[] {@this,other}.Choose(a=>a.Length > 1 ? (chooser.Compare(a[0],a[1]) < 0 ? 0 : 1) : 0);
         }
         public static IEnumerable<T> Switch<T>(this IEnumerable<IEnumerable<T>> @this)
 	    {

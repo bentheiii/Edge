@@ -17,7 +17,7 @@ namespace CoreTest
             val[8] = 1;
             val[2] = 1;
             var seq = val.Take(9);
-            IsTrue(seq.SequenceEqual(new int[] {0, 0, 1, 0, 1, 0, 0, 0, 1}));
+            IsTrue(seq.SequenceEqual(new[] {0, 0, 1, 0, 1, 0, 0, 0, 1}));
         }
     }
 }

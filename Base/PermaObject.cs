@@ -738,7 +738,7 @@ namespace Edge.PermanentObject
             {
                 return
                     _dic.SelectMany(
-                        a => new string[] { NumberSerialization.FullCodeSerializer.EncodeSpecificLength(_kwrite(a.Key).Select(x=>(char)x).ConvertToString()), NumberSerialization.FullCodeSerializer.EncodeSpecificLength(a.Value.name)})
+                        a => new [] { NumberSerialization.FullCodeSerializer.EncodeSpecificLength(_kwrite(a.Key).Select(x=>(char)x).ConvertToString()), NumberSerialization.FullCodeSerializer.EncodeSpecificLength(a.Value.name)})
                         .ToPrintable("", "", "");
             }
             
@@ -844,7 +844,7 @@ namespace Edge.PermanentObject
                 {
                     V ret;
                     if (!TryGetValue(key,out ret))
-                        throw new ArgumentOutOfRangeException("key not found");
+                        throw new ArgumentOutOfRangeException(nameof(key));
                     return ret;
                 }
                 set
@@ -939,7 +939,7 @@ namespace Edge.PermanentObject
                     var defstring = this._definitions.value;
                     this._dic = new Dictionary<string, IPermaObject<T>>(defstring.Count(_defSeperator));
                     var keys = (defstring == ""
-                        ? System.Linq.Enumerable.Empty<string>() : defstring.Split(new string[] {_defSeperator}, StringSplitOptions.None));
+                        ? System.Linq.Enumerable.Empty<string>() : defstring.Split(new [] {_defSeperator}, StringSplitOptions.None));
                     foreach (string s in keys.Take(Math.Max(0,keys.Count()-1)))
                     {
                         this._dic[s] = new PermaObject<T>(_read, _write,
@@ -974,7 +974,7 @@ namespace Edge.PermanentObject
                 if (!_dic.ContainsKey(key))
                     return false;
                 StringBuilder newdef = new StringBuilder(_definitions.value.Length + Environment.NewLine.Length * 2);
-                foreach (string s in _definitions.value.Split(new string[] {_defSeperator}, StringSplitOptions.None))
+                foreach (string s in _definitions.value.Split(new[] {_defSeperator}, StringSplitOptions.None))
                 {
                     if (s.Equals(key))
                         continue;

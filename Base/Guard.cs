@@ -3,7 +3,7 @@ using Edge.SystemExtensions;
 
 namespace Edge.Guard
 {
-    public enum AccessType {Get, Set, other};
+    public enum AccessType {Get, Set, Other};
     public interface IGuard<T> : ICloneable
     {
         T value { get; set; }
@@ -116,10 +116,12 @@ namespace Edge.Guard
         }
         public override object Clone()
         {
-            var ret = new EventGuard<T>(value);
-            ret.accessed = this.accessed.Copy();
-            ret.changed = this.changed.Copy();
-            ret.drawn = this.drawn.Copy();
+            var ret = new EventGuard<T>(value)
+            {
+                accessed = this.accessed.Copy(),
+                changed = this.changed.Copy(),
+                drawn = this.drawn.Copy()
+            };
             return ret;
         }
         public override int GetHashCode()

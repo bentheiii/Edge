@@ -41,7 +41,7 @@ namespace CoreTest
         public void MultiplicationByScalar()
         {
             var val1 = Matrix<double>.fromArr(new double[,] { { 0, 1, 2 }, { 3, 4, 5 }, { 6, 7, 8 }, { 9, 10, 11 } });
-            Islike(val1 * 1.2, new double[,] { { 0, 1.2,2.4 }, { 3.6,4.8, 6 }, { 7.2, 8.4, 9.6 }, { 10.8, 12, 13.2 } });
+            Islike(val1 * 1.2, new[,] { { 0, 1.2,2.4 }, { 3.6,4.8, 6 }, { 7.2, 8.4, 9.6 }, { 10.8, 12, 13.2 } });
         }
         [TestMethod] public void Square()
         {
@@ -83,7 +83,7 @@ namespace CoreTest
         [TestMethod] public void Invert()
         {
             var val = Matrix<double>.fromArr(new double[,] {{1, 2, 3}, {6, 2, 4}, {8, 5, 2}}).inverse();
-            Islike(val, new double[,] {{-8.0 / 33, 1.0 / 6, 1.0 / 33}, {10.0 / 33, -1.0 / 3, 7.0 / 33}, {7.0 / 33, 1.0 / 6, -5.0 / 33}});
+            Islike(val, new[,] {{-8.0 / 33, 1.0 / 6, 1.0 / 33}, {10.0 / 33, -1.0 / 3, 7.0 / 33}, {7.0 / 33, 1.0 / 6, -5.0 / 33}});
         }
         [TestMethod] public void Transpose()
         {
@@ -114,7 +114,7 @@ namespace CoreTest
         [TestMethod] public void Exponentiation()
         {
             var val = Matrix<double>.fromArr(new double[,] { { 1, 2, 3 }, { 6, 2, 4 }, { 8, 5, 2 } }).exp(0.001);
-            Islike(val, new double[,] { { 8590.33, 5569.56, 5796.94 }, { 14415.8, 9346.83, 9728.13 }, { 16987.1, 11013.7, 11463.3 } });
+            Islike(val, new[,] { { 8590.33, 5569.56, 5796.94 }, { 14415.8, 9346.83, 9728.13 }, { 16987.1, 11013.7, 11463.3 } });
         }
         [TestMethod] public void Trace()
         {

@@ -464,7 +464,7 @@ namespace Edge.Units
                 Hours,
                 Minutes,
                 Seconds,
-                none
+                None
             }
             public static TimeSpan Divide(this TimeSpan t, double divisor)
             {
@@ -774,9 +774,9 @@ namespace Edge.Units
                 return DefaultParsers.Value.Process(s);
             }
 
-            private static readonly SyncPermaObject<string> _ExchangeRatePerma;
+            private static readonly SyncPermaObject<string> _exchangeRatePerma;
             private static bool _initialized;
-            private static readonly string _ExchangeRatesPermaPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + @"\Edge\" + "__Edge_Units_Money_ExchangeRates.xml";
+            private static readonly string _exchangeRatesPermaPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + @"\Edge\" + "__Edge_Units_Money_ExchangeRates.xml";
             // ReSharper disable once InconsistentNaming
             public static Money DollarUS { get; private set; }
             public static Money NewShekel { get; private set; }
@@ -789,8 +789,8 @@ namespace Edge.Units
                 NewShekel = new Money(0.26, DollarUS);
                 Yen = new Money(0.009, DollarUS);
 
-                Directory.CreateDirectory(System.IO.Path.GetDirectoryName(_ExchangeRatesPermaPath));
-                _ExchangeRatePerma = new SyncPermaObject<string>(Encoding.ASCII.GetString, Encoding.ASCII.GetBytes, _ExchangeRatesPermaPath, false, FileAccess.ReadWrite, FileShare.ReadWrite, valueIfCreated: "");
+                Directory.CreateDirectory(System.IO.Path.GetDirectoryName(_exchangeRatesPermaPath));
+                _exchangeRatePerma = new SyncPermaObject<string>(Encoding.ASCII.GetString, Encoding.ASCII.GetBytes, _exchangeRatesPermaPath, false, FileAccess.ReadWrite, FileShare.ReadWrite, valueIfCreated: "");
 
                 DefaultParsers = new Lazy<Funnel<string, Money>>(() => new Funnel<string, Money>(
                     new Parser<Money>($@"^({WordPlay.RegexDouble}) ?(\$|dollars?)$", m => new Money(double.Parse(m.Groups[1].Value), DollarUS)),
@@ -817,9 +817,9 @@ namespace Edge.Units
             public static bool updateRates(TimeSpan updateTimeTolerance, [CanBeNull] out Exception error)
             {
                 error = null;
-                if (_ExchangeRatePerma.timeSinceUpdate() < updateTimeTolerance && _initialized)
+                if (_exchangeRatePerma.timeSinceUpdate() < updateTimeTolerance && _initialized)
                     return false;
-                var doc = (_ExchangeRatePerma.timeSinceUpdate() < updateTimeTolerance && _ExchangeRatePerma.value.Length > 0) ? XPathMarksman.getDocFromString(_ExchangeRatePerma.value) : loadXml(out error);
+                var doc = (_exchangeRatePerma.timeSinceUpdate() < updateTimeTolerance && _exchangeRatePerma.value.Length > 0) ? XPathMarksman.getDocFromString(_exchangeRatePerma.value) : loadXml(out error);
                 if (error != null)
                 {
                     return false;
@@ -837,7 +837,7 @@ namespace Edge.Units
             private static XmlDocument loadXml(out Exception error)
             {
                 XmlDocument doc = WebGuard.LoadXmlDocumentFromUrl(@"http://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml", out error);
-                _ExchangeRatePerma.value = doc.InnerXml;
+                _exchangeRatePerma.value = doc.InnerXml;
                 return doc;
             }
             private static double getrate(XmlNode root, string identifier, XmlNamespaceManager xnsm)

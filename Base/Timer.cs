@@ -153,14 +153,14 @@ namespace Edge.Timer
 	public class ReaderTimer : TextReader, ITimer
 	{
 		private bool _disposed = false;
-		private readonly Func<ITimer, string> _WriteCalc;
+		private readonly Func<ITimer, string> _writeCalc;
 		private readonly ActiveTimer _active;
 		private volatile StringBuilder _buffer = new StringBuilder();
 		private readonly ISet<Thread> _readerthreads = new HashSet<Thread>();
 	    public ReaderTimer(Func<ITimer, string> writeCalc, Frequency f) : this(writeCalc, 1/f) { }
 	    public ReaderTimer(Func<ITimer, string> writeCalc, TimeSpan ticklength)
 		{
-			this._WriteCalc = writeCalc;
+			this._writeCalc = writeCalc;
 			_active = new ActiveTimer(ticklength);
 			_active.onTick += _active_onTick;
 			_active.Start();
@@ -230,7 +230,7 @@ namespace Edge.Timer
 		}
 		private void _active_onTick(object sender, EventArgs e)
 		{
-			this._buffer.Append(_WriteCalc((ITimer)sender));
+			this._buffer.Append(_writeCalc((ITimer)sender));
 			_buffer.AppendLine();
 			foreach (Thread thread in this._readerthreads)
 			{

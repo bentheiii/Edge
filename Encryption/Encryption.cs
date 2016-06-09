@@ -5,7 +5,6 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using Edge.Arrays;
-using Edge.Looping;
 using Edge.Serializations;
 using Edge.Streams;
 
@@ -137,21 +136,18 @@ namespace Edge.Crypto
         16 bits-iv of encryption
         16 (encrypted) bits of plaintext length (serialized in base-256, max input size is 2^64)
         the rest is encrypted plaintext+padding
+        size overhead: 96 bytes
         */
         public static byte[] Encrypt(byte[] plainText, byte[] key,int padding=0, Func<byte> padGenerator = null)
         {
             if (padGenerator != null && padding == 0)
                 throw new ArgumentException();
-            byte[] iv;
-            byte[] padded;
-            if (padding == 0)
-                padded = plainText;
-            else
-                padded = plainText.Concat(ArrayExtensions.Fill(padding,padGenerator)).ToArray(plainText.Length+padding);
+            var padded = padding == 0 ? plainText : plainText.Concat(ArrayExtensions.Fill(padding,padGenerator)).ToArray(plainText.Length+padding);
             var orglength = NumberSerialization.FullCodeSerializer.ToBytes(plainText.Length).ToArray();
             if (orglength.Length > ORIGINALSIZELENGTH)
                 throw new ArgumentException("plaintext too long");
             orglength = orglength.Concat(ArrayExtensions.Fill(ORIGINALSIZELENGTH - orglength.Length, (byte)0)).ToArray(ORIGINALSIZELENGTH);
+            byte[] iv;
             byte[] cypher = Encryption.Encrypt(orglength.Concat(padded).ToArray(), key, out iv);
             var hash = Sha2Hashing.Hash(iv.Concat(cypher));
             return hash.Concat(iv).Concat(cypher).ToArray(iv.Length + cypher.Length + hash.Length);
