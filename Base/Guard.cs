@@ -12,12 +12,10 @@ namespace Edge.Guard
     {
         public static bool CondSet<T>(this IGuard<T> @this, T val)
         {
-            if (@this != null)
-            {
-                @this.value = val;
-                return true;
-            }
-            return false;
+            if (@this == null)
+                return false;
+            @this.value = val;
+            return true;
         }
         public static T CondGet<T>(this IGuard<T> @this, T defval = default(T))
         {
@@ -25,12 +23,10 @@ namespace Edge.Guard
         }
         public static bool CondMutate<T>(this IGuard<T> @this, Func<T,T> val)
         {
-            if (@this != null)
-            {
-                @this.value = val(@this.value);
-                return true;
-            }
-            return false;
+            if (@this == null)
+                return false;
+            @this.value = val(@this.value);
+            return true;
         }
     }
     public class Guard<T> : IGuard<T>

@@ -560,6 +560,58 @@ namespace Edge.Looping
         {
             return @this.Select(a => Tuple.Create(a.Item1, a.Item2, a.Item3, a.Item4, selector(a.Item1, a.Item2, a.Item3, a.Item4)));
         }
+        public class ListZip<T> : LockedList<IEnumerable<T>>
+        {
+            private readonly IEnumerable<IList<T>> _sources;
+            public ListZip(IEnumerable<IList<T>> sources)
+            {
+                _sources = sources;
+            }
+            public override IEnumerator<IEnumerable<T>> GetEnumerator()
+            {
+                return Range(Count).Select(i => _sources.Select(a => a[i])).GetEnumerator();
+            }
+            public override int Count
+            {
+                get
+                {
+                    return _sources.Min(a => a.Count);
+                }
+            }
+            public override IEnumerable<T> this[int index]
+            {
+                get
+                {
+                    return _sources.Select(a => a[index]);
+                }
+            }
+        }
+        public class ListZip : LockedList<IEnumerable>
+        {
+            private readonly IEnumerable<IList> _sources;
+            public ListZip(IEnumerable<IList> sources)
+            {
+                _sources = sources;
+            }
+            public override IEnumerator<IEnumerable> GetEnumerator()
+            {
+                return Range(Count).Select(i => _sources.Select(a => a[i])).GetEnumerator();
+            }
+            public override int Count
+            {
+                get
+                {
+                    return _sources.Min(a => a.Count);
+                }
+            }
+            public override IEnumerable this[int index]
+            {
+                get
+                {
+                    return _sources.Select(a => a[index]);
+                }
+            }
+        }
         public static IEnumerable<IEnumerable<T>> Zip<T>(IEnumerable<IEnumerable<T>> @this)
         {
             var tor = @this.SelectToArray(a => a.GetEnumerator());
@@ -567,6 +619,10 @@ namespace Edge.Looping
             {
                 yield return tor.Select(a => a.Current);
             }
+        }
+        public static LockedList<IEnumerable<T>> Zip<T>(IEnumerable<IList<T>> @this)
+        {
+            return new ListZip<T>(@this);
         }
         public static IEnumerable<IEnumerable> Zip(IEnumerable<IEnumerable> @this)
         {
@@ -576,13 +632,17 @@ namespace Edge.Looping
                 yield return tor.Select(a=>a.Current);
             }
         }
+        public static LockedList<IEnumerable> Zip(IEnumerable<IList> @this)
+        {
+            return new ListZip(@this);
+        }
         public static IEnumerable<Tuple<T1>> Zip<T1>(this IEnumerable<T1> a)
         {
             return Zip(new IEnumerable[] { a }).Select(x => x.ToTuple<T1>());
         }
         public static IEnumerable<Tuple<T1,T2>> Zip<T1, T2>(this IEnumerable<T1> a, IEnumerable<T2> b)
         {
-            return Zip(new IEnumerable[] {a, b}).Select(x=>x.ToTuple<T1,T2>());
+            return Zip(new IEnumerable[] { a, b }).Select(x => x.ToTuple<T1, T2>());
         }
         public static IEnumerable<Tuple<T1, T2,T3>> Zip<T1, T2,T3>(this IEnumerable<T1> a, IEnumerable<T2> b, IEnumerable<T3> c)
         {

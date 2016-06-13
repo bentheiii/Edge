@@ -3,17 +3,13 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Net;
 using System.Numerics;
 using System.Text;
 using System.Threading;
 using CCDefault.Annotations;
 using Edge.Arrays;
-using Edge.Credentials;
 using Edge.Looping;
 using Edge.Path;
-using Edge.Ports;
-using Edge.Ports.MultiSocket;
 using Edge.Serializations;
 using Edge.Units.Time;
 using Edge.WordsPlay;
@@ -281,133 +277,6 @@ namespace Edge.PermanentObject
         {
             Dispose(true);
             GC.SuppressFinalize(this);
-        }
-    }
-    public class PortBoundPermaObject<T> : ISyncPermaObject<T>
-    {
-        [Serializable]
-        private class ValChangedNotification
-        {}
-        private readonly SyncPermaObject<T> _int;
-        private readonly IConnection _conn;
-        private readonly PermaObject<EndPoint> _permaPort;
-        public PortBoundPermaObject([CanBeNull] string name, bool deleteOnDispose = false, FileAccess access = FileAccess.ReadWrite, FileShare share = FileShare.None, FileMode mode = FileMode.OpenOrCreate, T valueIfCreated = default(T), bool allowCaching = true) : this(a => (T)Serialization.Deserialize(a), a=>Serialization.Serialize(a), name, deleteOnDispose, access, share, mode, valueIfCreated,allowCaching) { }
-        public PortBoundPermaObject(Func<byte[], T> read, Func<T, byte[]> write, string name, bool deleteOnDispose = false, FileAccess access = FileAccess.ReadWrite, FileShare share = FileShare.None, FileMode mode = FileMode.OpenOrCreate, T valueIfCreated = default(T), bool allowCaching = true)
-        {
-            Exception ex;
-            this._permaPort = new PermaObject<EndPoint>(FilePath.MutateFileName(name, a => "__PORT_" + a), deleteOnDispose,FileAccess.ReadWrite,FileShare.ReadWrite,mode, new IPEndPoint(IPAddress.None, 0),allowCaching);
-            EndPoint port = this._permaPort.tryParse(out ex);
-            if (ex != null || ((IPEndPoint)port).Address == IPAddress.None)
-            {
-                //port is undefined
-                _conn = MultiSocket.ConnectToStrippedMultiSocket(out port, new OpenCredentialValidator(), new Credential());
-                this._permaPort.value = port;
-            }
-            else
-            {
-                //port is defined
-                _conn = MultiSocket.ConnectToStrippedMultiSocket(port, new OpenCredentialValidator(), new Credential());
-            }
-            _int = new SyncPermaObject<T>(read,write,name,deleteOnDispose,access,share,mode,valueIfCreated,allowCaching);
-
-        }
-        protected virtual void Dispose(bool disposing)
-        {
-            if (disposing)
-            {
-                _conn.Dispose();
-                _int.Dispose();
-                _permaPort.Dispose();
-            }
-        }
-        public void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-        public T tryParse(out Exception ex)
-        {
-            return _int.tryParse(out ex);
-        }
-        public T value
-        {
-            get
-            {
-                return _int.value;
-            }
-            set
-            {
-                _int.value = value;
-                _conn.target = _conn.source;
-                _conn.Send(new ValChangedNotification());
-            }
-        }
-        public string name
-        {
-            get
-            {
-                return _int.name;
-            }
-        }
-        public FileAccess access
-        {
-            get
-            {
-                return _int.access;
-            }
-        }
-        public FileShare share
-        {
-            get
-            {
-                return _int.share;
-            }
-        }
-        public bool AllowCaching
-        {
-            get
-            {
-                return _int.AllowCaching;
-            }
-        }
-        public bool DeleteOnDispose
-        {
-            get
-            {
-                return _int.DeleteOnDispose;
-            }
-            set
-            {
-                _int.DeleteOnDispose = value;
-            }
-        }
-        public DateTime getLatestUpdateTime()
-        {
-            return _int.getLatestUpdateTime();
-        }
-        public T getFresh(DateTime earliestTime)
-        {
-            while (getLatestUpdateTime() < earliestTime)
-            {
-                object pack = _conn.recieve();
-                if (!(pack is ValChangedNotification))
-                {
-                    throw new InvalidDataException("PortBoundPermaObject received a datagram that it cannot handle");
-                }
-            }
-            return this.value;
-        }
-        public T getFresh(TimeSpan maxInterval)
-        {
-            while (this.timeSinceUpdate() > maxInterval)
-            {
-                object pack = _conn.recieve();
-                if (!(pack is ValChangedNotification))
-                {
-                    throw new InvalidDataException("PortBoundPermaObject received a datagram that it cannot handle");
-                }
-            }
-            return this.value;
         }
     }
     namespace Enumerable

@@ -5,11 +5,8 @@ using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 using CCDefault.Annotations;
-using Edge.Arrays;
 using Edge.Comparison;
-using Edge.Credentials;
 using Edge.Factory;
-using Edge.Funnels;
 using Edge.Looping;
 using Edge.Ports.AutoCommands;
 using Edge.Processes;
@@ -97,7 +94,7 @@ namespace Edge.Ports
         [CanBeNull] ISet<Type> enabledAutoCommands { get; }
         int SendBytes(byte[] o);
         //receive without autocommands
-        object silentrecieve(out EndPoint from, int buffersize);
+        byte[] RecieveBytes(out EndPoint from, int buffersize);
     }
     public static class Connextention
     {
@@ -169,6 +166,10 @@ namespace Edge.Ports
             var glued = c as ConnectionGluedAutoCommand;
             return glued != null && glued.commands.All(@this.AcceptsAutoCommand);
         }
+        public static object silentrecieve(this IConnection @this, out EndPoint from, int buffersize)
+        {
+            return Serialization.Deserialize(@this.RecieveBytes(out from,buffersize));
+        }
         public static T recieve<T>(this IConnection c)
         {
             EndPoint from;
@@ -237,14 +238,13 @@ namespace Edge.Ports
         {
             return _sock.SendTo(o, target);
         }
-        public object silentrecieve(out EndPoint from, int bufferSize)
+        public byte[] RecieveBytes(out EndPoint from, int bufferSize)
         {
             from = new IPEndPoint(0,0);
             byte[] buffer = new byte[bufferSize];
             int l = _sock.ReceiveFrom(buffer, ref from);
-            byte[] ret = new byte[l];
-            ret.Fill(buffer);
-            return Serialization.Deserialize(ret);
+            Array.Resize(ref buffer,l);
+            return buffer;
         }
         ~UdpConnection()
         {
@@ -335,14 +335,13 @@ namespace Edge.Ports
             {
                 return _sock.Send(o);
             }
-            public object silentrecieve(out EndPoint from, int buffersize)
+            public byte[] RecieveBytes(out EndPoint from, int bufferSize)
             {
                 from = new IPEndPoint(0, 0);
-                byte[] buffer = new byte[buffersize];
+                byte[] buffer = new byte[bufferSize];
                 int l = _sock.Receive(buffer);
-                byte[] ret = new byte[l];
-                ret.Fill(buffer);
-                return Serialization.Deserialize(ret);
+                Array.Resize(ref buffer,l);
+                return buffer;
             }
             ~PrivateTcpServerConnection()
             {
@@ -400,14 +399,13 @@ namespace Edge.Ports
         {
             return _sock.Send(o);
         }
-        public object silentrecieve(out EndPoint from, int buffersize)
+        public byte[] RecieveBytes(out EndPoint from, int bufferSize)
         {
             from = new IPEndPoint(0, 0);
-            byte[] buffer = new byte[buffersize];
+            byte[] buffer = new byte[bufferSize];
             int l = _sock.Receive(buffer);
-            byte[] ret = new byte[l];
-            ret.Fill(buffer);
-            return Serialization.Deserialize(ret);
+            Array.Resize(ref buffer,l);
+            return buffer;
         }
         ~TcpClient()
         {
@@ -537,403 +535,6 @@ namespace Edge.Ports
         {
             Dispose(true);
             GC.SuppressFinalize(this);
-        }
-    }
-    namespace MultiSocket
-    {
-        public static class MultiSocket
-        {
-            [Serializable]
-            public class ForwardedDataGram
-            {
-                public ForwardedDataGram(object data, EndPoint origSource, DateTime origRecivDate)
-                {
-                    this.data = data;
-                    this.origSource = origSource;
-                    this.origRecivDate = origRecivDate;
-                }
-                public object data { get; }
-                public EndPoint origSource { get; }
-                public DateTime origRecivDate { get; }
-            }
-            [Serializable]
-            public class SubscriptionRequest
-            {
-                public Credential access { get; }
-                public SubscriptionRequest(Credential access)
-                {
-                    this.access = access;
-                }
-            }
-            [Serializable]
-            public class SubsciptionConfirmation
-            {
-                public SubsciptionConfirmation(bool allowed)
-                {
-                    this.allowed = allowed;
-                }
-                public bool allowed { get; }
-            }
-            [Serializable]
-            public class UnsubscribeRequest
-            {
-
-            }
-            [Serializable]
-            public class SendRequest
-            {
-                public SendRequest(object message, EndPoint target)
-                {
-                    this.message = message;
-                    this.Target = target;
-                }
-                public object message { get; }
-                public EndPoint Target { get; }
-            }
-            [Serializable]
-            public class SentConfirmation
-            {
-                public SentConfirmation(int sentBytes)
-                {
-                    this.sentBytes = sentBytes;
-                }
-                public int sentBytes { get; }
-            }
-            [Serializable]
-            public class MultiSocketNotifierConfirmationRequest
-            { }
-            [Serializable]
-            public class MultiSocketNotifierConfirmationReply
-            { }
-            [Serializable]
-            public class ConsiderClosingRequest { }
-            private static bool IsNotifier(EndPoint p, TimeSpan timeout)
-            {
-                IConnection testConnection = new UdpConnection();
-                testConnection.target = p;
-                testConnection.Send(new MultiSocketNotifierConfirmationRequest());
-                ForwardedDataGram g;
-                if (Routine.TimeOut(() =>
-                {
-                    EndPoint source;
-                    var o = testConnection.recieve(out source);
-                    return new ForwardedDataGram(o, source, DateTime.Now);
-                }, timeout, out timeout, out g))
-                {
-                    return g.data is MultiSocketNotifierConfirmationReply;
-                }
-                return false;
-
-            }
-            public enum NotifierState
-            {
-                Exists = 1,
-                Empty = 0,
-                Occupied = -1
-            }
-            private static NotifierState NotifierExists(EndPoint p)
-            {
-                TimeSpan defaulttimeout = TimeSpan.FromSeconds(3);
-                IConnection testConnection = new UdpConnection();
-                try
-                {
-                    testConnection.source = p;
-                    return NotifierState.Empty;
-                }
-                catch (SocketException e)
-                {
-                    if (e.SocketErrorCode == SocketError.AddressAlreadyInUse)
-                    {
-                        return IsNotifier(p, defaulttimeout) ? NotifierState.Exists : NotifierState.Occupied;
-                    }
-                    throw new Exception("unexpected error while checking for MultiSocketNotifier",e);
-                }
-                finally
-                {
-                    testConnection.Dispose();
-                }
-            }
-            private static void EnsureNotifierExists(EndPoint p, ICredentialValidator c)
-            {
-                var r = NotifierExists(p);
-                switch (r)
-                {
-                    case NotifierState.Empty:
-                        MultiSocketNotifier n = new MultiSocketNotifier(c,p);
-                        RecieverThread t = new RecieverThread(n);
-                        t.onRecieve += n.onRecieve;
-                        t.start();
-                        break;
-                    case NotifierState.Occupied:
-                        throw new Exception("the port is occupied by a non-MultiSocket socket");
-                }
-            }
-            public static IConnection ConnectToMultiSocket(out EndPoint p, ICredentialValidator notifierCredentials, Credential accessCredential)
-            {
-                var master = new MultiSocketNotifier(notifierCredentials,out p);
-                RecieverThread t = new RecieverThread(master);
-                t.onRecieve += master.onRecieve;
-                t.start();
-                IConnection retConnection = new MultiSocketListener(p, accessCredential);
-                return retConnection;
-            }
-            public static IConnection ConnectToMultiSocket(EndPoint p, ICredentialValidator notifierCredentials, Credential accessCredential)
-            {
-                EnsureNotifierExists(p,notifierCredentials);
-                IConnection retConnection = new MultiSocketListener(p,accessCredential);
-                return retConnection;
-            }
-            public static IConnection ConnectToStrippedMultiSocket(EndPoint p, ICredentialValidator notifierCredentials, Credential accessCredential)
-            {
-                return new MultiSocketStrippedListener(ConnectToMultiSocket(p,notifierCredentials,accessCredential) as MultiSocketListener);
-            }
-            public static IConnection ConnectToStrippedMultiSocket(out EndPoint p, ICredentialValidator notifierCredentials, Credential accessCredential)
-            {
-                return new MultiSocketStrippedListener(ConnectToMultiSocket(out p, notifierCredentials, accessCredential) as MultiSocketListener);
-            }
-        }
-        class MultiSocketListener : IConnection
-        {
-            private readonly IConnection _int;
-            public MultiSocketListener(EndPoint multiSocketPort, Credential c)
-            {
-                this._int = new UdpConnection();
-                _int.target = multiSocketPort;
-                _int.Send(new MultiSocket.SubscriptionRequest(c));
-                var reply = _int.recieve(out multiSocketPort);
-                if (!(reply as MultiSocket.SubsciptionConfirmation).allowed)
-                    throw new AccessViolationException("MultiSocketNotifier Denied access");
-            }
-            public void Dispose()
-            {
-                _int.Send(new MultiSocket.UnsubscribeRequest());
-                _int.Send(new MultiSocket.ConsiderClosingRequest());
-                this._int.Dispose();
-            }
-            public EndPoint source
-            {
-                get
-                {
-                    return _int.target;
-                }
-                set
-                {
-                    throw new Exception("MultiPortListener's source cannot be changed");
-                }
-            }
-            public EndPoint target { get; set; }
-            public ISet<Type> enabledAutoCommands
-            {
-                get
-                {
-                    return null;
-                }
-            }
-            public int SendBytes(byte[] o)
-            {
-                if (this.target == null)
-                    throw new Exception("connection target is not set!");
-                var m = target.Equals(_int.target) ? (object)o : new MultiSocket.SendRequest(o, this.target);
-                var ret =_int.Send(m);
-                var r = target.Equals(_int.target) ? new MultiSocket.SentConfirmation(ret) : _int.recieve();
-                var confirmation = r as MultiSocket.SentConfirmation;
-                if (confirmation == null)
-                    throw new Exception($"expected a {nameof(MultiSocket.SentConfirmation)}, got {r}");
-                return confirmation.sentBytes;
-            }
-            public object silentrecieve(out EndPoint from, int buffersize)
-            {
-                var ret = _int.silentrecieve(out from, buffersize);
-                return ret;
-            }
-        }
-        class MultiSocketStrippedListener : IConnection
-        {
-            private readonly MultiSocketListener _int;
-            public MultiSocketStrippedListener(MultiSocketListener c)
-            {
-                this._int = c;
-            }
-            public void Dispose()
-            {
-                this._int.Dispose();
-            }
-            public EndPoint source
-            {
-                get
-                {
-                    return _int.source;
-                }
-                set
-                {
-                    _int.source = value;
-                }
-            }
-            public EndPoint target
-            {
-                get
-                {
-                    return _int.target;
-                }
-                set
-                {
-                    this._int.target = value;
-                }
-            }
-            public ISet<Type> enabledAutoCommands
-            {
-                get
-                {
-                    return this._int.enabledAutoCommands;
-                }
-            }
-            public int SendBytes(byte[] o)
-            {
-                return this._int.Send(o);
-            }
-            public object silentrecieve(out EndPoint from, int buffersize)
-            {
-                return (this._int.silentrecieve(out from, buffersize) as MultiSocket.ForwardedDataGram).data;
-            }
-        }
-        class MultiSocketNotifier : IConnection
-        {
-            private readonly List<EndPoint> _subscibers = new List<EndPoint>();
-            private readonly IConnection _int;
-            private readonly ICredentialValidator _access;
-            public MultiSocketNotifier(int localport) : this(Connextention.LocalEndPoint(localport)) { }
-            public MultiSocketNotifier(EndPoint p) : this(new OpenCredentialValidator(), p) { }
-            public MultiSocketNotifier(ICredentialValidator access, int localport) : this(access, Connextention.LocalEndPoint(localport)) { }
-            public MultiSocketNotifier(ICredentialValidator access, EndPoint p)
-            {
-                this._access = access;
-                _int = new UdpConnection {source = p};
-            }
-            public MultiSocketNotifier(ICredentialValidator access, out EndPoint p)
-            {
-                this._access = access;
-                _int = new UdpConnection();
-                p = this._int.EnsureSource();
-            }
-            public void Dispose()
-            {
-                _int.Dispose();
-            }
-            public EndPoint source
-            {
-                get
-                {
-                    return _int.source;
-                }
-                set
-                {
-                    throw new Exception("cannot change MultiPort source");
-                }
-            }
-            public EndPoint target
-            {
-                get
-                {
-                    return _int.target;
-                }
-                set
-                {
-                    _int.target = value;
-                }
-            }
-            public ISet<Type> enabledAutoCommands
-            {
-                get
-                {
-                    return null;
-                }
-            }
-            public int SendBytes(byte[] o)
-            {
-                return _int.Send(o);
-            }
-            public object silentrecieve(out EndPoint from, int buffersize)
-            {
-                return _int.silentrecieve(out from, buffersize);
-            }
-            public void onRecieve(object o, MessageRecieveEventArgs messageRecieveEventArgs)
-            {
-                Funnel<object> handler = new Funnel<object>
-                {
-                    a =>
-                    {
-                        MultiSocket.SubscriptionRequest request = a as MultiSocket.SubscriptionRequest;
-                        if (request == null)
-                            return false;
-                        var reply = this._access.isValid(request.access);
-                        if (reply)
-                        {
-                            this._subscibers.Add(messageRecieveEventArgs.source);
-                        }
-                        this._int.target = messageRecieveEventArgs.source;
-                        this._int.Send(new MultiSocket.SubsciptionConfirmation(reply));
-                        return true;
-                    },
-                    a =>
-                    {
-                        if (a is MultiSocket.UnsubscribeRequest)
-                        {
-                            _subscibers.Remove(messageRecieveEventArgs.source);
-                            return true;
-                        }
-                        return false;
-                    },
-                    a =>
-                    {
-                        if (a is MultiSocket.ConsiderClosingRequest)
-                        {
-                            if (_subscibers.Count == 0)
-                            {
-                                this.Dispose();
-                                ((RecieverThread)o).Dispose();
-                            }
-                        }
-                        return false;
-                    },
-                    a =>
-                    {
-                        MultiSocket.SendRequest request = a as MultiSocket.SendRequest;
-                        if (request != null)
-                        {
-                            target = request.Target;
-                            var ret = this.Send(request.message);
-                            target = messageRecieveEventArgs.source;
-                            this.Send(new MultiSocket.SentConfirmation(ret));
-                            return true;
-                        }
-                        return false;
-                    },
-                    a =>
-                    {
-                        var request = a as MultiSocket.MultiSocketNotifierConfirmationRequest;
-                        if (request != null)
-                        {
-                            target = messageRecieveEventArgs.source;
-                            var ret = this.Send(new MultiSocket.MultiSocketNotifierConfirmationReply());
-                            return true;
-                        }
-                        return false;
-                    },
-                    a =>
-                    {
-                        DateTime t = DateTime.Now;
-                        foreach (EndPoint subsciber in _subscibers.Except(messageRecieveEventArgs.source))
-                        {
-                            target = subsciber;
-                            this.Send(new MultiSocket.ForwardedDataGram(messageRecieveEventArgs.message, messageRecieveEventArgs.source, t));
-                        }
-                        return true;
-                    }
-                };
-                // ReSharper disable ImplicitlyCapturedClosure
-                // ReSharper restore ImplicitlyCapturedClosure
-                handler.Process(messageRecieveEventArgs.message);
-            }
         }
     }
     namespace PeerTcp
