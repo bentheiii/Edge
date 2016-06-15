@@ -82,6 +82,7 @@
     <Compile Include="Complex.cs" />
     <Compile Include="Credential.cs" />
     <Compile Include="Data.cs" />
+    <Compile Include="Enviroment.cs" />
     <Compile Include="Factory.cs" />
     <Compile Include="Fields.cs" />
     <Compile Include="Formulas.cs" />

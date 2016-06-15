@@ -5,9 +5,9 @@ using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 using CCDefault.Annotations;
+using Edge.Arrays;
 using Edge.Comparison;
 using Edge.Factory;
-using Edge.Looping;
 using Edge.Ports.AutoCommands;
 using Edge.Processes;
 using Edge.Random;
@@ -543,9 +543,9 @@ namespace Edge.Ports
         public class PeerTcpGeneratorConnectionMessage
         {
             public const int SEED_LENGTH = 16;
-            public ulong[] seeds { get; }
+            public byte[] seeds { get; }
             public EndPoint ConnEndPoint { get; }
-            public PeerTcpGeneratorConnectionMessage(ulong[] seeds, EndPoint connEndPoint)
+            public PeerTcpGeneratorConnectionMessage(byte[] seeds, EndPoint connEndPoint)
             {
                 this.seeds = seeds;
                 ConnEndPoint = connEndPoint;
@@ -595,17 +595,21 @@ namespace Edge.Ports
                 _int.target = target;
                 IConnection placeholder = new UdpConnection();
                 placeholder.EnsureSource();
+                IEnumerable<byte> bytes = Enviroment.Platform.getMacAddress();
+                var port = ((IPEndPoint)placeholder.source).Port;
+                bytes = bytes.Concat(BitConverter.GetBytes(port)).ToArray();
+                if (bytes.Count() < PeerTcpGeneratorConnectionMessage.SEED_LENGTH)
+                    bytes = gen.Bytes(PeerTcpGeneratorConnectionMessage.SEED_LENGTH - bytes.Count()).Concat(bytes);
                 PeerTcpGeneratorConnectionMessage mes =
-                    new PeerTcpGeneratorConnectionMessage(
-                        Loops.Generate(() => gen.ULong(0, ulong.MaxValue)).Take(PeerTcpGeneratorConnectionMessage.SEED_LENGTH).ToArray(), placeholder.source);
+                    new PeerTcpGeneratorConnectionMessage( bytes.ToArray(PeerTcpGeneratorConnectionMessage.SEED_LENGTH), placeholder.source);
                 _int.Send(mes);
                 EndPoint from;
                 var peermes = _int.recieve<PeerTcpGeneratorConnectionMessage>(out from);
                 if (!from.Equals(target))
                     throw new Exception("peer target mismatch");
-                var comp = new EnumerableCompararer<ulong>().Compare(mes.seeds, peermes.seeds);
+                var comp = new EnumerableCompararer<byte>().Compare(mes.seeds, peermes.seeds);
                 if (comp == 0)
-                    throw new Exception($"seed perfect match, 2^-{64*PeerTcpGeneratorConnectionMessage.SEED_LENGTH} chance!");
+                    throw new Exception($"seed perfect match, 2^-{8*PeerTcpGeneratorConnectionMessage.SEED_LENGTH} chance!");
                 if (comp < 0)
                 {
                     placeholder.Dispose();

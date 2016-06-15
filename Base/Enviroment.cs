@@ -1,7 +1,10 @@
 ﻿using System;
 using System.Drawing;
+using System.Linq;
+using System.Net.NetworkInformation;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
+using Edge.Looping;
 using Edge.Units.DataSizes;
 
 namespace Edge.Enviroment
@@ -53,6 +56,22 @@ namespace Edge.Enviroment
         {
 	        return !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("PROCESSOR_ARCHITEW6432")) ? PlatformArcitecture.bit64 : PlatformArcitecture.x86;
         }
+        public static byte[] getMacAddress()
+        {
+            NetworkInterface[] nics = NetworkInterface.GetAllNetworkInterfaces();
+            String sMacAddress = string.Empty;
+            foreach (NetworkInterface adapter in nics)
+            {
+                if (sMacAddress == string.Empty)// only return MAC Address from first card  
+                {
+                    //IPInterfaceProperties properties = adapter.GetIPProperties(); Line is not required
+                    sMacAddress = adapter.GetPhysicalAddress().ToString();
+                }
+            }
+            return Loops.Range(0, sMacAddress.Length).Where(x => x%2 == 0)
+                .Select(x => Convert.ToByte(sMacAddress.Substring(x, 2), 16))
+                .ToArray();
+        }
     }
     public static class Disk
     {
@@ -68,18 +87,18 @@ namespace Edge.Enviroment
             ulong f, t, ft;
             if (GetDiskFreeSpaceEx(driveletter+":", out f, out t, out ft))
             {
-                ret._Freespace = new DataSize(f, DataSize.Bit);
-                ret._TotalSpace = new DataSize(t, DataSize.Bit);
-                ret._TotalFreePpace = new DataSize(ft, DataSize.Bit);
+                ret._freespace = new DataSize(f, DataSize.Bit);
+                ret._totalSpace = new DataSize(t, DataSize.Bit);
+                ret._totalFreePpace = new DataSize(ft, DataSize.Bit);
                 return ret;
             }
             return null;
         }
         public class DiskSpaceData
         {
-            internal DataSize _Freespace;
-            internal DataSize _TotalSpace;
-            internal DataSize _TotalFreePpace;
+            internal DataSize _freespace;
+            internal DataSize _totalSpace;
+            internal DataSize _totalFreePpace;
             /// <summary>
             /// measures in bytes
             /// </summary>
@@ -87,7 +106,7 @@ namespace Edge.Enviroment
             {
                 get
                 {
-                    return this._Freespace;
+                    return this._freespace;
                 }
             }
             /// <summary>
@@ -97,7 +116,7 @@ namespace Edge.Enviroment
             {
                 get
                 {
-                    return this._TotalSpace;
+                    return this._totalSpace;
                 }
             }
             /// <summary>
@@ -107,7 +126,7 @@ namespace Edge.Enviroment
             {
                 get
                 {
-                    return this._TotalFreePpace;
+                    return this._totalFreePpace;
                 }
             }
             internal DiskSpaceData() { }

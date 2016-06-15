@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
-VisualStudioVersion = 14.0.24720.0
+VisualStudioVersion = 14.0.25123.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mono", "Mono\Mono.csproj", "{F0C115C7-1031-445D-929E-C07E1FAF8DC8}"
 EndProject
@@ -23,8 +23,6 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Encryption", "Encryption\Encryption.csproj", "{B8CEE601-26BE-46B0-BCFB-A714D7E330B4}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Testing", "Testing\Testing.csproj", "{632ACFE8-F2B2-4F3D-8C0B-37C224898829}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Environment", "Environment\Environment.csproj", "{C1A4AEFC-678E-42C8-A8CB-2D2A2F12A1A0}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Graphs", "Graphs\Graphs.csproj", "{555F107D-5E76-4FA9-8CF4-44BB0F6456BE}"
 EndProject
@@ -66,10 +64,6 @@ Global
 		{632ACFE8-F2B2-4F3D-8C0B-37C224898829}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{632ACFE8-F2B2-4F3D-8C0B-37C224898829}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{632ACFE8-F2B2-4F3D-8C0B-37C224898829}.Release|Any CPU.Build.0 = Release|Any CPU
-		{C1A4AEFC-678E-42C8-A8CB-2D2A2F12A1A0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{C1A4AEFC-678E-42C8-A8CB-2D2A2F12A1A0}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{C1A4AEFC-678E-42C8-A8CB-2D2A2F12A1A0}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{C1A4AEFC-678E-42C8-A8CB-2D2A2F12A1A0}.Release|Any CPU.Build.0 = Release|Any CPU
 		{555F107D-5E76-4FA9-8CF4-44BB0F6456BE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{555F107D-5E76-4FA9-8CF4-44BB0F6456BE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{555F107D-5E76-4FA9-8CF4-44BB0F6456BE}.Release|Any CPU.ActiveCfg = Release|Any CPU

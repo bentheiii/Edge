@@ -133,10 +133,6 @@
       <Project>{b8cee601-26be-46b0-bcfb-a714d7e330b4}</Project>
       <Name>Encryption</Name>
     </ProjectReference>
-    <ProjectReference Include="..\Environment\Environment.csproj">
-      <Project>{c1a4aefc-678e-42c8-a8cb-2d2a2f12a1a0}</Project>
-      <Name>Environment</Name>
-    </ProjectReference>
     <ProjectReference Include="..\Graphics\Graphics.csproj">
       <Project>{4566b8d4-a0e1-4759-847d-18da6e39a77d}</Project>
       <Name>Graphics</Name>
