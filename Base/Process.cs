@@ -13,17 +13,9 @@ namespace Edge.Processes
     {
         public static int countprocesseswithsamename(params string[] otherprocessnames)
         {
-            int processesrunning = 0;
-            foreach (Process clsProcess in Process.GetProcesses())
-            {
-                if (clsProcess.ProcessName.Equals(Process.GetCurrentProcess().ProcessName) || otherprocessnames.Contains(clsProcess.ProcessName))
-                {
-                    processesrunning++;
-                }
-            }
-            return processesrunning;
+            return Process.GetProcesses().Count(clsProcess => clsProcess.ProcessName.Equals(Process.GetCurrentProcess().ProcessName) || otherprocessnames.Contains(clsProcess.ProcessName));
         }
-	    public static void OpenConsoleWindow(out Process p, out StreamWriter sw, out StreamReader sr)
+        public static void OpenConsoleWindow(out Process p, out StreamWriter sw, out StreamReader sr)
 	    {
 		    StreamReader er;
 		    OpenConsoleWindow(out p, out sw, out sr, out er);

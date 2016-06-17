@@ -156,6 +156,10 @@ namespace Edge.Serializations
                 return ms.ToArray();
             }
         }
+        public static byte[] Serialize<T>(T o)
+        {
+            return Serialize((object)o);
+        }
     }
     public static class Hashing
     {

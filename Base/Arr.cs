@@ -178,30 +178,34 @@ namespace Edge.Arrays
         {
             return (@this as IReadOnlyCollection<T>)?.Count ?? ((@this as ICollection<T>)?.Count);
         }
-        public static T[] ToArray<T>(this IEnumerable<T> @this, Action<int> reporter)
+        public static T[] ToArray<T>(this IEnumerable<T> @this, Action<int> reporter, bool limitToCapacity = false)
         {
-            return ToArray(@this, @this.RecommendSize() ?? 0, (arg1, i) => reporter?.Invoke(i));
+            return ToArray(@this, @this.RecommendSize() ?? 0, (arg1, i) => reporter?.Invoke(i),limitToCapacity);
         }
-        public static T[] ToArray<T>(this IEnumerable<T> @this, Action<T, int> reporter)
+        public static T[] ToArray<T>(this IEnumerable<T> @this, Action<T, int> reporter, bool limitToCapacity = false)
         {
-            return ToArray(@this, @this.RecommendSize() ?? 0, reporter);
+            return ToArray(@this, @this.RecommendSize() ?? 0, reporter, limitToCapacity);
         }
-        public static T[] ToArray<T>(this IEnumerable<T> @this, int capacity)
+        public static T[] ToArray<T>(this IEnumerable<T> @this, int capacity, bool limitToCapacity = false)
         {
-            return ToArray(@this, capacity, (Action<T, int>)null);
+            return ToArray(@this, capacity, (Action<T, int>)null, limitToCapacity);
         }
-        public static T[] ToArray<T>(this IEnumerable<T> @this, int capacity, Action<int> reporter)
+        public static T[] ToArray<T>(this IEnumerable<T> @this, int capacity, Action<int> reporter, bool limitToCapacity = false)
         {
-            return ToArray(@this, capacity, (arg1, i) => reporter?.Invoke(i));
+            return ToArray(@this, capacity, (arg1, i) => reporter?.Invoke(i), limitToCapacity);
         }
-        public static T[] ToArray<T>(this IEnumerable<T> @this, int capacity, Action<T, int> reporter)
+        public static T[] ToArray<T>(this IEnumerable<T> @this, int capacity, Action<T, int> reporter,bool limitToCapacity = false)
         {
             T[] ret = new T[capacity <= 0 ? 1 : capacity];
             int i = 0;
             foreach (T t in @this)
             {
                 if (ret.Length <= i)
-                    Array.Resize(ref ret, ret.Length * 2);
+                {
+                    if (limitToCapacity)
+                        return ret;
+                    Array.Resize(ref ret, ret.Length*2);
+                }
                 ret[i] = t;
                 reporter?.Invoke(t, i);
                 i++;
@@ -457,6 +461,30 @@ namespace Edge.Arrays
                 x.Swap(i, j);
             }
             return x;
+        }
+        public static T Pick<T>(this IEnumerable<T> @this, RandomGenerator gen = null)
+        {
+            gen = gen ?? new GlobalRandomGenerator();
+            return @this.Pick(1,gen).First();
+        }
+        public static IEnumerable<T> Pick<T>(this IEnumerable<T> @this, int count, RandomGenerator gen = null)
+        {
+            gen = gen ?? new GlobalRandomGenerator();
+            int nom = count;
+            int denom = @this.Count();
+            if (nom > denom || nom < 0)
+                throw new ArgumentException();
+            foreach (var t in @this)
+            {
+                if (nom == 0)
+                    yield break;
+                if (gen.success(nom / (double)denom))
+                {
+                    yield return t;
+                    nom--;
+                }
+                denom--;
+            }
         }
         public static void Append<T>(ref T[] @this, params T[] toAdd)
         {

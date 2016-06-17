@@ -9,7 +9,6 @@ using Edge.Arrays;
 using Edge.Comparison;
 using Edge.Factory;
 using Edge.Ports.AutoCommands;
-using Edge.Processes;
 using Edge.Random;
 using Edge.Serializations;
 
@@ -100,23 +99,6 @@ namespace Edge.Ports
     {
         private const int DEFAULTBUFFERSIZE = 1024;
         [CanBeNull]
-        public static object recieve(this IConnection c, out EndPoint from, int buffersize = DEFAULTBUFFERSIZE)
-        {
-            object r = c.silentrecieve(out from, buffersize);
-            IConnectionAutoCommand a = r as IConnectionAutoCommand;
-            if (a != null && c.enabledAutoCommands!=null && c.enabledAutoCommands.Contains(a.GetType()))
-            {
-                a.OnRecieve(c);
-                return r;
-            }
-            return r;
-        }
-        [CanBeNull]
-        public static object recieve(this IConnection c)
-        {
-            EndPoint p;
-            return c.recieve(out p);
-        }
         public static bool ping(this IConnection c, [CanBeNull] out Exception ex)
         {
             try
@@ -139,6 +121,7 @@ namespace Edge.Ports
             Exception e;
             return c.ping(out e);
         }
+        public enum SourceStyle { Private, Public, None}
         public static EndPoint LocalEndPoint(int port)
         {
             return new IPEndPoint(IPAddress.Parse("127.0.0.1"), port);
@@ -147,15 +130,26 @@ namespace Edge.Ports
         {
             c.target = LocalEndPoint(port);
         }
-        public static void setLocalSource(this IPortBound c, int port)
+        public static void setLocalSource(this IPortBound c, int port, SourceStyle style = SourceStyle.Private)
         {
-            c.source = LocalEndPoint(port);
+            switch (style)
+            {
+                case SourceStyle.Private:
+                    c.source = new IPEndPoint(IPAddress.Parse("127.0.0.1"), port);
+                    return;
+                case SourceStyle.Public:
+                    c.source = new IPEndPoint(IPAddress.Any, port);
+                    return;
+                default:
+                    c.source = new IPEndPoint(IPAddress.None, port);
+                    return;
+            }
         }
-        public static EndPoint EnsureSource(this IPortBound c)
+        public static EndPoint EnsureSource(this IPortBound c, SourceStyle style = SourceStyle.Private)
         {
             if (c.source == null)
             {
-                c.setLocalSource(0);
+                c.setLocalSource(0, style);
             }
             return c.source;
         }
@@ -170,45 +164,34 @@ namespace Edge.Ports
         {
             return Serialization.Deserialize(@this.RecieveBytes(out from,buffersize));
         }
+        public static object recieve(this IConnection c)
+        {
+            EndPoint p;
+            return c.recieve(out p);
+        }
         public static T recieve<T>(this IConnection c)
         {
             EndPoint from;
             return recieve<T>(c, out from);
         }
-        public static T recieve<T>(this IConnection c, out EndPoint from)
+        public static T recieve<T>(this IConnection c, out EndPoint from, int buffersize = DEFAULTBUFFERSIZE)
         {
-            return recieve<T>(c, out from, TimeSpan.FromMilliseconds(int.MaxValue));
+            return (T)recieve(c, out from,buffersize);
         }
-        public static T recieve<T>(this IConnection c, out EndPoint from, TimeSpan timeout)
+        [CanBeNull]
+        public static object recieve(this IConnection c, out EndPoint from, int buffersize = DEFAULTBUFFERSIZE)
         {
-            TimeSpan time;
-            return recieve<T>(c, out from, timeout, out time);
-        }
-        public static T recieve<T>(this IConnection c, TimeSpan timeout)
-        {
-            TimeSpan time;
-            return recieve<T>(c, timeout, out time);
-        }
-        public static T recieve<T>(this IConnection c, TimeSpan timeout, out TimeSpan time)
-        {
-            EndPoint from;
-            return recieve<T>(c, out from, timeout, out time);
-        }
-        public static T recieve<T>(this IConnection c, out EndPoint from, TimeSpan timeout, out TimeSpan time)
-        {
-            object recievedval;
-            EndPoint source = LocalEndPoint(0);
-            bool finished = Routine.TimeOut(() => c.recieve(out source), timeout, out time, out recievedval);
-            if (!finished)
-                throw new TimeoutException();
-            from = source;
-            if (!(recievedval is T))
-                throw new InvalidCastException();
-            return (T)recievedval;
+            object r = c.silentrecieve(out from, buffersize);
+            IConnectionAutoCommand a = r as IConnectionAutoCommand;
+            if (a != null && c.enabledAutoCommands!=null && c.AcceptsAutoCommand(a))
+            {
+                a.OnRecieve(c);
+            }
+            return r;
         }
         public static int Send<T>(this IConnection @this, T message, Func<T, byte[]> converter = null)
         {
-            converter = converter ?? (x=> Serialization.Serialize(x));
+            converter = converter ?? (Serialization.Serialize);
             return @this.SendBytes(converter(message));
         }
     }
@@ -614,7 +597,7 @@ namespace Edge.Ports
                 {
                     placeholder.Dispose();
                     //we are server
-                    var ret = new TcpServer() {source = mes.ConnEndPoint}.Create();
+                    var ret = new TcpServer {source = mes.ConnEndPoint}.Create();
                     outcome = ConnectionOutcome.Server;
                     return ret;
                 }
@@ -623,7 +606,7 @@ namespace Edge.Ports
                     Thread.Sleep(TimeSpan.FromSeconds(0.1));
                     placeholder.Dispose();
                     //we are client
-                    var ret = new TcpClient() {target = peermes.ConnEndPoint};
+                    var ret = new TcpClient {target = peermes.ConnEndPoint};
                     outcome = ConnectionOutcome.Client;
                     return ret;
                 }

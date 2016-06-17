@@ -90,11 +90,11 @@ namespace Edge.Random
         {
             return allowedchars[Int(0, allowedchars.Length)];
         }
-        public object randomenum(Type e)
+        public object randomenum<T>() where T : struct, IConvertible
         {
-            if (!e.IsEnum)
+            if (!typeof(T).IsEnum)
                 throw new Exception("type is not an enum");
-            return Enum.ToObject(e, Int(0, Enum.GetNames(e).Length));
+            return Loops.Enum<T>().Pick(this);
         }
         public Color randomcolor()
         {
@@ -124,10 +124,6 @@ namespace Edge.Random
             if (f.GenType != GenerationType.Special)
                 throw new NotSupportedException("Field does not support this generation");
             return f.Generate(Bytes(), Tuple.Create(min, max), special);
-        }
-        public T FromList<T>(IList<T> arr)
-        {
-            return arr[this.Int(arr.Count)];
         }
     }
     public abstract class ByteEnumeratorGenerator : RandomGenerator

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Net.NetworkInformation;
@@ -56,7 +57,7 @@ namespace Edge.Enviroment
         {
 	        return !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("PROCESSOR_ARCHITEW6432")) ? PlatformArcitecture.bit64 : PlatformArcitecture.x86;
         }
-        public static byte[] getMacAddress()
+        public static IEnumerable<byte> getMacAddress()
         {
             NetworkInterface[] nics = NetworkInterface.GetAllNetworkInterfaces();
             String sMacAddress = string.Empty;
@@ -68,68 +69,34 @@ namespace Edge.Enviroment
                     sMacAddress = adapter.GetPhysicalAddress().ToString();
                 }
             }
-            return Loops.Range(0, sMacAddress.Length).Where(x => x%2 == 0)
-                .Select(x => Convert.ToByte(sMacAddress.Substring(x, 2), 16))
-                .ToArray();
+            return Loops.Range(0, sMacAddress.Length).Where(x => x%2 == 0).Select(x => Convert.ToByte(sMacAddress.Substring(x, 2), 16));
         }
     }
     public static class Disk
     {
         [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Auto)]
-        [return: MarshalAs(UnmanagedType.Bool)]
-        static extern bool GetDiskFreeSpaceEx(string lpDirectoryName, out ulong lpFreeBytesAvailable, out ulong lpTotalNumberOfBytes, out ulong lpTotalNumberOfFreeBytes);
+        [return: MarshalAs(UnmanagedType.Bool)] private static extern bool GetDiskFreeSpaceEx(string lpDirectoryName, out ulong lpFreeBytesAvailable, out ulong lpTotalNumberOfBytes, out ulong lpTotalNumberOfFreeBytes);
         /// <summary>
         /// returns null if disk not found
         /// </summary>
         public static DiskSpaceData getdiskdata(char driveletter)
         {
-            DiskSpaceData ret = new DiskSpaceData();
             ulong f, t, ft;
-            if (GetDiskFreeSpaceEx(driveletter+":", out f, out t, out ft))
-            {
-                ret._freespace = new DataSize(f, DataSize.Bit);
-                ret._totalSpace = new DataSize(t, DataSize.Bit);
-                ret._totalFreePpace = new DataSize(ft, DataSize.Bit);
-                return ret;
-            }
-            return null;
+            if (!GetDiskFreeSpaceEx(driveletter + ":", out f, out t, out ft))
+                return null;
+            return new DiskSpaceData(new DataSize(f,DataSize.Byte), new DataSize(t,DataSize.Byte), new DataSize(ft,DataSize.Byte));
         }
         public class DiskSpaceData
         {
-            internal DataSize _freespace;
-            internal DataSize _totalSpace;
-            internal DataSize _totalFreePpace;
-            /// <summary>
-            /// measures in bytes
-            /// </summary>
-            public DataSize freespace
+            public DataSize freespace { get; }
+            public DataSize totalspace { get; }
+            public DataSize totalfreespace { get; }
+            internal DiskSpaceData(DataSize freespace, DataSize totalspace, DataSize totalfreespace)
             {
-                get
-                {
-                    return this._freespace;
-                }
+                this.freespace = freespace;
+                this.totalspace = totalspace;
+                this.totalfreespace = totalfreespace;
             }
-            /// <summary>
-            /// measures in bytes
-            /// </summary>
-            public DataSize totalspace
-            {
-                get
-                {
-                    return this._totalSpace;
-                }
-            }
-            /// <summary>
-            /// measures in bytes
-            /// </summary>
-            public DataSize totalfreespace
-            {
-                get
-                {
-                    return this._totalFreePpace;
-                }
-            }
-            internal DiskSpaceData() { }
         }
     }
     public static class ScreenLens
